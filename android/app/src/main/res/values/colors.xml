@@ -2,4 +2,6 @@
 <resources>
     <!-- Cor do papel (AppPalette.light.page) -->
     <color name="splash_background">#FCFBF9</color>
+    <!-- Fundo do ícone adaptativo (papel) -->
+    <color name="ic_launcher_background">#FCFBF9</color>
 </resources>
