@@ -39,9 +39,9 @@ enum GrammarCategory {
 
   /// Rótulo curto, usado nos seletores.
   String get shortLabel => switch (this) {
-        GrammarCategory.masculineNoun => 'der',
-        GrammarCategory.feminineNoun => 'die',
-        GrammarCategory.neuterNoun => 'das',
+        GrammarCategory.masculineNoun => 'der (Masc.)',
+        GrammarCategory.feminineNoun => 'die (Fem.)',
+        GrammarCategory.neuterNoun => 'das (Neutro)',
         GrammarCategory.verb => 'verbo',
         GrammarCategory.adjective => 'adjetivo',
         GrammarCategory.adverb => 'advérbio',
