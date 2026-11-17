@@ -103,3 +103,57 @@ O app reproduz o protótipo HTML (Tailwind):
   `onUpgrade` no `MigrationStrategy`, senão o app já instalado quebra.
 - O layout de caderno aberto (duas fichas) aparece a partir de 840 px de
   largura.
+
+## Backup no Google Drive
+
+O app envia um backup por dia (ao abrir) para a pasta **Mein Notizbuch** do
+Google Drive da conta conectada, e guarda os 30 mais recentes. A tela fica no
+ícone de nuvem da tela inicial. O escopo usado é `drive.file`: o app só
+enxerga os arquivos que ele mesmo criou.
+
+### Configuração (uma vez, no Google Cloud)
+
+1. Em <https://console.cloud.google.com>, crie um projeto (ex.: "Mein Notizbuch").
+2. **APIs e serviços › Biblioteca**: ative a **Google Drive API**.
+3. **Tela de consentimento OAuth** (Google Auth Platform):
+   - Público: **Externo**; status **Em teste**.
+   - Adicione o seu e-mail em **Usuários de teste**.
+   - Escopos: `.../auth/drive.file`.
+4. **Credenciais › Criar credenciais › ID do cliente OAuth**, duas vezes:
+   - Tipo **Android**: pacote `com.brunodiedrich.mein_notizbuch` e o
+     **SHA-1** da chave de assinatura (veja "SHA-1 do build de debug"
+     abaixo). Para o build de release, crie outro client Android com o
+     SHA-1 da sua keystore de release.
+   - Tipo **Aplicativo da Web**: nenhum campo extra (origens e URIs de
+     redirecionamento ficam vazios). Copie o **ID do cliente**, que termina
+     em `.apps.googleusercontent.com`.
+5. Cole o ID do cliente **Web** em `lib/core/config/google_config.dart`
+   (`googleServerClientId`).
+6. `flutter pub get` e rode o app.
+
+### SHA-1 do build de debug
+
+O Flutter assina o build de debug com a keystore padrão do Android,
+`~/.android/debug.keystore` (criada na primeira vez que você roda o app).
+Para ver o SHA-1, use um dos comandos abaixo e copie a linha **SHA1**
+(no formato `A1:B2:C3:…`):
+
+```sh
+keytool -list -v -keystore ~/.android/debug.keystore \
+  -alias androiddebugkey -storepass android -keypass android
+```
+
+ou, na pasta do projeto (use o bloco da variante `debug`):
+
+```sh
+cd android && ./gradlew signingReport
+```
+
+Cada computador tem a sua própria `debug.keystore`. Se você rodar o app
+de outro computador, cadastre também o SHA-1 dele (mais um client
+Android). Se o login falhar com erro de configuração ou "DEVELOPER_ERROR",
+quase sempre é o SHA-1 ou o nome do pacote errados.
+
+Enquanto o projeto estiver "Em teste", só os usuários de teste conseguem
+entrar, e o Google pode pedir o login de novo a cada 7 dias.
+

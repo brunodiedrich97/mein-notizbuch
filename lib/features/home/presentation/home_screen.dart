@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../backup/presentation/backup_screen.dart';
+import '../../backup/providers/backup_provider.dart';
 import '../../decks/presentation/deck_navigation.dart';
 import '../../decks/presentation/widgets/deck_card.dart';
 import '../../decks/presentation/widgets/new_deck_sheet.dart';
@@ -53,7 +56,8 @@ class HomeScreen extends ConsumerWidget {
     // A lista vem em ordem de cadastro; as mais novas ficam no fim.
     final recent = words.reversed.take(recentCount).toList();
 
-    return Scaffold(
+    return _DailyBackup(
+      child: Scaffold(
       backgroundColor: p.page,
       body: SafeArea(
         child: Center(
@@ -91,6 +95,8 @@ class HomeScreen extends ConsumerWidget {
                               color: p.text600,
                             ),
                           ),
+                          const Spacer(),
+                          const _BackupButton(),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -215,6 +221,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -350,4 +357,63 @@ class _ShortcutTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Ícone de nuvem no topo: abre a tela de backup. Mostra se o backup no
+/// Drive está ligado.
+class _BackupButton extends ConsumerWidget {
+  const _BackupButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(backupProvider);
+    return HeaderIconButton(
+      icon: state.connected ? Icons.cloud_done_outlined : Icons.cloud_outlined,
+      tooltip: 'Backup no Google Drive',
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
+      ),
+    );
+  }
+}
+
+/// Dispara o backup diário ao abrir a tela inicial e sempre que o app
+/// volta para a frente. O controlador só envia se ainda não houve backup
+/// hoje.
+class _DailyBackup extends ConsumerStatefulWidget {
+  const _DailyBackup({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_DailyBackup> createState() => _DailyBackupState();
+}
+
+class _DailyBackupState extends ConsumerState<_DailyBackup>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    Future.microtask(_check);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  void _check() {
+    if (!mounted) return;
+    ref.read(backupProvider.notifier).backupIfDue();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

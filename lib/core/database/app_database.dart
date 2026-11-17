@@ -241,6 +241,67 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteSentence(int id) =>
       (delete(sentences)..where((t) => t.id.equals(id))).go();
 
+  // ---------- Backup ----------
+
+  /// Formato do arquivo de backup. Suba ao mudar a estrutura do JSON.
+  static const int backupFormat = 1;
+
+  /// Todos os dados (decks, palavras e frases) num mapa pronto para JSON.
+  Future<Map<String, dynamic>> exportData() async {
+    final allDecks = await select(decks).get();
+    final allWords = await select(wordEntries).get();
+    final allSentences = await select(sentences).get();
+    return {
+      'app': 'mein_notizbuch',
+      'format': backupFormat,
+      'schemaVersion': schemaVersion,
+      'exportedAt': DateTime.now().toUtc().toIso8601String(),
+      'decks': [for (final d in allDecks) d.toJson()],
+      'words': [for (final w in allWords) w.toJson()],
+      'sentences': [for (final s in allSentences) s.toJson()],
+    };
+  }
+
+  /// Substitui TODOS os dados do aparelho pelos do backup [data].
+  /// Lança [FormatException] se o arquivo não for um backup válido.
+  Future<void> importData(Map<String, dynamic> data) async {
+    if (data['app'] != 'mein_notizbuch') {
+      throw const FormatException('O arquivo não é um backup do Notizbuch.');
+    }
+    final format = data['format'];
+    if (format is! int || format > backupFormat) {
+      throw const FormatException(
+        'Backup feito por uma versão mais nova do app. Atualize o app.',
+      );
+    }
+
+    List<Map<String, dynamic>> list(String key) => [
+          for (final item in (data[key] as List? ?? const []))
+            Map<String, dynamic>.from(item as Map),
+        ];
+
+    // Converte antes de apagar: se algo estiver errado, nada é perdido.
+    final newDecks = [for (final j in list('decks')) Deck.fromJson(j)];
+    final newWords = [for (final j in list('words')) WordEntry.fromJson(j)];
+    final newSentences = [
+      for (final j in list('sentences')) Sentence.fromJson(j),
+    ];
+
+    await transaction(() async {
+      await delete(sentences).go();
+      await delete(wordEntries).go();
+      await delete(decks).go();
+      await batch((b) {
+        b.insertAll(decks, newDecks);
+        b.insertAll(wordEntries, newWords);
+        b.insertAll(sentences, newSentences);
+      });
+      // O "Geral" precisa existir, mesmo num backup sem ele.
+      await _createGeneralDeck();
+      await _moveOrphanWordsToGeneral();
+    });
+  }
+
   /// Registra o resultado de uma pergunta da revisão.
   Future<void> recordReview(int id, {required bool correct}) {
     return transaction(() async {

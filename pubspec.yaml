@@ -29,6 +29,14 @@ dependencies:
   # Ícones SVG idênticos aos do protótipo
   flutter_svg: ^2.0.10
 
+  # Backup no Google Drive (login Google + Drive API v3)
+  google_sign_in: ^7.1.0
+  googleapis: ^14.0.0
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+
+  # Preferências simples (data do último backup, conta conectada)
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
