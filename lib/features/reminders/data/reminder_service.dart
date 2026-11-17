@@ -89,10 +89,10 @@ class ReminderService {
     return await _android?.requestNotificationsPermission() ?? true;
   }
 
-  /// Texto principal: duas linhas no iOS; no Android, uma linha (a
-  /// notificação recolhida só mostra a primeira linha do texto).
+  /// Texto principal: duas linhas no iOS; no Android, uma linha em HTML
+  /// (a notificação recolhida só mostra a primeira linha do texto).
   static String _body(ReminderContent c) =>
-      Platform.isIOS ? c.twoLines : c.oneLine;
+      Platform.isIOS ? c.twoLines : c.oneLineHtml;
 
   NotificationDetails _details(ReminderContent c) {
     return NotificationDetails(
@@ -102,9 +102,12 @@ class ReminderService {
         channelDescription: 'Uma palavra do seu Notizbuch por dia.',
         icon: 'ic_notification',
         color: const Color(0xFF111827),
+        // Recolhida e expandida: a classe em itálico (HTML).
+        htmlFormatContent: true,
         // Expandida: classe e significado em duas linhas.
         styleInformation: BigTextStyleInformation(
-          c.twoLines,
+          c.twoLinesHtml,
+          htmlFormatBigText: true,
           contentTitle: c.title,
         ),
       ),

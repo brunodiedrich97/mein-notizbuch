@@ -31,11 +31,30 @@ class ReminderContent {
   /// Significado: "o cachorro".
   final String meaning;
 
+  /// Classe entre parênteses: "(substantivo · masculino)".
+  String get _categoryLine => '($category)';
+
   /// Classe numa linha e significado na seguinte.
-  String get twoLines => '$category\n$meaning';
+  String get twoLines => '$_categoryLine\n$meaning';
 
   /// Tudo numa linha só (notificação recolhida no Android).
-  String get oneLine => '$category — $meaning';
+  String get oneLine => '$_categoryLine — $meaning';
+
+  // Versões em HTML para o Android, com a classe em itálico. O iOS não
+  // aceita formatação no texto da notificação.
+
+  /// "<i>(substantivo · masculino)</i> — o cachorro".
+  String get oneLineHtml =>
+      '<i>${_escape(_categoryLine)}</i> — ${_escape(meaning)}';
+
+  /// Classe em itálico numa linha e significado na seguinte.
+  String get twoLinesHtml =>
+      '<i>${_escape(_categoryLine)}</i><br>${_escape(meaning)}';
+
+  static String _escape(String s) => s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
 
   factory ReminderContent.fromWord(
     WordEntry word, {
