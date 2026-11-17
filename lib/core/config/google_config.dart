@@ -11,4 +11,4 @@ const String googleServerClientId =
     '254788562202-g8v4gp9oq25ncr3euvdnj5pi8g3grsiu.apps.googleusercontent.com';
 
 /// `true` quando o client ID acima já foi preenchido.
-bool get isGoogleConfigured => !googleServerClientId.startsWith('254788562202');
+bool get isGoogleConfigured => !googleServerClientId.startsWith('COLE_AQUI');
