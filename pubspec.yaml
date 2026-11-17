@@ -41,6 +41,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/logo/logo_mark.png
+
   # Fontes empacotadas no app (funcionam offline desde a primeira abertura).
   # Licenças em assets/fonts/.
   fonts:

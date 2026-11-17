@@ -9,6 +9,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../review/presentation/review_session_screen.dart';
+import '../../../splash/presentation/splash_screen.dart' show kLogoMark;
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/flashcard_card.dart';
 import '../widgets/pronunciation_box.dart';
@@ -311,8 +312,14 @@ class _Header extends StatelessWidget {
                       height: 24,
                       child: Row(
                         children: [
-                          // const _PulsingDot(),
-                          // const SizedBox(width: 6),
+                          Image.asset(
+                            kLogoMark,
+                            height: 28,
+                            color: p.text600,
+                            colorBlendMode: BlendMode.srcIn,
+                            excludeFromSemantics: true,
+                          ),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'MEIN NOTIZBUCH',
