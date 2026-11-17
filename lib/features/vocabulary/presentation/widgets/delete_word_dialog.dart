@@ -128,7 +128,7 @@ class DeleteWordDialog extends StatelessWidget {
                         foregroundColor: p.onInk,
                         textStyle: label,
                         shape: shape,
-                        elevation: 1, // shadow-sm, como "Próximo"
+                        elevation: 1,
                         shadowColor: Colors.black26,
                       ),
                       child: const Text('Excluir'),

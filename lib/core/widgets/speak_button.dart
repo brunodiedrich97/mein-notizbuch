@@ -33,7 +33,7 @@ class SpeakButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            elevation: 0.5, // shadow-xs
+            elevation: 0.5,
             shadowColor: Colors.black26,
           ),
           child: SvgPathIcon(AppIcons.volumeUp, size: 20, color: p.text700),

@@ -35,7 +35,7 @@ class PrimaryButton extends StatelessWidget {
         foregroundColor: p.onInk,
         textStyle: AppText.button,
         shape: _buttonShape,
-        elevation: 1, // shadow-sm
+        elevation: 1,
         shadowColor: Colors.black26,
       ),
       child: Row(

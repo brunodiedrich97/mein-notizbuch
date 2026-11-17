@@ -228,7 +228,6 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   ],
                 ),
 
-                // Deck: rótulo + chips neutros em linha rolável.
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 10),
                   child: Row(
@@ -245,7 +244,6 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Classe gramatical: rótulo + chips em linha rolável.
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 10),
                   child: Row(

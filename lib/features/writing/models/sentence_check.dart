@@ -81,8 +81,18 @@ const _contractions = {
 };
 
 const _articles = {
-  'der', 'die', 'das', 'den', 'dem', 'des', //
-  'ein', 'eine', 'einen', 'einem', 'einer', 'eines',
+  'der',
+  'die',
+  'das',
+  'den',
+  'dem',
+  'des',
+  'ein',
+  'eine',
+  'einen',
+  'einem',
+  'einer',
+  'eines',
 };
 
 /// Compara [answer] com [expected]. Maiúsculas e trema contam como erro

@@ -74,15 +74,6 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
                         children: [
                           Row(
                             children: [
-                              // Container(
-                              //   width: 6,
-                              //   height: 6,
-                              //   decoration: BoxDecoration(
-                              //     color: p.text500,
-                              //     shape: BoxShape.circle,
-                              //   ),
-                              // ),
-                              // const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   eyebrow,

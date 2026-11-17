@@ -31,7 +31,7 @@ import '../widgets/pronunciation_box.dart';
 class FlashcardsScreen extends ConsumerStatefulWidget {
   const FlashcardsScreen({super.key});
 
-  /// Largura máxima do conteúdo (`max-w-md` do protótipo).
+  /// Largura máxima do conteúdo.
   static const double maxWidth = 448;
 
   @override

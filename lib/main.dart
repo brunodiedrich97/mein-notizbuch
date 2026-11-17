@@ -18,7 +18,7 @@ class DeutschNotizbuchApp extends StatelessWidget {
     return MaterialApp(
       title: 'Deutsch Notizbuch',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system, // claro ou escuro, conforme o aparelho
+      themeMode: ThemeMode.system,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       locale: const Locale('pt', 'BR'),

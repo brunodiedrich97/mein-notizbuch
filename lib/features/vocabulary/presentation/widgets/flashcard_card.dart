@@ -6,8 +6,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import 'pronunciation_box.dart';
 
-/// Uma ficha do caderno, reproduzindo o `<article class="flashcard">` do
-/// protótipo.
+/// Uma ficha do caderno: classe, palavra, pronúncia e as seções da classe
+/// (presente, graus, exemplo, regência e "Minhas frases").
 class FlashcardCard extends StatelessWidget {
   const FlashcardCard({
     super.key,
@@ -30,7 +30,7 @@ class FlashcardCard extends StatelessWidget {
   /// Toque longo numa frase (ex.: excluir).
   final ValueChanged<Sentence>? onSentenceLongPress;
 
-  /// `max-w-md` (448) menos o `p-4` (16) de cada lado.
+  /// Largura máxima da ficha: 448 menos a margem de 16 de cada lado.
   static const double maxCardWidth = 416;
 
   static String? _clean(String? value) {
@@ -44,7 +44,7 @@ class FlashcardCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final category = word.category;
     final color = GrammarColors.of(category, isDark: isDark);
-    // sm:p-7 a partir de 640 px de largura
+    // Mais espaço interno em telas largas.
     final padding = MediaQuery.sizeOf(context).width >= 640 ? 28.0 : 24.0;
 
     final tagDetail = _clean(word.tagDetail);
@@ -62,7 +62,7 @@ class FlashcardCard extends StatelessWidget {
     final label =
         tagDetail == null ? category.label : '${category.label} · $tagDetail';
 
-    // Conteúdo depois do divisor pontilhado, na ordem do protótipo.
+    // Conteúdo depois do divisor pontilhado.
     final lower = <Widget>[
       if (conjugation != null)
         _Section(
@@ -102,7 +102,6 @@ class FlashcardCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Rótulo da classe
                 Row(
                   children: [
                     CategoryIcon(category, color: color),
@@ -123,7 +122,6 @@ class FlashcardCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Palavra
                 Text(
                   word.germanWord,
                   style: AppTheme.serif(
@@ -135,7 +133,6 @@ class FlashcardCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // Linha de apoio gramatical
                 _SupportLine(
                   plural: plural,
                   verbForms: verbForms,
@@ -144,7 +141,6 @@ class FlashcardCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Pronúncia
                 PronunciationBox(
                   speakText: word.germanWord,
                   ipa: ipa,
@@ -218,7 +214,7 @@ class _SupportLine extends StatelessWidget {
     final verbForms = this.verbForms;
 
     if (plural != null) {
-      // Substantivo: ponto mais claro (opacity-60) com margem dos dois lados.
+      // Substantivo: ponto mais claro, com margem dos dois lados.
       return Text.rich(
         TextSpan(
           children: [

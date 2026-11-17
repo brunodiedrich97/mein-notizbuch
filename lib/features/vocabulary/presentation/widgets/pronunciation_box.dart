@@ -48,7 +48,6 @@ class PronunciationBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // p-1.5 em volta de um ícone de 20 px
           Semantics(
             button: true,
             label: 'Ouvir pronúncia',
