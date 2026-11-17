@@ -149,18 +149,35 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     void previous() => _step(-1, shown, total, isTablet);
 
     final menuItems = <PopupMenuEntry<VoidCallback>>[
-      PopupMenuItem(value: _openAddWord, child: const Text('Adicionar palavra')),
-      PopupMenuItem(
+      _menuItem(
+        palette,
+        icon: Icons.add_rounded,
+        label: 'Adicionar palavra',
+        value: _openAddWord,
+      ),
+      _menuItem(
+        palette,
+        icon: Icons.style_outlined,
+        label: 'Revisar',
         value: _openReview,
         enabled: !notebookIsEmpty,
-        child: const Text('Revisar'),
       ),
-      if (visibleCards.isNotEmpty) const PopupMenuDivider(),
-      for (final w in visibleCards)
-        PopupMenuItem(
-          value: () => _confirmDelete(w),
-          child: Text('Excluir "${w.germanWord}"'),
-        ),
+      if (visibleCards.isNotEmpty) ...[
+        const PopupMenuDivider(height: 9),
+        _menuHeading(palette, 'Excluir ficha'),
+        for (final w in visibleCards)
+          _menuItem(
+            palette,
+            icon: Icons.delete_outline_rounded,
+            label: w.germanWord,
+            labelColor: GrammarColors.of(
+              w.category,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
+            serif: true,
+            value: () => _confirmDelete(w),
+          ),
+      ],
     ];
 
     Widget content = wordsAsync.when(
@@ -332,6 +349,17 @@ class _Header extends StatelessWidget {
                               padding: EdgeInsets.zero,
                               iconSize: 18,
                               icon: Icon(Icons.more_vert, color: p.text500),
+                              position: PopupMenuPosition.under,
+                              offset: const Offset(0, 6),
+                              color: p.card,
+                              surfaceTintColor: Colors.transparent,
+                              elevation: 6,
+                              shadowColor: Colors.black26,
+                              constraints: const BoxConstraints(minWidth: 220),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: p.cardBorder),
+                              ),
                               onSelected: (action) => action(),
                               itemBuilder: (_) => menuItems,
                             ),
@@ -663,4 +691,66 @@ class _NavigationFooter extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Item do menu "⋮": ícone + texto, no estilo da interface.
+PopupMenuItem<VoidCallback> _menuItem(
+  AppPalette p, {
+  required IconData icon,
+  required String label,
+  required VoidCallback value,
+  bool enabled = true,
+  Color? labelColor,
+  bool serif = false,
+}) {
+  final color = enabled ? (labelColor ?? p.text700) : p.text400;
+  return PopupMenuItem<VoidCallback>(
+    value: value,
+    enabled: enabled,
+    height: 44,
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: enabled ? p.text500 : p.text400),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: serif
+                ? AppTheme.serif(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  )
+                : TextStyle(
+                    fontFamily: AppTheme.sansFamily,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                  ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Rótulo de grupo do menu, em caixa alta (não clicável).
+PopupMenuItem<VoidCallback> _menuHeading(AppPalette p, String text) {
+  return PopupMenuItem<VoidCallback>(
+    enabled: false,
+    height: 28,
+    padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+    child: Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontFamily: AppTheme.sansFamily,
+        fontSize: 11,
+        letterSpacing: 0.6,
+        fontWeight: FontWeight.w600,
+        color: p.text400,
+      ),
+    ),
+  );
 }
