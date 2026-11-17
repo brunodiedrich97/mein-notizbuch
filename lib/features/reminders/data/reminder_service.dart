@@ -102,12 +102,12 @@ class ReminderService {
         channelDescription: 'Uma palavra do seu Notizbuch por dia.',
         icon: 'ic_notification',
         color: const Color(0xFF111827),
-        // Recolhida e expandida: a classe em itálico (HTML).
-        htmlFormatContent: true,
-        // Expandida: classe e significado em duas linhas.
+        // Classe em itálico (HTML). Recolhida: tudo numa linha (texto
+        // principal); expandida: classe e significado em duas linhas.
         styleInformation: BigTextStyleInformation(
           c.twoLinesHtml,
           htmlFormatBigText: true,
+          htmlFormatContent: true,
           contentTitle: c.title,
         ),
       ),
