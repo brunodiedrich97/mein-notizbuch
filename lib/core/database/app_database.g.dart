@@ -1696,7 +1696,7 @@ class SentencesCompanion extends UpdateCompanion<Sentence> {
 }
 
 class $WordClassesTable extends WordClasses
-    with TableInfo<$WordClassesTable, WordClassesData> {
+    with TableInfo<$WordClassesTable, WordClass> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1739,7 +1739,7 @@ class $WordClassesTable extends WordClasses
   String get actualTableName => $name;
   static const String $name = 'word_classes';
   @override
-  VerificationContext validateIntegrity(Insertable<WordClassesData> instance,
+  VerificationContext validateIntegrity(Insertable<WordClass> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1768,9 +1768,9 @@ class $WordClassesTable extends WordClasses
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  WordClassesData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  WordClass map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return WordClassesData(
+    return WordClass(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
@@ -1788,14 +1788,14 @@ class $WordClassesTable extends WordClasses
   }
 }
 
-class WordClassesData extends DataClass implements Insertable<WordClassesData> {
+class WordClass extends DataClass implements Insertable<WordClass> {
   final int id;
   final String name;
 
   /// Cor escolhida (ARGB). No tema escuro, o app usa uma versão mais clara.
   final int color;
   final DateTime createdAt;
-  const WordClassesData(
+  const WordClass(
       {required this.id,
       required this.name,
       required this.color,
@@ -1819,10 +1819,10 @@ class WordClassesData extends DataClass implements Insertable<WordClassesData> {
     );
   }
 
-  factory WordClassesData.fromJson(Map<String, dynamic> json,
+  factory WordClass.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return WordClassesData(
+    return WordClass(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<int>(json['color']),
@@ -1840,16 +1840,16 @@ class WordClassesData extends DataClass implements Insertable<WordClassesData> {
     };
   }
 
-  WordClassesData copyWith(
+  WordClass copyWith(
           {int? id, String? name, int? color, DateTime? createdAt}) =>
-      WordClassesData(
+      WordClass(
         id: id ?? this.id,
         name: name ?? this.name,
         color: color ?? this.color,
         createdAt: createdAt ?? this.createdAt,
       );
-  WordClassesData copyWithCompanion(WordClassesCompanion data) {
-    return WordClassesData(
+  WordClass copyWithCompanion(WordClassesCompanion data) {
+    return WordClass(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
@@ -1859,7 +1859,7 @@ class WordClassesData extends DataClass implements Insertable<WordClassesData> {
 
   @override
   String toString() {
-    return (StringBuffer('WordClassesData(')
+    return (StringBuffer('WordClass(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
@@ -1873,14 +1873,14 @@ class WordClassesData extends DataClass implements Insertable<WordClassesData> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is WordClassesData &&
+      (other is WordClass &&
           other.id == this.id &&
           other.name == this.name &&
           other.color == this.color &&
           other.createdAt == this.createdAt);
 }
 
-class WordClassesCompanion extends UpdateCompanion<WordClassesData> {
+class WordClassesCompanion extends UpdateCompanion<WordClass> {
   final Value<int> id;
   final Value<String> name;
   final Value<int> color;
@@ -1898,7 +1898,7 @@ class WordClassesCompanion extends UpdateCompanion<WordClassesData> {
     this.createdAt = const Value.absent(),
   })  : name = Value(name),
         color = Value(color);
-  static Insertable<WordClassesData> custom({
+  static Insertable<WordClass> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<int>? color,
@@ -2808,17 +2808,14 @@ class $$WordClassesTableAnnotationComposer
 class $$WordClassesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $WordClassesTable,
-    WordClassesData,
+    WordClass,
     $$WordClassesTableFilterComposer,
     $$WordClassesTableOrderingComposer,
     $$WordClassesTableAnnotationComposer,
     $$WordClassesTableCreateCompanionBuilder,
     $$WordClassesTableUpdateCompanionBuilder,
-    (
-      WordClassesData,
-      BaseReferences<_$AppDatabase, $WordClassesTable, WordClassesData>
-    ),
-    WordClassesData,
+    (WordClass, BaseReferences<_$AppDatabase, $WordClassesTable, WordClass>),
+    WordClass,
     PrefetchHooks Function()> {
   $$WordClassesTableTableManager(_$AppDatabase db, $WordClassesTable table)
       : super(TableManagerState(
@@ -2864,17 +2861,14 @@ class $$WordClassesTableTableManager extends RootTableManager<
 typedef $$WordClassesTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
     $WordClassesTable,
-    WordClassesData,
+    WordClass,
     $$WordClassesTableFilterComposer,
     $$WordClassesTableOrderingComposer,
     $$WordClassesTableAnnotationComposer,
     $$WordClassesTableCreateCompanionBuilder,
     $$WordClassesTableUpdateCompanionBuilder,
-    (
-      WordClassesData,
-      BaseReferences<_$AppDatabase, $WordClassesTable, WordClassesData>
-    ),
-    WordClassesData,
+    (WordClass, BaseReferences<_$AppDatabase, $WordClassesTable, WordClass>),
+    WordClass,
     PrefetchHooks Function()>;
 
 class $AppDatabaseManager {

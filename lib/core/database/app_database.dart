@@ -93,6 +93,10 @@ class Sentences extends Table {
 
 /// Classes gramaticais criadas pelo usuário ("Conjunção", "Pronome"…).
 /// Gera `WordClass` e `WordClassesCompanion`. (v6)
+///
+/// O nome da classe de dados é fixado aqui: sozinho, o Drift geraria
+/// `WordClassesData` (não sabe tirar o plural de "Classes").
+@DataClassName('WordClass')
 class WordClasses extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 40)();
