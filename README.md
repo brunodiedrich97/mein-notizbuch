@@ -39,6 +39,51 @@ Requisitos: Flutter 3.27 ou mais novo (`flutter --version`).
    flutter run
    ```
 
+## Instalar no celular (Android)
+
+Para usar o app no dia a dia, instale o build de **release** (mais rápido e
+sem a faixa de debug).
+
+1. No celular, ative as opções do desenvolvedor (toque 7 vezes em
+   *Configurações › Sobre o telefone › Número da versão*) e, em
+   *Opções do desenvolvedor*, ligue a **Depuração USB**. Conecte o cabo e
+   aceite "Permitir depuração USB?".
+2. Confira se o aparelho aparece:
+
+   ```bash
+   flutter devices
+   ```
+
+3. Instale de um destes jeitos:
+
+   - Direto pelo cabo (compila, instala e abre):
+
+     ```bash
+     flutter run --release
+     ```
+
+   - Gerando o APK:
+
+     ```bash
+     flutter build apk --release
+     ```
+
+     O arquivo fica em `build/app/outputs/flutter-apk/app-release.apk`.
+     Instale com `flutter install` (cabo conectado) ou envie o arquivo para o
+     celular e abra (o Android pede para permitir "fontes desconhecidas").
+
+Por enquanto, o build de release é assinado com a chave de **debug**
+(`signingConfig = signingConfigs.getByName("debug")` em
+`android/app/build.gradle.kts`). Por isso:
+
+- ele instala por cima de um build de debug sem perder os dados;
+- o login Google (backup) funciona com o client Android do SHA-1 de debug.
+
+Ao criar uma keystore de release própria (ex.: para a Play Store), o Android
+não deixa instalar por cima do app atual: será preciso desinstalar, e os
+dados do aparelho se perdem. Faça antes um backup no Drive para restaurar
+depois, e cadastre um novo client Android com o SHA-1 da nova chave.
+
 ## Pronúncia offline
 
 O app usa a voz do próprio aparelho. Se o botão de áudio avisar que não há voz
