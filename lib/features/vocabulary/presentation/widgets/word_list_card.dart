@@ -67,7 +67,10 @@ class WordListRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Duas colunas de largura fixa: a tradução sempre termina na
+          // borda direita, curta ou longa.
           Expanded(
+            flex: 5,
             child: Text(
               word.germanWord,
               overflow: TextOverflow.ellipsis,
@@ -80,9 +83,11 @@ class WordListRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
+          Expanded(
+            flex: 4,
             child: Text(
               word.portugueseTranslation,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: TextStyle(fontSize: 13, height: 18 / 13, color: p.text500),

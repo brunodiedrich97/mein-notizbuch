@@ -121,23 +121,31 @@ class DeckScreen extends ConsumerWidget {
                 CategoryLegend(words: summary.words),
               ],
               const SizedBox(height: 16),
+              PrimaryButton(
+                label: 'Estudar fichas',
+                onPressed: count == 0
+                    ? null
+                    : () => openFlashcards(context, ref, deckId: deckId),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
-                    child: PrimaryButton(
-                      label: 'Estudar fichas',
-                      onPressed: count == 0
-                          ? null
-                          : () => openFlashcards(context, ref, deckId: deckId),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: SoftButton(
                       label: 'Revisar deck',
                       onPressed: canReview
                           ? () => openReview(context, ref, deckId: deckId)
                           : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SoftButton(
+                      label: 'Escrever',
+                      onPressed: count == 0
+                          ? null
+                          : () =>
+                              openWritingExercise(context, ref, deckId: deckId),
                     ),
                   ),
                 ],

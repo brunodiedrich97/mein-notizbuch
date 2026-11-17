@@ -5,6 +5,9 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../decks/presentation/deck_navigation.dart';
+import '../../../writing/presentation/sentence_actions.dart';
+import '../../../writing/providers/sentence_provider.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
@@ -53,7 +56,13 @@ class WordDetailScreen extends ConsumerWidget {
       ),
       body: word == null
           ? const Center(child: CircularProgressIndicator())
-          : FlashcardCard(word: word),
+          : FlashcardCard(
+              word: word,
+              sentences: ref.watch(sentencesOfWordProvider(word.id)),
+              onWriteSentence: () => openWriteSentence(context, word.id),
+              onSentenceLongPress: (s) =>
+                  confirmDeleteSentence(context, ref, s),
+            ),
     );
   }
 }

@@ -12,13 +12,15 @@ import '../../../../core/widgets/speak_button.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
 import '../../../review/presentation/review_session_screen.dart';
+import '../../../writing/presentation/sentence_actions.dart';
+import '../../../writing/providers/sentence_provider.dart';
+import '../../../study/presentation/widgets/session_summary.dart';
 import '../../../study/presentation/widgets/study_filter_sheet.dart';
 import '../../../study/providers/study_provider.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
 import '../widgets/pronunciation_box.dart';
-import '../widgets/word_list_card.dart';
 
 /// Sessão de estudo: um lote de fichas (do deck aberto, ou de todos), uma
 /// por vez. Para cada ficha, o usuário diz se sabia ou não; a resposta é
@@ -172,12 +174,13 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     if (!_ready) {
       body = const Center(child: CircularProgressIndicator());
     } else if (_finished) {
-      body = _SessionSummary(
-        session: session,
+      body = SessionSummary(
+        words: session,
         results: _results,
         deckName: deckName,
         onBack: () => Navigator.of(context).maybePop(),
         onRestart: _startSession,
+        onOpenWord: (w) => openWordDetail(context, w.id),
       );
     } else if (total == 0) {
       body = _poolSize == 0
@@ -230,6 +233,10 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
                 child: FlashcardCard(
                   key: ValueKey(word.id),
                   word: word,
+                  sentences: ref.watch(sentencesOfWordProvider(word.id)),
+                  onWriteSentence: () => openWriteSentence(context, word.id),
+                  onSentenceLongPress: (s) =>
+                      confirmDeleteSentence(context, ref, s),
                 ),
               ),
             ),
@@ -284,6 +291,8 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
                     current: showControls ? current : null,
                     onWords: () => openWordIndex(context, deckId: deckId),
                     onAdd: () => openAddWord(context, deckId: deckId),
+                    onWrite: () =>
+                        openWritingExercise(context, ref, deckId: deckId),
                     onReview: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const ReviewSessionScreen(),
@@ -621,6 +630,7 @@ class _SessionMenu extends StatelessWidget {
     required this.current,
     required this.onWords,
     required this.onAdd,
+    required this.onWrite,
     required this.onReview,
     required this.onDelete,
   });
@@ -629,6 +639,7 @@ class _SessionMenu extends StatelessWidget {
   final WordEntry? current;
   final VoidCallback onWords;
   final VoidCallback onAdd;
+  final VoidCallback onWrite;
   final VoidCallback onReview;
   final ValueChanged<WordEntry> onDelete;
 
@@ -674,6 +685,7 @@ class _SessionMenu extends StatelessWidget {
         item(Icons.list_rounded, 'Ver palavras', onWords),
         item(Icons.add_rounded, 'Adicionar palavra', onAdd),
         item(Icons.style_outlined, 'Revisar (quiz)', onReview),
+        item(Icons.edit_outlined, 'Praticar escrita', onWrite),
         if (word != null) ...[
           const PopupMenuDivider(height: 9),
           item(
@@ -692,119 +704,6 @@ class _SessionMenu extends StatelessWidget {
           border: Border.all(color: p.outline),
         ),
         child: Icon(Icons.more_vert, size: 20, color: p.text700),
-      ),
-    );
-  }
-}
-
-/// Resumo no fim da sessão.
-class _SessionSummary extends StatelessWidget {
-  const _SessionSummary({
-    required this.session,
-    required this.results,
-    required this.deckName,
-    required this.onBack,
-    required this.onRestart,
-  });
-
-  final List<WordEntry> session;
-  final Map<int, bool> results;
-  final String? deckName;
-  final VoidCallback onBack;
-  final VoidCallback onRestart;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    final knew = results.values.where((r) => r).length;
-    final notYet = results.values.where((r) => !r).length;
-    final toReview = [
-      for (final w in session)
-        if (results[w.id] == false) w,
-    ];
-    final total = session.length;
-    final great = total > 0 && knew / total >= 0.7;
-    final studied = total == 1 ? '1 ficha' : '$total fichas';
-
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: FlashcardsScreen.maxWidth),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
-          children: [
-            Text('SESSÃO CONCLUÍDA', style: AppText.section(p)),
-            const SizedBox(height: 8),
-            Text(
-              great ? 'Gut gemacht!' : 'Weiter so!',
-              style: AppText.display(p, fontSize: 40),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              deckName == null
-                  ? 'Você estudou $studied.'
-                  : 'Você estudou $studied do deck $deckName.',
-              style: AppText.body(p),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(child: _StatTile(value: knew, label: 'sabia')),
-                const SizedBox(width: 12),
-                Expanded(child: _StatTile(value: notYet, label: 'ainda não')),
-              ],
-            ),
-            if (toReview.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Text('PARA REVER', style: AppText.section(p)),
-              const SizedBox(height: 12),
-              WordListCard(
-                words: toReview,
-                onTap: (w) => openWordDetail(context, w.id),
-              ),
-            ],
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(child: SoftButton(label: 'Voltar', onPressed: onBack)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: PrimaryButton(
-                    label: 'Nova sessão',
-                    onPressed: onRestart,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({required this.value, required this.label});
-
-  final int value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: p.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: p.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$value', style: AppText.display(p, fontSize: 32)),
-          const SizedBox(height: 4),
-          Text(label, style: AppText.meta(p)),
-        ],
       ),
     );
   }

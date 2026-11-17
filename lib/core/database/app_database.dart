@@ -9,6 +9,7 @@ import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import '../../features/decks/models/deck_icon.dart';
 import '../../features/vocabulary/models/grammar_type.dart';
+import '../../features/writing/models/sentence_source.dart';
 
 part 'app_database.g.dart';
 
@@ -69,7 +70,24 @@ class WordEntries extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Decks, WordEntries])
+/// Frases escritas pelo usuário com uma palavra ("Minhas frases"). Gera
+/// `Sentence` e `SentencesCompanion`. (v5)
+class Sentences extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Palavra da ficha. As frases são apagadas junto com a palavra.
+  IntColumn get wordId => integer()();
+
+  TextColumn get german => text().withLength(min: 1, max: 300)();
+  TextColumn get portuguese => text().nullable()();
+
+  /// Salvo pelo nome ("free"), não pelo índice.
+  TextColumn get source => textEnum<SentenceSource>()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [Decks, WordEntries, Sentences])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -80,7 +98,7 @@ class AppDatabase extends _$AppDatabase {
   static const int generalDeckId = 1;
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -104,6 +122,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 4) {
             await _restoreSchoenExampleTranslation();
+          }
+          if (from < 5) {
+            await m.createTable(sentences);
           }
         },
       );
@@ -196,8 +217,29 @@ class AppDatabase extends _$AppDatabase {
   Future<int> addWord(WordEntriesCompanion entry) =>
       into(wordEntries).insert(entry);
 
-  Future<int> deleteWord(int id) =>
-      (delete(wordEntries)..where((t) => t.id.equals(id))).go();
+  /// Exclui a palavra e as frases dela.
+  Future<void> deleteWord(int id) {
+    return transaction(() async {
+      await (delete(sentences)..where((t) => t.wordId.equals(id))).go();
+      await (delete(wordEntries)..where((t) => t.id.equals(id))).go();
+    });
+  }
+
+  /// Todas as frases, das mais novas para as mais antigas.
+  Stream<List<Sentence>> watchSentences() {
+    return (select(sentences)
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.createdAt),
+            (t) => OrderingTerm.desc(t.id),
+          ]))
+        .watch();
+  }
+
+  Future<int> addSentence(SentencesCompanion entry) =>
+      into(sentences).insert(entry);
+
+  Future<int> deleteSentence(int id) =>
+      (delete(sentences)..where((t) => t.id.equals(id))).go();
 
   /// Registra o resultado de uma pergunta da revisão.
   Future<void> recordReview(int id, {required bool correct}) {

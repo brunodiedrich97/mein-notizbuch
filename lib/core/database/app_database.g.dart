@@ -1298,16 +1298,366 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
   }
 }
 
+class $SentencesTable extends Sentences
+    with TableInfo<$SentencesTable, Sentence> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SentencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _wordIdMeta = const VerificationMeta('wordId');
+  @override
+  late final GeneratedColumn<int> wordId = GeneratedColumn<int>(
+      'word_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _germanMeta = const VerificationMeta('german');
+  @override
+  late final GeneratedColumn<String> german = GeneratedColumn<String>(
+      'german', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 300),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _portugueseMeta =
+      const VerificationMeta('portuguese');
+  @override
+  late final GeneratedColumn<String> portuguese = GeneratedColumn<String>(
+      'portuguese', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  late final GeneratedColumnWithTypeConverter<SentenceSource, String> source =
+      GeneratedColumn<String>('source', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<SentenceSource>($SentencesTable.$convertersource);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, wordId, german, portuguese, source, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sentences';
+  @override
+  VerificationContext validateIntegrity(Insertable<Sentence> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('word_id')) {
+      context.handle(_wordIdMeta,
+          wordId.isAcceptableOrUnknown(data['word_id']!, _wordIdMeta));
+    } else if (isInserting) {
+      context.missing(_wordIdMeta);
+    }
+    if (data.containsKey('german')) {
+      context.handle(_germanMeta,
+          german.isAcceptableOrUnknown(data['german']!, _germanMeta));
+    } else if (isInserting) {
+      context.missing(_germanMeta);
+    }
+    if (data.containsKey('portuguese')) {
+      context.handle(
+          _portugueseMeta,
+          portuguese.isAcceptableOrUnknown(
+              data['portuguese']!, _portugueseMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Sentence map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Sentence(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      wordId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}word_id'])!,
+      german: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}german'])!,
+      portuguese: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}portuguese']),
+      source: $SentencesTable.$convertersource.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $SentencesTable createAlias(String alias) {
+    return $SentencesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SentenceSource, String, String> $convertersource =
+      const EnumNameConverter<SentenceSource>(SentenceSource.values);
+}
+
+class Sentence extends DataClass implements Insertable<Sentence> {
+  final int id;
+
+  /// Palavra da ficha. As frases são apagadas junto com a palavra.
+  final int wordId;
+  final String german;
+  final String? portuguese;
+
+  /// Salvo pelo nome ("free"), não pelo índice.
+  final SentenceSource source;
+  final DateTime createdAt;
+  const Sentence(
+      {required this.id,
+      required this.wordId,
+      required this.german,
+      this.portuguese,
+      required this.source,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['word_id'] = Variable<int>(wordId);
+    map['german'] = Variable<String>(german);
+    if (!nullToAbsent || portuguese != null) {
+      map['portuguese'] = Variable<String>(portuguese);
+    }
+    {
+      map['source'] =
+          Variable<String>($SentencesTable.$convertersource.toSql(source));
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SentencesCompanion toCompanion(bool nullToAbsent) {
+    return SentencesCompanion(
+      id: Value(id),
+      wordId: Value(wordId),
+      german: Value(german),
+      portuguese: portuguese == null && nullToAbsent
+          ? const Value.absent()
+          : Value(portuguese),
+      source: Value(source),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Sentence.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Sentence(
+      id: serializer.fromJson<int>(json['id']),
+      wordId: serializer.fromJson<int>(json['wordId']),
+      german: serializer.fromJson<String>(json['german']),
+      portuguese: serializer.fromJson<String?>(json['portuguese']),
+      source: $SentencesTable.$convertersource
+          .fromJson(serializer.fromJson<String>(json['source'])),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'wordId': serializer.toJson<int>(wordId),
+      'german': serializer.toJson<String>(german),
+      'portuguese': serializer.toJson<String?>(portuguese),
+      'source': serializer
+          .toJson<String>($SentencesTable.$convertersource.toJson(source)),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Sentence copyWith(
+          {int? id,
+          int? wordId,
+          String? german,
+          Value<String?> portuguese = const Value.absent(),
+          SentenceSource? source,
+          DateTime? createdAt}) =>
+      Sentence(
+        id: id ?? this.id,
+        wordId: wordId ?? this.wordId,
+        german: german ?? this.german,
+        portuguese: portuguese.present ? portuguese.value : this.portuguese,
+        source: source ?? this.source,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  Sentence copyWithCompanion(SentencesCompanion data) {
+    return Sentence(
+      id: data.id.present ? data.id.value : this.id,
+      wordId: data.wordId.present ? data.wordId.value : this.wordId,
+      german: data.german.present ? data.german.value : this.german,
+      portuguese:
+          data.portuguese.present ? data.portuguese.value : this.portuguese,
+      source: data.source.present ? data.source.value : this.source,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Sentence(')
+          ..write('id: $id, ')
+          ..write('wordId: $wordId, ')
+          ..write('german: $german, ')
+          ..write('portuguese: $portuguese, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, wordId, german, portuguese, source, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Sentence &&
+          other.id == this.id &&
+          other.wordId == this.wordId &&
+          other.german == this.german &&
+          other.portuguese == this.portuguese &&
+          other.source == this.source &&
+          other.createdAt == this.createdAt);
+}
+
+class SentencesCompanion extends UpdateCompanion<Sentence> {
+  final Value<int> id;
+  final Value<int> wordId;
+  final Value<String> german;
+  final Value<String?> portuguese;
+  final Value<SentenceSource> source;
+  final Value<DateTime> createdAt;
+  const SentencesCompanion({
+    this.id = const Value.absent(),
+    this.wordId = const Value.absent(),
+    this.german = const Value.absent(),
+    this.portuguese = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  SentencesCompanion.insert({
+    this.id = const Value.absent(),
+    required int wordId,
+    required String german,
+    this.portuguese = const Value.absent(),
+    required SentenceSource source,
+    this.createdAt = const Value.absent(),
+  })  : wordId = Value(wordId),
+        german = Value(german),
+        source = Value(source);
+  static Insertable<Sentence> custom({
+    Expression<int>? id,
+    Expression<int>? wordId,
+    Expression<String>? german,
+    Expression<String>? portuguese,
+    Expression<String>? source,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (wordId != null) 'word_id': wordId,
+      if (german != null) 'german': german,
+      if (portuguese != null) 'portuguese': portuguese,
+      if (source != null) 'source': source,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  SentencesCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? wordId,
+      Value<String>? german,
+      Value<String?>? portuguese,
+      Value<SentenceSource>? source,
+      Value<DateTime>? createdAt}) {
+    return SentencesCompanion(
+      id: id ?? this.id,
+      wordId: wordId ?? this.wordId,
+      german: german ?? this.german,
+      portuguese: portuguese ?? this.portuguese,
+      source: source ?? this.source,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (wordId.present) {
+      map['word_id'] = Variable<int>(wordId.value);
+    }
+    if (german.present) {
+      map['german'] = Variable<String>(german.value);
+    }
+    if (portuguese.present) {
+      map['portuguese'] = Variable<String>(portuguese.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(
+          $SentencesTable.$convertersource.toSql(source.value));
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SentencesCompanion(')
+          ..write('id: $id, ')
+          ..write('wordId: $wordId, ')
+          ..write('german: $german, ')
+          ..write('portuguese: $portuguese, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DecksTable decks = $DecksTable(this);
   late final $WordEntriesTable wordEntries = $WordEntriesTable(this);
+  late final $SentencesTable sentences = $SentencesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [decks, wordEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [decks, wordEntries, sentences];
 }
 
 typedef $$DecksTableCreateCompanionBuilder = DecksCompanion Function({
@@ -1872,6 +2222,182 @@ typedef $$WordEntriesTableProcessedTableManager = ProcessedTableManager<
     (WordEntry, BaseReferences<_$AppDatabase, $WordEntriesTable, WordEntry>),
     WordEntry,
     PrefetchHooks Function()>;
+typedef $$SentencesTableCreateCompanionBuilder = SentencesCompanion Function({
+  Value<int> id,
+  required int wordId,
+  required String german,
+  Value<String?> portuguese,
+  required SentenceSource source,
+  Value<DateTime> createdAt,
+});
+typedef $$SentencesTableUpdateCompanionBuilder = SentencesCompanion Function({
+  Value<int> id,
+  Value<int> wordId,
+  Value<String> german,
+  Value<String?> portuguese,
+  Value<SentenceSource> source,
+  Value<DateTime> createdAt,
+});
+
+class $$SentencesTableFilterComposer
+    extends Composer<_$AppDatabase, $SentencesTable> {
+  $$SentencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get wordId => $composableBuilder(
+      column: $table.wordId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get german => $composableBuilder(
+      column: $table.german, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get portuguese => $composableBuilder(
+      column: $table.portuguese, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<SentenceSource, SentenceSource, String>
+      get source => $composableBuilder(
+          column: $table.source,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$SentencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SentencesTable> {
+  $$SentencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get wordId => $composableBuilder(
+      column: $table.wordId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get german => $composableBuilder(
+      column: $table.german, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get portuguese => $composableBuilder(
+      column: $table.portuguese, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SentencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SentencesTable> {
+  $$SentencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get wordId =>
+      $composableBuilder(column: $table.wordId, builder: (column) => column);
+
+  GeneratedColumn<String> get german =>
+      $composableBuilder(column: $table.german, builder: (column) => column);
+
+  GeneratedColumn<String> get portuguese => $composableBuilder(
+      column: $table.portuguese, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SentenceSource, String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$SentencesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SentencesTable,
+    Sentence,
+    $$SentencesTableFilterComposer,
+    $$SentencesTableOrderingComposer,
+    $$SentencesTableAnnotationComposer,
+    $$SentencesTableCreateCompanionBuilder,
+    $$SentencesTableUpdateCompanionBuilder,
+    (Sentence, BaseReferences<_$AppDatabase, $SentencesTable, Sentence>),
+    Sentence,
+    PrefetchHooks Function()> {
+  $$SentencesTableTableManager(_$AppDatabase db, $SentencesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SentencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SentencesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SentencesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> wordId = const Value.absent(),
+            Value<String> german = const Value.absent(),
+            Value<String?> portuguese = const Value.absent(),
+            Value<SentenceSource> source = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              SentencesCompanion(
+            id: id,
+            wordId: wordId,
+            german: german,
+            portuguese: portuguese,
+            source: source,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int wordId,
+            required String german,
+            Value<String?> portuguese = const Value.absent(),
+            required SentenceSource source,
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              SentencesCompanion.insert(
+            id: id,
+            wordId: wordId,
+            german: german,
+            portuguese: portuguese,
+            source: source,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SentencesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SentencesTable,
+    Sentence,
+    $$SentencesTableFilterComposer,
+    $$SentencesTableOrderingComposer,
+    $$SentencesTableAnnotationComposer,
+    $$SentencesTableCreateCompanionBuilder,
+    $$SentencesTableUpdateCompanionBuilder,
+    (Sentence, BaseReferences<_$AppDatabase, $SentencesTable, Sentence>),
+    Sentence,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1880,4 +2406,6 @@ class $AppDatabaseManager {
       $$DecksTableTableManager(_db, _db.decks);
   $$WordEntriesTableTableManager get wordEntries =>
       $$WordEntriesTableTableManager(_db, _db.wordEntries);
+  $$SentencesTableTableManager get sentences =>
+      $$SentencesTableTableManager(_db, _db.sentences);
 }

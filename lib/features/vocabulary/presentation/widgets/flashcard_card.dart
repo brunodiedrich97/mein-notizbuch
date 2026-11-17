@@ -13,10 +13,22 @@ class FlashcardCard extends StatelessWidget {
     super.key,
     required this.word,
     this.margin = const EdgeInsets.all(16),
+    this.sentences = const [],
+    this.onWriteSentence,
+    this.onSentenceLongPress,
   });
 
   final WordEntry word;
   final EdgeInsetsGeometry margin;
+
+  /// "Minhas frases": frases escritas com esta palavra.
+  final List<Sentence> sentences;
+
+  /// "Escrever frase". Sem ele (e sem frases), a seção não aparece.
+  final VoidCallback? onWriteSentence;
+
+  /// Toque longo numa frase (ex.: excluir).
+  final ValueChanged<Sentence>? onSentenceLongPress;
 
   /// `max-w-md` (448) menos o `p-4` (16) de cada lado.
   static const double maxCardWidth = 416;
@@ -166,6 +178,16 @@ class FlashcardCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   _RuleSection(rule),
                 ],
+                if (sentences.isNotEmpty || onWriteSentence != null) ...[
+                  const SizedBox(height: 20),
+                  _DottedDivider(color: p.dots),
+                  const SizedBox(height: 16),
+                  _SentencesSection(
+                    sentences: sentences,
+                    onWrite: onWriteSentence,
+                    onLongPress: onSentenceLongPress,
+                  ),
+                ],
               ],
             ),
           ),
@@ -312,6 +334,122 @@ class _Example extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// "MINHAS FRASES · 2", as frases (com a data) e "Escrever frase".
+class _SentencesSection extends StatelessWidget {
+  const _SentencesSection({
+    required this.sentences,
+    this.onWrite,
+    this.onLongPress,
+  });
+
+  final List<Sentence> sentences;
+  final VoidCallback? onWrite;
+  final ValueChanged<Sentence>? onLongPress;
+
+  static String _date(DateTime d) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(d.day)}/${two(d.month)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final label = sentences.isEmpty
+        ? 'minhas frases'
+        : 'minhas frases · ${sentences.length}';
+
+    return _Section(
+      label: label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < sentences.length; i++)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: onLongPress == null
+                  ? null
+                  : () => onLongPress!(sentences[i]),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: i == sentences.length - 1
+                      ? null
+                      : Border(bottom: BorderSide(color: p.divider)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sentences[i].german,
+                            style: AppTheme.serif(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                              color: p.text900,
+                            ),
+                          ),
+                          if (sentences[i].portuguese != null)
+                            Text(
+                              sentences[i].portuguese!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.45,
+                                color: p.text500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _date(sentences[i].createdAt),
+                      style: AppTheme.mono(fontSize: 10.5, color: p.text400),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (onWrite != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: onWrite,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: sentences.isEmpty ? 0 : 8,
+                    bottom: 4,
+                    right: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_outlined, size: 16, color: p.text700),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Escrever frase',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: p.text700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

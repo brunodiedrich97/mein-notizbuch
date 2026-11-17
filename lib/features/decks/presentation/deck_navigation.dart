@@ -8,6 +8,8 @@ import '../../vocabulary/presentation/screens/word_detail_screen.dart';
 import '../../vocabulary/presentation/screens/word_index_screen.dart';
 import '../../study/providers/study_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
+import '../../writing/presentation/screens/translation_exercise_screen.dart';
+import '../../writing/presentation/screens/write_sentence_screen.dart';
 import 'deck_screen.dart';
 
 // Atalhos de navegação. As fichas e a revisão leem o deck em
@@ -53,3 +55,17 @@ Future<void> openWordIndex(BuildContext context, {int? deckId}) =>
 /// Uma ficha sozinha.
 Future<void> openWordDetail(BuildContext context, int wordId) =>
     _push(context, WordDetailScreen(wordId: wordId));
+
+/// Frase livre com uma palavra, salva em "Minhas frases".
+Future<void> openWriteSentence(BuildContext context, int wordId) =>
+    _push(context, WriteSentenceScreen(wordId: wordId));
+
+/// Tradução reversa com as fichas de um deck (ou de todos).
+Future<void> openWritingExercise(
+  BuildContext context,
+  WidgetRef ref, {
+  int? deckId,
+}) {
+  ref.read(deckScopeProvider.notifier).state = deckId;
+  return _push(context, const TranslationExerciseScreen());
+}
