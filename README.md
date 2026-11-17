@@ -1,4 +1,4 @@
-# Deutsch Notizbuch
+# Mein Notizbuch
 
 Caderno de vocabulário de alemão com método cromático, em Flutter 3
 (Riverpod + Drift/SQLite + TTS do aparelho), para celular e tablet.
