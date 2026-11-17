@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
+import '../../word_classes/providers/word_class_provider.dart';
 import '../data/reminder_service.dart';
 
 class ReminderState {
@@ -95,6 +97,7 @@ class ReminderController extends Notifier<ReminderState> {
       words: words,
       hour: state.hour,
       minute: state.minute,
+      classes: await _classes(),
     );
   }
 
@@ -103,7 +106,14 @@ class ReminderController extends Notifier<ReminderState> {
   Future<bool> sendTest() async {
     final words = await ref.read(wordListProvider.future);
     if (words.isEmpty || !await _service.requestPermission()) return false;
-    await _service.showNow(_service.pickWords(words, 1).first);
+    final word = _service.pickWords(words, 1).first;
+    final classes = await _classes();
+    await _service.showNow(word, customClass: classes[word.customClassId]);
     return true;
+  }
+
+  Future<Map<int, WordClass>> _classes() async {
+    final list = await ref.read(wordClassListProvider.future);
+    return {for (final c in list) c.id: c};
   }
 }

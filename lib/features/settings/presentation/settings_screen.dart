@@ -11,6 +11,8 @@ import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
 import '../../reminders/providers/reminder_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
+import '../../word_classes/presentation/word_classes_screen.dart';
+import '../../word_classes/providers/word_class_provider.dart';
 
 /// Ajustes: lembrete diário e backup no Google Drive.
 class SettingsScreen extends ConsumerWidget {
@@ -121,6 +123,7 @@ class SettingsScreen extends ConsumerWidget {
     final p = AppPalette.of(context);
     final reminder = ref.watch(reminderProvider);
     final backup = ref.watch(backupProvider);
+    final classCount = ref.watch(wordClassMapProvider).length;
 
     return Scaffold(
       backgroundColor: p.page,
@@ -131,6 +134,27 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
+              Text('VOCABULÁRIO', style: AppText.section(p)),
+              const SizedBox(height: 12),
+              _Group(
+                children: [
+                  _SettingRow(
+                    icon: Icons.palette_outlined,
+                    title: 'Classes gramaticais',
+                    subtitle: switch (classCount) {
+                      0 => 'Crie classes novas, com nome e cor',
+                      1 => '1 classe criada',
+                      _ => '$classCount classes criadas',
+                    },
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const WordClassesScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
               Text('LEMBRETE DIÁRIO', style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(

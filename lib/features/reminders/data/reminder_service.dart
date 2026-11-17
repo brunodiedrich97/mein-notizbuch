@@ -147,6 +147,7 @@ class ReminderService {
     required List<WordEntry> words,
     required int hour,
     required int minute,
+    Map<int, WordClass> classes = const {},
   }) async {
     await init();
     await cancelScheduled();
@@ -163,7 +164,10 @@ class ReminderService {
       // O construtor ajusta dias além do fim do mês e respeita o horário de
       // verão (somar 24 h mudaria a hora).
       final when = tz.TZDateTime(tz.local, now.year, now.month, day, hour, minute);
-      final content = ReminderContent.fromWord(chosen[i]);
+      final content = ReminderContent.fromWord(
+        chosen[i],
+        customClass: classes[chosen[i].customClassId],
+      );
       await _plugin.zonedSchedule(
         _firstId + i,
         content.title,
@@ -184,9 +188,9 @@ class ReminderService {
   }
 
   /// Mostra agora uma notificação com [word] (botão "Enviar um teste").
-  Future<void> showNow(WordEntry word) async {
+  Future<void> showNow(WordEntry word, {WordClass? customClass}) async {
     await init();
-    final content = ReminderContent.fromWord(word);
+    final content = ReminderContent.fromWord(word, customClass: customClass);
     await _plugin.show(
       _testId,
       content.title,

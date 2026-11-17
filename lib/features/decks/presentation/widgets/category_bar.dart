@@ -1,23 +1,40 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/theme/grammar_colors.dart';
-import '../../../vocabulary/models/grammar_type.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 
-/// Quantas palavras de cada classe, na ordem do enum (só as que existem).
-List<MapEntry<GrammarCategory, int>> countByCategory(List<WordEntry> words) {
-  final counts = <GrammarCategory, int>{};
-  for (final w in words) {
-    counts[w.category] = (counts[w.category] ?? 0) + 1;
-  }
-  return [
-    for (final c in GrammarCategory.values)
-      if (counts[c] != null) MapEntry(c, counts[c]!),
-  ];
+/// Uma classe presente nas palavras: rótulo, cor e quantidade.
+class ClassCount {
+  const ClassCount(this.label, this.color, this.count);
+  final String label;
+  final Color color;
+  final int count;
 }
 
-/// Rótulo curto da classe na legenda: artigo para substantivos.
-String _legendLabel(GrammarCategory c) => c.article ?? c.label;
+/// Quantas palavras de cada classe, com as do método primeiro (na ordem do
+/// enum) e as criadas pelo usuário depois.
+List<ClassCount> countByClass(BuildContext context, List<WordEntry> words) {
+  final counts = <String, int>{};
+  final first = <String, ClassCount>{};
+  final order = <String, int>{};
+  for (final w in words) {
+    final look = appearanceOf(context, w);
+    final custom = look.customClass;
+    final key = custom == null ? 'c${w.category.index}' : 'u${custom.id}';
+    counts[key] = (counts[key] ?? 0) + 1;
+    // Rótulo curto: artigo para substantivos ("der"), senão o nome.
+    final label = custom == null
+        ? (w.category.article ?? w.category.label)
+        : look.label;
+    first[key] = ClassCount(label, look.color, 0);
+    order[key] = custom == null ? w.category.index : 1000 + custom.id;
+  }
+  final keys = counts.keys.toList()
+    ..sort((a, b) => order[a]!.compareTo(order[b]!));
+  return [
+    for (final k in keys) ClassCount(first[k]!.label, first[k]!.color, counts[k]!),
+  ];
+}
 
 /// Barra com a proporção de cada classe gramatical, nas cores das classes.
 class CategoryBar extends StatelessWidget {
@@ -28,8 +45,7 @@ class CategoryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final counts = countByCategory(words);
+    final counts = countByClass(context, words);
     if (counts.isEmpty) return SizedBox(height: height);
 
     return ClipRRect(
@@ -43,10 +59,8 @@ class CategoryBar extends StatelessWidget {
             for (var i = 0; i < counts.length; i++) ...[
               if (i > 0) const SizedBox(width: 1.5),
               Expanded(
-                flex: counts[i].value,
-                child: ColoredBox(
-                  color: GrammarColors.of(counts[i].key, isDark: isDark),
-                ),
+                flex: counts[i].count,
+                child: ColoredBox(color: counts[i].color),
               ),
             ],
           ],
@@ -64,12 +78,11 @@ class CategoryLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: 12,
       runSpacing: 6,
       children: [
-        for (final e in countByCategory(words))
+        for (final e in countByClass(context, words))
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -77,17 +90,17 @@ class CategoryLegend extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: GrammarColors.of(e.key, isDark: isDark),
+                  color: e.color,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 4),
               Text(
-                _legendLabel(e.key),
+                e.label,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: GrammarColors.of(e.key, isDark: isDark),
+                  color: e.color,
                 ),
               ),
             ],

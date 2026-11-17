@@ -174,6 +174,29 @@ O app reproduz o protótipo HTML (Tailwind):
 - O layout de caderno aberto (duas fichas) aparece a partir de 840 px de
   largura.
 
+## Classes gramaticais criadas pelo usuário
+
+Em **Ajustes › Classes gramaticais** (ou no chip "+ Nova" de "Registrar
+Palavra"), dá para criar classes com nome e cor livre ("Conjunção",
+"Pronome"…). As oito classes do método (der, die, das, verbo…) têm cores
+fixas e não podem ser editadas.
+
+- Uma palavra de classe criada é gravada como "outros" (`category`) mais o
+  `customClassId`: o comportamento é o de "outros" (tradução, pronúncia e
+  exemplo, sem campos especiais); só o nome e a cor mudam.
+- Nome e cor de qualquer palavra vêm de `appearanceOf` (em
+  `word_classes/presentation/word_appearance.dart`), usado pela ficha,
+  listas, revisão, escrita, barra de classes e notificação. As classes
+  chegam às telas pelo `WordClassScope`, colocado no `builder` do
+  `MaterialApp`.
+- A cor escolhida é ajustada para ser legível: escurecida no tema claro se
+  for clara demais e clareada no tema escuro se for escura demais
+  (`customClassColor`). A tela de criação avisa quando a cor é parecida com
+  a de uma classe do método.
+- Excluir uma classe devolve as palavras dela para "outros". As classes
+  entram no backup (Drive e arquivo); backups antigos, sem classes,
+  continuam válidos.
+
 ## Lembrete diário (palavra do dia)
 
 Em **Ajustes** (engrenagem da tela inicial), "Palavra do dia" liga uma

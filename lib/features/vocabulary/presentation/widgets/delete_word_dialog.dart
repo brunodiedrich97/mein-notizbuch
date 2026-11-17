@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/grammar_colors.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 
 /// Confirmação de exclusão no estilo dos cartões do app: a palavra aparece
 /// na cor da classe gramatical, e os botões seguem os do rodapé das fichas.
@@ -25,7 +25,7 @@ class DeleteWordDialog extends StatelessWidget {
     final p = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final danger = Theme.of(context).colorScheme.error;
-    final wordColor = GrammarColors.titleOf(word.category, isDark: isDark);
+    final wordColor = appearanceOf(context, word).titleColor;
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
     );

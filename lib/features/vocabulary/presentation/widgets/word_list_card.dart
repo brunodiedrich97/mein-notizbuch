@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/grammar_colors.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 
 /// Lista de palavras num cartão: alemão em serifa, na cor da classe, e a
 /// tradução à direita. Com [onTap], cada linha é tocável e ganha um "›".
@@ -55,7 +55,6 @@ class WordListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final row = Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -78,7 +77,7 @@ class WordListRow extends StatelessWidget {
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
                 height: 1.2,
-                color: GrammarColors.titleOf(word.category, isDark: isDark),
+                color: appearanceOf(context, word).titleColor,
               ),
             ),
           ),

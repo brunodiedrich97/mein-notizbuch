@@ -12,6 +12,7 @@ import '../../../study/models/study_settings.dart';
 import '../../../study/presentation/widgets/study_filter_sheet.dart';
 import '../../models/grammar_type.dart';
 import '../../providers/vocabulary_provider.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 import '../widgets/word_list_card.dart';
 
 /// Ordenações do índice.
@@ -40,7 +41,8 @@ class WordIndexScreen extends ConsumerStatefulWidget {
 class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
   final _search = TextEditingController();
   IndexSort _sort = IndexSort.az;
-  WordFilter _filter = WordFilter.all;
+  /// Só o filtro de classe é usado aqui (ordem e tamanho são da sessão).
+  StudySettings _filter = const StudySettings();
 
   @override
   void dispose() {
@@ -110,10 +112,10 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
   Future<void> _openFilter() async {
     final result = await showStudyFilterSheet(
       context,
-      StudySettings(filter: _filter),
+      _filter,
       sessionOptions: false,
     );
-    if (result != null && mounted) setState(() => _filter = result.filter);
+    if (result != null && mounted) setState(() => _filter = result);
   }
 
   @override
@@ -126,7 +128,7 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
     final query = _fold(_search.text.trim());
     final words = all.where((w) {
       if (deckId != null && deckOf(w) != deckId) return false;
-      if (!_filter.matches(w.category)) return false;
+      if (!_filter.matches(w)) return false;
       if (query.isEmpty) return true;
       return _fold(w.germanWord).contains(query) ||
           _fold(w.portugueseTranslation).contains(query);
@@ -139,7 +141,9 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
       _ => '${words.length} palavras',
     };
     final filterText =
-        _filter == WordFilter.all ? '' : ' · ${_filter.label}';
+        _filter.filter == WordFilter.all && _filter.customClassId == null
+            ? ''
+            : ' · ${_filter.filterLabel(WordClassScope.of(context))}';
 
     return Scaffold(
       backgroundColor: p.page,

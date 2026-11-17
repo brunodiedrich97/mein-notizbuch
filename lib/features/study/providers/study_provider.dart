@@ -23,7 +23,7 @@ List<WordEntry> buildSession(
 }) {
   final rnd = random ?? Random();
   final list =
-      pool.where((w) => settings.filter.matches(w.category)).toList();
+      pool.where(settings.matches).toList();
 
   switch (settings.order) {
     case SessionOrder.smart:

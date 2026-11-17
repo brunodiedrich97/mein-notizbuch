@@ -31,7 +31,7 @@ Future<void> openFlashcards(
   ref.read(deckScopeProvider.notifier).state = deckId;
   final settings = ref.read(studySettingsProvider);
   ref.read(studySettingsProvider.notifier).state =
-      settings.copyWith(filter: WordFilter.all);
+      settings.withoutClassFilter();
   return _push(context, const FlashcardsScreen());
 }
 

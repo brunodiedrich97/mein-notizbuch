@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
 import '../../../vocabulary/models/grammar_type.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 import '../../models/sentence_check.dart';
 import '../../models/sentence_source.dart';
 import '../widgets/umlaut_keys.dart';
@@ -109,7 +110,7 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
                   fontSize: 34,
                   fontWeight: FontWeight.w700,
                   height: 1.15,
-                  color: GrammarColors.titleOf(word.category, isDark: isDark),
+                  color: appearanceOf(context, word).titleColor,
                 ),
               ),
               const SizedBox(height: 4),

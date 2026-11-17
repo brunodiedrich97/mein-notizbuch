@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/grammar_colors.dart';
 import 'pronunciation_box.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 
 /// Uma ficha do caderno: classe, palavra, pronúncia e as seções da classe
 /// (presente, graus, exemplo, regência e "Minhas frases").
@@ -41,9 +41,9 @@ class FlashcardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final category = word.category;
-    final color = GrammarColors.of(category, isDark: isDark);
+    final look = appearanceOf(context, word);
+    final color = look.color;
     // Mais espaço interno em telas largas.
     final padding = MediaQuery.sizeOf(context).width >= 640 ? 28.0 : 24.0;
 
@@ -60,7 +60,7 @@ class FlashcardCard extends StatelessWidget {
     final rule = _clean(word.prepositionCase);
 
     final label =
-        tagDetail == null ? category.label : '${category.label} · $tagDetail';
+        tagDetail == null ? look.label : '${look.label} · $tagDetail';
 
     // Conteúdo depois do divisor pontilhado.
     final lower = <Widget>[
@@ -104,7 +104,19 @@ class FlashcardCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    CategoryIcon(category, color: color),
+                    // Classes criadas pelo usuário não têm ícone próprio.
+                    if (look.isCustom)
+                      Container(
+                        width: 8,
+                        height: 8,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    else
+                      CategoryIcon(category, color: color),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
@@ -127,7 +139,7 @@ class FlashcardCard extends StatelessWidget {
                   style: AppTheme.serif(
                     fontSize: 40,
                     fontWeight: FontWeight.w700,
-                    color: GrammarColors.titleOf(category, isDark: isDark),
+                    color: look.titleColor,
                     height: 1.25,
                   ),
                 ),

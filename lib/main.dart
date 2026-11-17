@@ -7,6 +7,8 @@ import 'core/theme/app_theme.dart';
 import 'features/reminders/data/reminder_service.dart';
 import 'features/splash/presentation/splash_screen.dart';
 import 'features/vocabulary/presentation/screens/word_detail_screen.dart';
+import 'features/word_classes/presentation/word_appearance.dart';
+import 'features/word_classes/providers/word_class_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,13 @@ class DeutschNotizbuchApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Classes criadas pelo usuário, disponíveis em todas as telas.
+      builder: (context, child) => Consumer(
+        builder: (context, ref, _) => WordClassScope(
+          classes: ref.watch(wordClassMapProvider),
+          child: child!,
+        ),
+      ),
       home: const SplashScreen(),
     );
   }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/grammar_colors.dart';
 import '../../../core/widgets/screen_header.dart';
 import '../../../core/widgets/speak_button.dart';
 import '../../vocabulary/presentation/widgets/pronunciation_box.dart';
+import '../../word_classes/presentation/word_appearance.dart';
 import '../providers/review_quiz_provider.dart';
 
 class ReviewSessionScreen extends ConsumerWidget {
@@ -87,7 +87,7 @@ class _QuestionView extends StatelessWidget {
     final shownWord = hideAnswer ? q.prompt : q.word.germanWord;
     final wordColor = hideAnswer
         ? scheme.onSurface
-        : GrammarColors.of(q.word.category, isDark: isDark);
+        : appearanceOf(context, q.word).color;
 
     final example = q.word.exampleGerman?.trim();
     final examplePt = q.word.examplePortuguese?.trim();

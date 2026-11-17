@@ -351,6 +351,12 @@ class $WordEntriesTable extends WordEntries
   late final GeneratedColumn<int> deckId = GeneratedColumn<int>(
       'deck_id', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _customClassIdMeta =
+      const VerificationMeta('customClassId');
+  @override
+  late final GeneratedColumn<int> customClassId = GeneratedColumn<int>(
+      'custom_class_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _tagDetailMeta =
       const VerificationMeta('tagDetail');
   @override
@@ -454,6 +460,7 @@ class $WordEntriesTable extends WordEntries
         portugueseTranslation,
         category,
         deckId,
+        customClassId,
         tagDetail,
         ipaPronunciation,
         brazilianApproximation,
@@ -502,6 +509,12 @@ class $WordEntriesTable extends WordEntries
     if (data.containsKey('deck_id')) {
       context.handle(_deckIdMeta,
           deckId.isAcceptableOrUnknown(data['deck_id']!, _deckIdMeta));
+    }
+    if (data.containsKey('custom_class_id')) {
+      context.handle(
+          _customClassIdMeta,
+          customClassId.isAcceptableOrUnknown(
+              data['custom_class_id']!, _customClassIdMeta));
     }
     if (data.containsKey('tag_detail')) {
       context.handle(_tagDetailMeta,
@@ -606,6 +619,8 @@ class $WordEntriesTable extends WordEntries
           .read(DriftSqlType.string, data['${effectivePrefix}category'])!),
       deckId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}deck_id']),
+      customClassId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}custom_class_id']),
       tagDetail: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}tag_detail']),
       ipaPronunciation: attachedDatabase.typeMapping.read(
@@ -661,6 +676,10 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
   /// Deck da palavra (v3). `null` é tratado como o deck "Geral".
   final int? deckId;
 
+  /// Classe criada pelo usuário (v6). Quando preenchida, [category] fica
+  /// como "outros" (mesmo comportamento) e o nome e a cor vêm da classe.
+  final int? customClassId;
+
   /// Complemento do rótulo da classe: "irregular", "dativo"… (v2)
   final String? tagDetail;
   final String? ipaPronunciation;
@@ -685,6 +704,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       required this.portugueseTranslation,
       required this.category,
       this.deckId,
+      this.customClassId,
       this.tagDetail,
       this.ipaPronunciation,
       this.brazilianApproximation,
@@ -712,6 +732,9 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
     }
     if (!nullToAbsent || deckId != null) {
       map['deck_id'] = Variable<int>(deckId);
+    }
+    if (!nullToAbsent || customClassId != null) {
+      map['custom_class_id'] = Variable<int>(customClassId);
     }
     if (!nullToAbsent || tagDetail != null) {
       map['tag_detail'] = Variable<String>(tagDetail);
@@ -763,6 +786,9 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       category: Value(category),
       deckId:
           deckId == null && nullToAbsent ? const Value.absent() : Value(deckId),
+      customClassId: customClassId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customClassId),
       tagDetail: tagDetail == null && nullToAbsent
           ? const Value.absent()
           : Value(tagDetail),
@@ -816,6 +842,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       category: $WordEntriesTable.$convertercategory
           .fromJson(serializer.fromJson<String>(json['category'])),
       deckId: serializer.fromJson<int?>(json['deckId']),
+      customClassId: serializer.fromJson<int?>(json['customClassId']),
       tagDetail: serializer.fromJson<String?>(json['tagDetail']),
       ipaPronunciation: serializer.fromJson<String?>(json['ipaPronunciation']),
       brazilianApproximation:
@@ -845,6 +872,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       'category': serializer.toJson<String>(
           $WordEntriesTable.$convertercategory.toJson(category)),
       'deckId': serializer.toJson<int?>(deckId),
+      'customClassId': serializer.toJson<int?>(customClassId),
       'tagDetail': serializer.toJson<String?>(tagDetail),
       'ipaPronunciation': serializer.toJson<String?>(ipaPronunciation),
       'brazilianApproximation':
@@ -870,6 +898,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           String? portugueseTranslation,
           GrammarCategory? category,
           Value<int?> deckId = const Value.absent(),
+          Value<int?> customClassId = const Value.absent(),
           Value<String?> tagDetail = const Value.absent(),
           Value<String?> ipaPronunciation = const Value.absent(),
           Value<String?> brazilianApproximation = const Value.absent(),
@@ -892,6 +921,8 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
             portugueseTranslation ?? this.portugueseTranslation,
         category: category ?? this.category,
         deckId: deckId.present ? deckId.value : this.deckId,
+        customClassId:
+            customClassId.present ? customClassId.value : this.customClassId,
         tagDetail: tagDetail.present ? tagDetail.value : this.tagDetail,
         ipaPronunciation: ipaPronunciation.present
             ? ipaPronunciation.value
@@ -928,6 +959,9 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           : this.portugueseTranslation,
       category: data.category.present ? data.category.value : this.category,
       deckId: data.deckId.present ? data.deckId.value : this.deckId,
+      customClassId: data.customClassId.present
+          ? data.customClassId.value
+          : this.customClassId,
       tagDetail: data.tagDetail.present ? data.tagDetail.value : this.tagDetail,
       ipaPronunciation: data.ipaPronunciation.present
           ? data.ipaPronunciation.value
@@ -972,6 +1006,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           ..write('portugueseTranslation: $portugueseTranslation, ')
           ..write('category: $category, ')
           ..write('deckId: $deckId, ')
+          ..write('customClassId: $customClassId, ')
           ..write('tagDetail: $tagDetail, ')
           ..write('ipaPronunciation: $ipaPronunciation, ')
           ..write('brazilianApproximation: $brazilianApproximation, ')
@@ -992,27 +1027,29 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      germanWord,
-      portugueseTranslation,
-      category,
-      deckId,
-      tagDetail,
-      ipaPronunciation,
-      brazilianApproximation,
-      phoneticTip,
-      pluralForm,
-      verbForms,
-      prepositionCase,
-      degrees,
-      conjugation,
-      exampleGerman,
-      examplePortuguese,
-      correctCount,
-      wrongCount,
-      lastReviewedAt,
-      createdAt);
+  int get hashCode => Object.hashAll([
+        id,
+        germanWord,
+        portugueseTranslation,
+        category,
+        deckId,
+        customClassId,
+        tagDetail,
+        ipaPronunciation,
+        brazilianApproximation,
+        phoneticTip,
+        pluralForm,
+        verbForms,
+        prepositionCase,
+        degrees,
+        conjugation,
+        exampleGerman,
+        examplePortuguese,
+        correctCount,
+        wrongCount,
+        lastReviewedAt,
+        createdAt
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1022,6 +1059,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           other.portugueseTranslation == this.portugueseTranslation &&
           other.category == this.category &&
           other.deckId == this.deckId &&
+          other.customClassId == this.customClassId &&
           other.tagDetail == this.tagDetail &&
           other.ipaPronunciation == this.ipaPronunciation &&
           other.brazilianApproximation == this.brazilianApproximation &&
@@ -1045,6 +1083,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
   final Value<String> portugueseTranslation;
   final Value<GrammarCategory> category;
   final Value<int?> deckId;
+  final Value<int?> customClassId;
   final Value<String?> tagDetail;
   final Value<String?> ipaPronunciation;
   final Value<String?> brazilianApproximation;
@@ -1066,6 +1105,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     this.portugueseTranslation = const Value.absent(),
     this.category = const Value.absent(),
     this.deckId = const Value.absent(),
+    this.customClassId = const Value.absent(),
     this.tagDetail = const Value.absent(),
     this.ipaPronunciation = const Value.absent(),
     this.brazilianApproximation = const Value.absent(),
@@ -1088,6 +1128,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     required String portugueseTranslation,
     required GrammarCategory category,
     this.deckId = const Value.absent(),
+    this.customClassId = const Value.absent(),
     this.tagDetail = const Value.absent(),
     this.ipaPronunciation = const Value.absent(),
     this.brazilianApproximation = const Value.absent(),
@@ -1112,6 +1153,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     Expression<String>? portugueseTranslation,
     Expression<String>? category,
     Expression<int>? deckId,
+    Expression<int>? customClassId,
     Expression<String>? tagDetail,
     Expression<String>? ipaPronunciation,
     Expression<String>? brazilianApproximation,
@@ -1135,6 +1177,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
         'portuguese_translation': portugueseTranslation,
       if (category != null) 'category': category,
       if (deckId != null) 'deck_id': deckId,
+      if (customClassId != null) 'custom_class_id': customClassId,
       if (tagDetail != null) 'tag_detail': tagDetail,
       if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
       if (brazilianApproximation != null)
@@ -1160,6 +1203,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
       Value<String>? portugueseTranslation,
       Value<GrammarCategory>? category,
       Value<int?>? deckId,
+      Value<int?>? customClassId,
       Value<String?>? tagDetail,
       Value<String?>? ipaPronunciation,
       Value<String?>? brazilianApproximation,
@@ -1182,6 +1226,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
           portugueseTranslation ?? this.portugueseTranslation,
       category: category ?? this.category,
       deckId: deckId ?? this.deckId,
+      customClassId: customClassId ?? this.customClassId,
       tagDetail: tagDetail ?? this.tagDetail,
       ipaPronunciation: ipaPronunciation ?? this.ipaPronunciation,
       brazilianApproximation:
@@ -1220,6 +1265,9 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     }
     if (deckId.present) {
       map['deck_id'] = Variable<int>(deckId.value);
+    }
+    if (customClassId.present) {
+      map['custom_class_id'] = Variable<int>(customClassId.value);
     }
     if (tagDetail.present) {
       map['tag_detail'] = Variable<String>(tagDetail.value);
@@ -1278,6 +1326,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
           ..write('portugueseTranslation: $portugueseTranslation, ')
           ..write('category: $category, ')
           ..write('deckId: $deckId, ')
+          ..write('customClassId: $customClassId, ')
           ..write('tagDetail: $tagDetail, ')
           ..write('ipaPronunciation: $ipaPronunciation, ')
           ..write('brazilianApproximation: $brazilianApproximation, ')
@@ -1646,18 +1695,279 @@ class SentencesCompanion extends UpdateCompanion<Sentence> {
   }
 }
 
+class $WordClassesTable extends WordClasses
+    with TableInfo<$WordClassesTable, WordClassesData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WordClassesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 40),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+      'color', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'word_classes';
+  @override
+  VerificationContext validateIntegrity(Insertable<WordClassesData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+          _colorMeta, color.isAcceptableOrUnknown(data['color']!, _colorMeta));
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WordClassesData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WordClassesData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      color: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}color'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $WordClassesTable createAlias(String alias) {
+    return $WordClassesTable(attachedDatabase, alias);
+  }
+}
+
+class WordClassesData extends DataClass implements Insertable<WordClassesData> {
+  final int id;
+  final String name;
+
+  /// Cor escolhida (ARGB). No tema escuro, o app usa uma versão mais clara.
+  final int color;
+  final DateTime createdAt;
+  const WordClassesData(
+      {required this.id,
+      required this.name,
+      required this.color,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WordClassesCompanion toCompanion(bool nullToAbsent) {
+    return WordClassesCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WordClassesData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WordClassesData(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WordClassesData copyWith(
+          {int? id, String? name, int? color, DateTime? createdAt}) =>
+      WordClassesData(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        color: color ?? this.color,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  WordClassesData copyWithCompanion(WordClassesCompanion data) {
+    return WordClassesData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordClassesData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, color, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WordClassesData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class WordClassesCompanion extends UpdateCompanion<WordClassesData> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  const WordClassesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  WordClassesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required int color,
+    this.createdAt = const Value.absent(),
+  })  : name = Value(name),
+        color = Value(color);
+  static Insertable<WordClassesData> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  WordClassesCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<int>? color,
+      Value<DateTime>? createdAt}) {
+    return WordClassesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordClassesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DecksTable decks = $DecksTable(this);
   late final $WordEntriesTable wordEntries = $WordEntriesTable(this);
   late final $SentencesTable sentences = $SentencesTable(this);
+  late final $WordClassesTable wordClasses = $WordClassesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [decks, wordEntries, sentences];
+      [decks, wordEntries, sentences, wordClasses];
 }
 
 typedef $$DecksTableCreateCompanionBuilder = DecksCompanion Function({
@@ -1827,6 +2137,7 @@ typedef $$WordEntriesTableCreateCompanionBuilder = WordEntriesCompanion
   required String portugueseTranslation,
   required GrammarCategory category,
   Value<int?> deckId,
+  Value<int?> customClassId,
   Value<String?> tagDetail,
   Value<String?> ipaPronunciation,
   Value<String?> brazilianApproximation,
@@ -1850,6 +2161,7 @@ typedef $$WordEntriesTableUpdateCompanionBuilder = WordEntriesCompanion
   Value<String> portugueseTranslation,
   Value<GrammarCategory> category,
   Value<int?> deckId,
+  Value<int?> customClassId,
   Value<String?> tagDetail,
   Value<String?> ipaPronunciation,
   Value<String?> brazilianApproximation,
@@ -1893,6 +2205,9 @@ class $$WordEntriesTableFilterComposer
 
   ColumnFilters<int> get deckId => $composableBuilder(
       column: $table.deckId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get customClassId => $composableBuilder(
+      column: $table.customClassId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get tagDetail => $composableBuilder(
       column: $table.tagDetail, builder: (column) => ColumnFilters(column));
@@ -1969,6 +2284,10 @@ class $$WordEntriesTableOrderingComposer
 
   ColumnOrderings<int> get deckId => $composableBuilder(
       column: $table.deckId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get customClassId => $composableBuilder(
+      column: $table.customClassId,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get tagDetail => $composableBuilder(
       column: $table.tagDetail, builder: (column) => ColumnOrderings(column));
@@ -2047,6 +2366,9 @@ class $$WordEntriesTableAnnotationComposer
   GeneratedColumn<int> get deckId =>
       $composableBuilder(column: $table.deckId, builder: (column) => column);
 
+  GeneratedColumn<int> get customClassId => $composableBuilder(
+      column: $table.customClassId, builder: (column) => column);
+
   GeneratedColumn<String> get tagDetail =>
       $composableBuilder(column: $table.tagDetail, builder: (column) => column);
 
@@ -2121,6 +2443,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             Value<String> portugueseTranslation = const Value.absent(),
             Value<GrammarCategory> category = const Value.absent(),
             Value<int?> deckId = const Value.absent(),
+            Value<int?> customClassId = const Value.absent(),
             Value<String?> tagDetail = const Value.absent(),
             Value<String?> ipaPronunciation = const Value.absent(),
             Value<String?> brazilianApproximation = const Value.absent(),
@@ -2143,6 +2466,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             portugueseTranslation: portugueseTranslation,
             category: category,
             deckId: deckId,
+            customClassId: customClassId,
             tagDetail: tagDetail,
             ipaPronunciation: ipaPronunciation,
             brazilianApproximation: brazilianApproximation,
@@ -2165,6 +2489,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             required String portugueseTranslation,
             required GrammarCategory category,
             Value<int?> deckId = const Value.absent(),
+            Value<int?> customClassId = const Value.absent(),
             Value<String?> tagDetail = const Value.absent(),
             Value<String?> ipaPronunciation = const Value.absent(),
             Value<String?> brazilianApproximation = const Value.absent(),
@@ -2187,6 +2512,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             portugueseTranslation: portugueseTranslation,
             category: category,
             deckId: deckId,
+            customClassId: customClassId,
             tagDetail: tagDetail,
             ipaPronunciation: ipaPronunciation,
             brazilianApproximation: brazilianApproximation,
@@ -2398,6 +2724,158 @@ typedef $$SentencesTableProcessedTableManager = ProcessedTableManager<
     (Sentence, BaseReferences<_$AppDatabase, $SentencesTable, Sentence>),
     Sentence,
     PrefetchHooks Function()>;
+typedef $$WordClassesTableCreateCompanionBuilder = WordClassesCompanion
+    Function({
+  Value<int> id,
+  required String name,
+  required int color,
+  Value<DateTime> createdAt,
+});
+typedef $$WordClassesTableUpdateCompanionBuilder = WordClassesCompanion
+    Function({
+  Value<int> id,
+  Value<String> name,
+  Value<int> color,
+  Value<DateTime> createdAt,
+});
+
+class $$WordClassesTableFilterComposer
+    extends Composer<_$AppDatabase, $WordClassesTable> {
+  $$WordClassesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get color => $composableBuilder(
+      column: $table.color, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$WordClassesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WordClassesTable> {
+  $$WordClassesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get color => $composableBuilder(
+      column: $table.color, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$WordClassesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WordClassesTable> {
+  $$WordClassesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WordClassesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $WordClassesTable,
+    WordClassesData,
+    $$WordClassesTableFilterComposer,
+    $$WordClassesTableOrderingComposer,
+    $$WordClassesTableAnnotationComposer,
+    $$WordClassesTableCreateCompanionBuilder,
+    $$WordClassesTableUpdateCompanionBuilder,
+    (
+      WordClassesData,
+      BaseReferences<_$AppDatabase, $WordClassesTable, WordClassesData>
+    ),
+    WordClassesData,
+    PrefetchHooks Function()> {
+  $$WordClassesTableTableManager(_$AppDatabase db, $WordClassesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WordClassesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WordClassesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WordClassesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<int> color = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              WordClassesCompanion(
+            id: id,
+            name: name,
+            color: color,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required int color,
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              WordClassesCompanion.insert(
+            id: id,
+            name: name,
+            color: color,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WordClassesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $WordClassesTable,
+    WordClassesData,
+    $$WordClassesTableFilterComposer,
+    $$WordClassesTableOrderingComposer,
+    $$WordClassesTableAnnotationComposer,
+    $$WordClassesTableCreateCompanionBuilder,
+    $$WordClassesTableUpdateCompanionBuilder,
+    (
+      WordClassesData,
+      BaseReferences<_$AppDatabase, $WordClassesTable, WordClassesData>
+    ),
+    WordClassesData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2408,4 +2886,6 @@ class $AppDatabaseManager {
       $$WordEntriesTableTableManager(_db, _db.wordEntries);
   $$SentencesTableTableManager get sentences =>
       $$SentencesTableTableManager(_db, _db.sentences);
+  $$WordClassesTableTableManager get wordClasses =>
+      $$WordClassesTableTableManager(_db, _db.wordClasses);
 }

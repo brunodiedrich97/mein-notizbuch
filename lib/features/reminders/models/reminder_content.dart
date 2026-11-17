@@ -56,14 +56,17 @@ class ReminderContent {
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;');
 
+  /// [customClass] é a classe criada pelo usuário da palavra, se houver
+  /// (o nome dela substitui o da classe do método).
   factory ReminderContent.fromWord(
     WordEntry word, {
+    WordClass? customClass,
     TranslationLanguage language = TranslationLanguage.ptBR,
   }) {
+    final base = customClass?.name.toLowerCase() ?? word.category.label;
     final detail = word.tagDetail?.trim();
-    final category = (detail == null || detail.isEmpty)
-        ? word.category.label
-        : '${word.category.label} · $detail';
+    final category =
+        (detail == null || detail.isEmpty) ? base : '$base · $detail';
     return ReminderContent(
       title: word.germanWord,
       category: category,

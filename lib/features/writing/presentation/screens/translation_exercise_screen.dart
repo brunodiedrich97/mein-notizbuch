@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
 import '../../../decks/presentation/deck_navigation.dart';
@@ -15,6 +14,7 @@ import '../../../decks/providers/deck_provider.dart';
 import '../../../study/presentation/widgets/session_summary.dart';
 import '../../../study/providers/study_provider.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 import '../../models/sentence_check.dart';
 import '../../models/sentence_source.dart';
 import '../widgets/umlaut_keys.dart';
@@ -332,7 +332,7 @@ class _WordHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = GrammarColors.of(word.category, isDark: isDark);
+    final color = appearanceOf(context, word).color;
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(

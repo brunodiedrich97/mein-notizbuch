@@ -10,6 +10,8 @@ import '../../../../core/widgets/screen_header.dart';
 import '../../../decks/presentation/deck_icon_data.dart';
 import '../../../decks/presentation/widgets/new_deck_sheet.dart';
 import '../../../decks/providers/deck_provider.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
+import '../../../word_classes/presentation/word_class_form_screen.dart';
 import '../../models/grammar_type.dart';
 import '../../models/word_parser.dart';
 import '../../providers/vocabulary_provider.dart';
@@ -45,6 +47,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
   GrammarCategory _category = GrammarCategory.other;
   bool _categoryChosenByUser = false;
+
+  /// Classe criada pelo usuário escolhida (a categoria fica "outros").
+  int? _customClassId;
   bool _articleAmbiguous = false;
   bool _saving = false;
   late int _deckId = widget.initialDeckId ?? AppDatabase.generalDeckId;
@@ -84,8 +89,24 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   void _chooseCategory(GrammarCategory category) {
     setState(() {
       _category = category;
+      _customClassId = null;
       _categoryChosenByUser = true;
     });
+  }
+
+  void _chooseCustomClass(int id) {
+    setState(() {
+      _category = GrammarCategory.other;
+      _customClassId = id;
+      _categoryChosenByUser = true;
+    });
+  }
+
+  Future<void> _createClass() async {
+    final id = await Navigator.of(context).push<int>(
+      MaterialPageRoute(builder: (_) => const WordClassFormScreen()),
+    );
+    if (id != null && mounted) _chooseCustomClass(id);
   }
 
   /// Para substantivos, grava sempre com o artigo da classe escolhida:
@@ -163,6 +184,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
       exampleGerman: _optional(_exampleDe),
       examplePortuguese: _optional(_examplePt),
       deckId: Value(_deckId),
+      customClassId: Value(c == GrammarCategory.other ? _customClassId : null),
     );
 
     try {
@@ -186,7 +208,10 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     final p = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = _category;
-    final accent = GrammarColors.of(c, isDark: isDark);
+    final classes = WordClassScope.of(context);
+    final customClass =
+        c == GrammarCategory.other ? classes[_customClassId] : null;
+    final accent = appearanceFor(c, customClass, isDark: isDark).color;
     final hasForms = c != GrammarCategory.other;
 
     return Scaffold(
@@ -261,18 +286,32 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                 ),
                 SizedBox(
                   height: 40,
-                  child: ListView.separated(
+                  child: ListView(
                     scrollDirection: Axis.horizontal,
-                    itemCount: GrammarCategory.values.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final category = GrammarCategory.values[i];
-                      return _CategoryChip(
-                        category: category,
-                        selected: category == c,
-                        onSelected: () => _chooseCategory(category),
-                      );
-                    },
+                    children: [
+                      for (final category in GrammarCategory.values) ...[
+                        _CategoryChip(
+                          label: category.shortLabel,
+                          color: GrammarColors.of(category, isDark: isDark),
+                          selected: category == c && customClass == null,
+                          onSelected: () => _chooseCategory(category),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      for (final wc in classes.values) ...[
+                        _CategoryChip(
+                          label: wc.name,
+                          color: customClassColor(
+                            Color(wc.color),
+                            isDark: isDark,
+                          ),
+                          selected: customClass?.id == wc.id,
+                          onSelected: () => _chooseCustomClass(wc.id),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      _NewClassChip(onTap: _createClass),
+                    ],
                   ),
                 ),
                 if (_articleAmbiguous && c == GrammarCategory.feminineNoun)
@@ -832,19 +871,20 @@ class _DeckPicker extends ConsumerWidget {
 
 class _CategoryChip extends StatelessWidget {
   const _CategoryChip({
-    required this.category,
+    required this.label,
+    required this.color,
     required this.selected,
     required this.onSelected,
   });
 
-  final GrammarCategory category;
+  final String label;
+  final Color color;
   final bool selected;
   final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = GrammarColors.of(category, isDark: isDark);
     final radius = BorderRadius.circular(12);
 
     // A cor da classe aparece sempre: sem seleção, fundo levemente tingido
@@ -863,7 +903,7 @@ class _CategoryChip extends StatelessWidget {
           child: Center(
             widthFactor: 1,
             child: Text(
-              category.shortLabel,
+              label,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
@@ -872,6 +912,48 @@ class _CategoryChip extends StatelessWidget {
                     : color,
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Chip tracejado "+ Nova" no fim da linha de classes.
+class _NewClassChip extends StatelessWidget {
+  const _NewClassChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final radius = BorderRadius.circular(12);
+    return Material(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: p.dots, width: 1.5),
+      ),
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_rounded, size: 16, color: p.text500),
+              const SizedBox(width: 6),
+              Text(
+                'Nova',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: p.text500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

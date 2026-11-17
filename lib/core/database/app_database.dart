@@ -41,6 +41,10 @@ class WordEntries extends Table {
   /// Deck da palavra (v3). `null` é tratado como o deck "Geral".
   IntColumn get deckId => integer().nullable()();
 
+  /// Classe criada pelo usuário (v6). Quando preenchida, [category] fica
+  /// como "outros" (mesmo comportamento) e o nome e a cor vêm da classe.
+  IntColumn get customClassId => integer().nullable()();
+
   /// Complemento do rótulo da classe: "irregular", "dativo"… (v2)
   TextColumn get tagDetail => text().nullable()();
 
@@ -87,7 +91,19 @@ class Sentences extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Decks, WordEntries, Sentences])
+/// Classes gramaticais criadas pelo usuário ("Conjunção", "Pronome"…).
+/// Gera `WordClass` e `WordClassesCompanion`. (v6)
+class WordClasses extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 40)();
+
+  /// Cor escolhida (ARGB). No tema escuro, o app usa uma versão mais clara.
+  IntColumn get color => integer()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [Decks, WordEntries, Sentences, WordClasses])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -98,7 +114,7 @@ class AppDatabase extends _$AppDatabase {
   static const int generalDeckId = 1;
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +141,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.createTable(sentences);
+          }
+          if (from < 6) {
+            await m.createTable(wordClasses);
+            await m.addColumn(wordEntries, wordEntries.customClassId);
           }
         },
       );
@@ -197,6 +217,30 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
+  /// Classes criadas pelo usuário, em ordem de criação.
+  Stream<List<WordClass>> watchWordClasses() {
+    return (select(wordClasses)..orderBy([(t) => OrderingTerm.asc(t.id)]))
+        .watch();
+  }
+
+  Future<int> addWordClass(String name, int color) => into(wordClasses)
+      .insert(WordClassesCompanion.insert(name: name, color: color));
+
+  Future<void> updateWordClass(int id, String name, int color) {
+    return (update(wordClasses)..where((t) => t.id.equals(id))).write(
+      WordClassesCompanion(name: Value(name), color: Value(color)),
+    );
+  }
+
+  /// Exclui a classe; as palavras dela voltam a ser "outros".
+  Future<void> deleteWordClass(int id) {
+    return transaction(() async {
+      await (update(wordEntries)..where((t) => t.customClassId.equals(id)))
+          .write(const WordEntriesCompanion(customClassId: Value(null)));
+      await (delete(wordClasses)..where((t) => t.id.equals(id))).go();
+    });
+  }
+
   /// Decks em ordem de criação ("Geral" primeiro).
   Stream<List<Deck>> watchDecks() {
     return (select(decks)..orderBy([(t) => OrderingTerm.asc(t.id)])).watch();
@@ -251,6 +295,7 @@ class AppDatabase extends _$AppDatabase {
     final allDecks = await select(decks).get();
     final allWords = await select(wordEntries).get();
     final allSentences = await select(sentences).get();
+    final allClasses = await select(wordClasses).get();
     return {
       'app': 'mein_notizbuch',
       'format': backupFormat,
@@ -259,6 +304,7 @@ class AppDatabase extends _$AppDatabase {
       'decks': [for (final d in allDecks) d.toJson()],
       'words': [for (final w in allWords) w.toJson()],
       'sentences': [for (final s in allSentences) s.toJson()],
+      'wordClasses': [for (final c in allClasses) c.toJson()],
     };
   }
 
@@ -286,12 +332,18 @@ class AppDatabase extends _$AppDatabase {
     final newSentences = [
       for (final j in list('sentences')) Sentence.fromJson(j),
     ];
+    // Backups anteriores à v6 não têm classes: a lista fica vazia.
+    final newClasses = [
+      for (final j in list('wordClasses')) WordClass.fromJson(j),
+    ];
 
     await transaction(() async {
       await delete(sentences).go();
       await delete(wordEntries).go();
       await delete(decks).go();
+      await delete(wordClasses).go();
       await batch((b) {
+        b.insertAll(wordClasses, newClasses);
         b.insertAll(decks, newDecks);
         b.insertAll(wordEntries, newWords);
         b.insertAll(sentences, newSentences);

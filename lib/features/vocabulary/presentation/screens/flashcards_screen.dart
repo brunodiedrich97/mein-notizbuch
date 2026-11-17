@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
 import '../../../../core/widgets/speak_button.dart';
@@ -17,6 +16,7 @@ import '../../../writing/providers/sentence_provider.dart';
 import '../../../study/presentation/widgets/session_summary.dart';
 import '../../../study/presentation/widgets/study_filter_sheet.dart';
 import '../../../study/providers/study_provider.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
@@ -87,7 +87,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   Future<void> _clearFilter() async {
     final s = ref.read(studySettingsProvider);
     ref.read(studySettingsProvider.notifier).state =
-        s.copyWith(filter: WordFilter.all);
+        s.withoutClassFilter();
     await _startSession();
   }
 
@@ -193,7 +193,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
             )
           : _EmptyState(
               message: 'Nenhuma ficha com o filtro '
-                  '"${settings.filter.label}".',
+                  '"${settings.filterLabel(WordClassScope.of(context))}".',
               actionLabel: 'Limpar filtro',
               onAction: _clearFilter,
             );
@@ -203,7 +203,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
         children: [
           _SessionToolbar(
             progress: answered / total,
-            filterLabel: settings.filter.label,
+            filterLabel: settings.filterLabel(WordClassScope.of(context)),
             orderLabel: settings.order.label,
             onFilters: _openFilters,
           ),
@@ -564,7 +564,6 @@ class _JumpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final error = Theme.of(context).colorScheme.error;
 
     return Column(
@@ -601,10 +600,7 @@ class _JumpSheet extends StatelessWidget {
                         fontWeight: i == current
                             ? FontWeight.w700
                             : FontWeight.w600,
-                        color: GrammarColors.titleOf(
-                          session[i].category,
-                          isDark: isDark,
-                        ),
+                        color: appearanceOf(context, session[i]).titleColor,
                       ),
                     ),
                   ),

@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_buttons.dart';
 import '../../../vocabulary/models/grammar_type.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
 import '../../models/study_settings.dart';
+import '../../../word_classes/presentation/word_appearance.dart';
 
 /// Cor de cada filtro: a da classe correspondente. "Todos" não tem cor.
 Color? filterColor(WordFilter f, {required bool isDark}) {
@@ -57,6 +58,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -70,9 +72,19 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
           children: [
             for (final f in WordFilter.values)
               _FilterChip(
-                filter: f,
-                selected: f == _s.filter,
+                label: f.label,
+                color: filterColor(f, isDark: isDark),
+                selected: _s.customClassId == null && f == _s.filter,
                 onTap: () => setState(() => _s = _s.copyWith(filter: f)),
+              ),
+            // Classes criadas pelo usuário.
+            for (final c in WordClassScope.of(context).values)
+              _FilterChip(
+                label: c.name,
+                color: customClassColor(Color(c.color), isDark: isDark),
+                selected: _s.customClassId == c.id,
+                onTap: () =>
+                    setState(() => _s = _s.copyWith(customClassId: c.id)),
               ),
           ],
         ),
@@ -121,12 +133,16 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
 /// Chip de classe: sempre na cor da classe; preenchido quando selecionado.
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
-    required this.filter,
+    required this.label,
+    required this.color,
     required this.selected,
     required this.onTap,
   });
 
-  final WordFilter filter;
+  final String label;
+
+  /// Cor da classe. `null` = neutro ("Todos").
+  final Color? color;
   final bool selected;
   final VoidCallback onTap;
 
@@ -134,8 +150,8 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = filterColor(filter, isDark: isDark) ?? p.ink;
-    final neutral = filter == WordFilter.all;
+    final neutral = this.color == null;
+    final color = this.color ?? p.ink;
     final radius = BorderRadius.circular(12);
 
     final Color background;
@@ -170,7 +186,7 @@ class _FilterChip extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Text(
-              filter.label,
+              label,
               style: AppText.button.copyWith(color: text),
             ),
           ),
