@@ -201,6 +201,15 @@ Configuração no Android (já feita): permissões `POST_NOTIFICATIONS` e
 `AndroidManifest.xml`, o *core library desugaring* no `build.gradle.kts` e o
 ícone `ic_notification` (silhueta da logo) em `res/drawable-*`.
 
+## Exportar e importar (arquivo)
+
+Em **Ajustes › Backup**, "Exportar para um arquivo" gera um `.json` com
+palavras, decks e frases (o mesmo formato do backup no Drive) e abre o
+"Salvar em…" do sistema: no iPhone, o app Arquivos (incluindo o iCloud
+Drive); no Android, qualquer pasta ou provedor. "Importar de um arquivo"
+mostra o que o arquivo contém e, depois de confirmar, substitui os dados do
+aparelho. Funciona nas duas plataformas, sem login.
+
 ## Backup no Google Drive
 
 O app envia um backup por dia (ao abrir) para a pasta **Mein Notizbuch** do

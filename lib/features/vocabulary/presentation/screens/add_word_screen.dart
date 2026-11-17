@@ -228,10 +228,10 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   ],
                 ),
 
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 10),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4, bottom: 10),
                   child: Row(
-                    children: const [
+                    children: [
                       Expanded(child: _SectionLabel('Deck')),
                       _MetaText('Toque para escolher'),
                     ],

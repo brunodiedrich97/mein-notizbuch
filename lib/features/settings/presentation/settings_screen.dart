@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../backup/data/file_backup.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
 import '../../reminders/providers/reminder_provider.dart';
+import '../../vocabulary/providers/vocabulary_provider.dart';
 
 /// Ajustes: lembrete diário e backup no Google Drive.
 class SettingsScreen extends ConsumerWidget {
@@ -58,6 +61,59 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _export(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final saved = await FileBackup.export(ref.read(databaseProvider));
+      if (saved) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Backup exportado.')),
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Não foi possível exportar: $e')),
+      );
+    }
+  }
+
+  Future<void> _import(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    Map<String, dynamic>? data;
+    try {
+      data = await FileBackup.pick();
+    } on FormatException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Não foi possível abrir o arquivo: $e')),
+      );
+      return;
+    }
+    if (data == null || !context.mounted) return;
+
+    final backup = data;
+    final confirmed = await showAppSheet<bool>(
+      context,
+      (_) => _ConfirmImportSheet(data: backup),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(databaseProvider).importData(backup);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Backup importado.')),
+      );
+    } on FormatException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Não foi possível importar: $e')),
+      );
+    }
   }
 
   @override
@@ -124,6 +180,19 @@ class SettingsScreen extends ConsumerWidget {
                         builder: (_) => const BackupScreen(),
                       ),
                     ),
+                  ),
+                  _SettingRow(
+                    icon: Icons.ios_share_rounded,
+                    title: 'Exportar para um arquivo',
+                    subtitle: 'Salve no app Arquivos, no iCloud Drive ou '
+                        'em outra pasta.',
+                    onTap: () => _export(context, ref),
+                  ),
+                  _SettingRow(
+                    icon: Icons.file_open_outlined,
+                    title: 'Importar de um arquivo',
+                    subtitle: 'Substitui os dados deste aparelho.',
+                    onTap: () => _import(context, ref),
                   ),
                 ],
               ),
@@ -238,6 +307,74 @@ class _Value extends StatelessWidget {
       style: mono
           ? AppTheme.mono(fontSize: 13, color: p.text700)
           : AppText.meta(p),
+    );
+  }
+}
+
+/// Confirmação antes de importar: mostra a data e o conteúdo do arquivo.
+class _ConfirmImportSheet extends StatelessWidget {
+  const _ConfirmImportSheet({required this.data});
+
+  final Map<String, dynamic> data;
+
+  int _count(String key) => (data[key] as List?)?.length ?? 0;
+
+  String? _date() {
+    final raw = data['exportedAt'];
+    final d = raw is String ? DateTime.tryParse(raw)?.toLocal() : null;
+    if (d == null) return null;
+    return formatBackupDate(d);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final date = _date();
+    final words = _count('words');
+    final decks = _count('decks');
+    final sentences = _count('sentences');
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('IMPORTAR BACKUP', style: AppText.section(p)),
+        const SizedBox(height: 12),
+        Text(
+          date == null ? 'Backup do Notizbuch' : 'De $date',
+          style: AppText.display(p, fontSize: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$words palavras · $decks decks · $sentences frases',
+          style: AppText.meta(p),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'As palavras, decks e frases deste aparelho serão substituídos '
+          'pelos do arquivo. Se quiser guardar os dados atuais, exporte '
+          'antes.',
+          style: AppText.body(p),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: SoftButton(
+                label: 'Cancelar',
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: PrimaryButton(
+                label: 'Importar',
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
