@@ -1,0 +1,75 @@
+name: deutsch_notizbuch
+description: "Caderno artesanal e interativo de vocabulário de alemão com método cromático."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Gerenciamento de estado
+  flutter_riverpod: ^2.5.1
+
+  # Banco de dados local offline (Drift + SQLite)
+  drift: ^2.20.0
+  sqlite3: ^2.4.6
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Pronúncia (text-to-speech do próprio aparelho)
+  flutter_tts: ^4.2.0
+
+  # Ícones SVG idênticos aos do protótipo
+  flutter_svg: ^2.0.10
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+  # Geradores de código do Drift
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+
+  # Fontes empacotadas no app (funcionam offline desde a primeira abertura).
+  # Licenças em assets/fonts/.
+  fonts:
+    - family: PlusJakartaSans # texto da interface
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+    # Newsreader com tamanho óptico fixo: "Display" (opsz 40) para os títulos
+    # de 40 px e a versão de texto (opsz 20) para frases e exemplos, como o
+    # navegador faz automaticamente no protótipo.
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader-Regular.ttf
+        - asset: assets/fonts/Newsreader-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Newsreader-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Newsreader-Bold.ttf
+          weight: 700
+    - family: NewsreaderDisplay
+      fonts:
+        - asset: assets/fonts/NewsreaderDisplay-Regular.ttf
+        - asset: assets/fonts/NewsreaderDisplay-Bold.ttf
+          weight: 700
+    - family: NotizMono # IPA e contador (DejaVu Sans Mono, cobre os símbolos fonéticos)
+      fonts:
+        - asset: assets/fonts/DejaVuSansMono.ttf
