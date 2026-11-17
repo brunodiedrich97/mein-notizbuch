@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../vocabulary/presentation/screens/flashcards_screen.dart';
+import '../../home/presentation/home_screen.dart';
 
 /// Caminho da logo recortada, com fundo transparente.
 const String kLogoMark = 'assets/logo/logo_mark.png';
 
 /// Abertura do app: a logo aparece (fade + leve subida), o nome surge logo
-/// depois e, em seguida, a tela de fichas entra com um fade.
+/// depois e, em seguida, a tela inicial entra com um fade.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
-  /// Tempo total na tela antes de abrir as fichas.
+  /// Tempo total na tela antes de abrir a tela inicial.
   static const Duration duration = Duration(milliseconds: 1800);
 
   @override
@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _controller.forward();
-    Future<void>.delayed(SplashScreen.duration, _openFlashcards);
+    Future<void>.delayed(SplashScreen.duration, _openHome);
   }
 
   @override
@@ -49,12 +49,12 @@ class _SplashScreenState extends State<SplashScreen>
     precacheImage(const AssetImage(kLogoMark), context);
   }
 
-  void _openFlashcards() {
+  void _openHome() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, __, ___) => const FlashcardsScreen(),
+        pageBuilder: (_, __, ___) => const HomeScreen(),
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
       ),

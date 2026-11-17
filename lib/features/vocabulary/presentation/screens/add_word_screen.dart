@@ -7,13 +7,20 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../decks/presentation/deck_icon_data.dart';
+import '../../../decks/presentation/widgets/new_deck_sheet.dart';
+import '../../../decks/providers/deck_provider.dart';
 import '../../models/grammar_type.dart';
 import '../../models/word_parser.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/pronunciation_box.dart';
 
 class AddWordScreen extends ConsumerStatefulWidget {
-  const AddWordScreen({super.key});
+  const AddWordScreen({super.key, this.initialDeckId});
+
+  /// Deck já escolhido ao abrir (ex.: "+ Adicionar" dentro de um deck).
+  /// `null` = deck "Geral".
+  final int? initialDeckId;
 
   @override
   ConsumerState<AddWordScreen> createState() => _AddWordScreenState();
@@ -40,6 +47,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   bool _categoryChosenByUser = false;
   bool _articleAmbiguous = false;
   bool _saving = false;
+  late int _deckId = widget.initialDeckId ?? AppDatabase.generalDeckId;
 
   List<TextEditingController> get _controllers => [
         _german,
@@ -112,6 +120,11 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     return Value('[$text]');
   }
 
+  Future<void> _createDeck() async {
+    final id = await NewDeckSheet.show(context);
+    if (id != null && mounted) setState(() => _deckId = id);
+  }
+
   String? _validateGerman(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) return 'Digite a palavra em alemão.';
@@ -149,13 +162,14 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
       ),
       exampleGerman: _optional(_exampleDe),
       examplePortuguese: _optional(_examplePt),
+      deckId: Value(_deckId),
     );
 
     try {
       await ref.read(databaseProvider).addWord(entry);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"$german" foi adicionada ao caderno.')),
+        SnackBar(content: Text('"$german" foi adicionada ao Notizbuch.')),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -213,6 +227,23 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     ),
                   ],
                 ),
+
+                // Deck: rótulo + chips neutros em linha rolável.
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 10),
+                  child: Row(
+                    children: const [
+                      Expanded(child: _SectionLabel('Deck')),
+                      _MetaText('Toque para escolher'),
+                    ],
+                  ),
+                ),
+                _DeckPicker(
+                  selectedId: _deckId,
+                  onSelected: (id) => setState(() => _deckId = id),
+                  onCreate: _createDeck,
+                ),
+                const SizedBox(height: 16),
 
                 // Classe gramatical: rótulo + chips em linha rolável.
                 Padding(
@@ -699,6 +730,102 @@ class _BoxField extends StatelessWidget {
             )
           else
             field,
+        ],
+      ),
+    );
+  }
+}
+
+/// Linha rolável com os decks (chips neutros) e o chip "+ Novo".
+class _DeckPicker extends ConsumerWidget {
+  const _DeckPicker({
+    required this.selectedId,
+    required this.onSelected,
+    required this.onCreate,
+  });
+
+  final int selectedId;
+  final ValueChanged<int> onSelected;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = AppPalette.of(context);
+    final decks =
+        ref.watch(deckSummariesProvider).valueOrNull ?? const <DeckSummary>[];
+    // "Geral" primeiro aqui: é o padrão.
+    final ordered = [
+      ...decks.where((d) => d.isGeneral),
+      ...decks.where((d) => !d.isGeneral),
+    ];
+
+    Widget chip({
+      required IconData icon,
+      required String label,
+      required bool selected,
+      required VoidCallback onTap,
+      bool dashed = false,
+    }) {
+      final radius = BorderRadius.circular(12);
+      return Material(
+        color: selected ? p.ink : (dashed ? Colors.transparent : p.card),
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(
+            color: selected ? p.ink : (dashed ? p.dots : p.outline),
+            width: dashed ? 1.5 : 1,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected ? p.onInk : p.text500,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: selected ? p.onInk : p.text700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (final d in ordered) ...[
+            chip(
+              icon: d.deck.icon.data,
+              label: d.deck.namePt,
+              selected: d.deck.id == selectedId,
+              onTap: () => onSelected(d.deck.id),
+            ),
+            const SizedBox(width: 8),
+          ],
+          chip(
+            icon: Icons.add_rounded,
+            label: 'Novo',
+            selected: false,
+            dashed: true,
+            onTap: onCreate,
+          ),
         ],
       ),
     );

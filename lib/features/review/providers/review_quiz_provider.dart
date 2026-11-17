@@ -76,14 +76,24 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
     // `read`, e não `watch`: cada resposta grava no banco, e a sessão não
     // deve recomeçar quando a lista de palavras é atualizada.
     final words = await ref.read(wordListProvider.future);
-    return ReviewQuizState(questions: _buildQuestions(words));
+    // Só as palavras do deck aberto (ou todas, se nenhum deck foi aberto).
+    final deckId = ref.read(deckScopeProvider);
+    final pool = deckId == null
+        ? words
+        : words.where((w) => deckOf(w) == deckId).toList();
+    return ReviewQuizState(questions: _buildQuestions(pool, words));
   }
 
   /// Palavras erradas e nunca revisadas aparecem primeiro.
   int _priority(WordEntry w) =>
       w.wrongCount * 2 - w.correctCount + (w.lastReviewedAt == null ? 2 : 0);
 
-  List<QuizQuestion> _buildQuestions(List<WordEntry> words) {
+  /// [words] são as palavras perguntadas; [all] fornece as traduções
+  /// usadas como opções erradas (mais variedade num deck pequeno).
+  List<QuizQuestion> _buildQuestions(
+    List<WordEntry> words,
+    List<WordEntry> all,
+  ) {
     if (words.isEmpty) return const [];
 
     final pool = [...words]..shuffle(_random);
@@ -91,7 +101,7 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
     final chosen = pool.take(sessionSize).toList()..shuffle(_random);
 
     final translations =
-        words.map((w) => w.portugueseTranslation.trim()).toSet().toList();
+        all.map((w) => w.portugueseTranslation.trim()).toSet().toList();
 
     final questions = <QuizQuestion>[];
     for (final word in chosen) {

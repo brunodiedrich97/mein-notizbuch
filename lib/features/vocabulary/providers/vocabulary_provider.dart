@@ -42,10 +42,23 @@ enum WordFilter {
 
 final wordFilterProvider = StateProvider<WordFilter>((ref) => WordFilter.all);
 
-/// Fichas visíveis com o filtro atual.
+/// Deck aberto nas fichas e na revisão. `null` = todos os decks.
+///
+/// Defina antes de abrir a tela (veja `openFlashcards` e `openReview` em
+/// `deck_navigation.dart`), e não durante o build.
+final deckScopeProvider = StateProvider<int?>((ref) => null);
+
+/// Deck de uma palavra, tratando `null` como o "Geral".
+int deckOf(WordEntry w) => w.deckId ?? AppDatabase.generalDeckId;
+
+/// Fichas visíveis com o deck e o filtro atuais.
 final filteredWordsProvider = Provider<AsyncValue<List<WordEntry>>>((ref) {
   final filter = ref.watch(wordFilterProvider);
+  final deckId = ref.watch(deckScopeProvider);
   return ref.watch(wordListProvider).whenData(
-        (words) => words.where((w) => filter.matches(w.category)).toList(),
+        (words) => words
+            .where((w) => deckId == null || deckOf(w) == deckId)
+            .where((w) => filter.matches(w.category))
+            .toList(),
       );
 });

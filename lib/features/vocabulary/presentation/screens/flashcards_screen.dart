@@ -11,6 +11,7 @@ import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/speak_button.dart';
 import '../../../review/presentation/review_session_screen.dart';
 import '../../../splash/presentation/splash_screen.dart' show kLogoMark;
+import '../../../decks/providers/deck_provider.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
@@ -80,7 +81,10 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
 
   Future<void> _openAddWord() {
     return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const AddWordScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            AddWordScreen(initialDeckId: ref.read(deckScopeProvider)),
+      ),
     );
   }
 
@@ -125,6 +129,11 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
 
     final palette = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Com um deck aberto, o título mostra o nome dele.
+    final scopeId = ref.watch(deckScopeProvider);
+    final scopedDeck =
+        scopeId == null ? null : ref.watch(deckByIdProvider(scopeId));
+    final title = scopedDeck?.deck.namePt.toUpperCase() ?? 'MEIN NOTIZBUCH';
     final isTablet = MediaQuery.sizeOf(context).width >= _tabletBreakpoint;
     // max-w-md do protótipo no celular; mais largo no caderno aberto.
     final barMaxWidth = isTablet ? 960.0 : 448.0;
@@ -242,6 +251,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
             body: Column(
               children: [
                 _Header(
+                  title: title,
                   maxWidth: barMaxWidth,
                   counter: _counterText(shown, total, isTablet),
                   progress: progress,
@@ -271,6 +281,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
 /// `<header>` do protótipo: título, contador, barra de progresso e filtros.
 class _Header extends StatelessWidget {
   const _Header({
+    required this.title,
     required this.maxWidth,
     required this.counter,
     required this.progress,
@@ -279,6 +290,7 @@ class _Header extends StatelessWidget {
     required this.menuItems,
   });
 
+  final String title;
   final double maxWidth;
   final String counter;
   final double progress;
@@ -312,6 +324,24 @@ class _Header extends StatelessWidget {
                       height: 24,
                       child: Row(
                         children: [
+                          // Voltar para a tela inicial.
+                          if (Navigator.of(context).canPop()) ...[
+                            Tooltip(
+                              message: 'Voltar',
+                              child: InkResponse(
+                                radius: 18,
+                                onTap: () => Navigator.of(context).maybePop(),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: ChevronIcon.left(
+                                    color: p.text500,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Image.asset(
                             kLogoMark,
                             height: 28,
@@ -322,7 +352,7 @@ class _Header extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'MEIN NOTIZBUCH',
+                              title,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,

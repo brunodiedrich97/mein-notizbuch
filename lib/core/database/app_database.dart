@@ -7,9 +7,26 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
+import '../../features/decks/models/deck_icon.dart';
 import '../../features/vocabulary/models/grammar_type.dart';
 
 part 'app_database.g.dart';
+
+/// Decks temáticos ("Saúde", "Comida"…). Gera `Deck` e `DecksCompanion`. (v3)
+class Decks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Nome em português, exibido em destaque: "Saúde".
+  TextColumn get namePt => text().withLength(min: 1, max: 40)();
+
+  /// Nome em alemão, exibido abaixo: "Gesundheit". Opcional.
+  TextColumn get nameDe => text().nullable()();
+
+  /// Salvo pelo nome ("health"), não pelo índice.
+  TextColumn get icon => textEnum<DeckIcon>()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
 
 /// Gera a classe de dados `WordEntry` e o `WordEntriesCompanion`.
 class WordEntries extends Table {
@@ -19,6 +36,9 @@ class WordEntries extends Table {
 
   /// Salvo pelo nome ("masculineNoun"), não pelo índice.
   TextColumn get category => textEnum<GrammarCategory>()();
+
+  /// Deck da palavra (v3). `null` é tratado como o deck "Geral".
+  IntColumn get deckId => integer().nullable()();
 
   /// Complemento do rótulo da classe: "irregular", "dativo"… (v2)
   TextColumn get tagDetail => text().nullable()();
@@ -49,21 +69,26 @@ class WordEntries extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [WordEntries])
+@DriftDatabase(tables: [Decks, WordEntries])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   /// Para testes: `AppDatabase.forTesting(NativeDatabase.memory())`.
   AppDatabase.forTesting(super.executor);
 
+  /// Deck padrão. Recebe as palavras sem deck e não pode ser excluído.
+  static const int generalDeckId = 1;
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
+          await _createGeneralDeck();
           await batch((b) => b.insertAll(wordEntries, _seedWords));
+          await _moveOrphanWordsToGeneral();
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -71,8 +96,32 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(wordEntries, wordEntries.conjugation);
             await _upgradeSeedToV2();
           }
+          if (from < 3) {
+            await m.createTable(decks);
+            await m.addColumn(wordEntries, wordEntries.deckId);
+            await _createGeneralDeck();
+            await _moveOrphanWordsToGeneral();
+          }
         },
       );
+
+  Future<void> _createGeneralDeck() {
+    return into(decks).insert(
+      DecksCompanion.insert(
+        id: const Value(generalDeckId),
+        namePt: 'Geral',
+        nameDe: const Value('Allgemein'),
+        icon: DeckIcon.general,
+      ),
+      mode: InsertMode.insertOrIgnore,
+    );
+  }
+
+  /// Palavras sem deck vão para o "Geral".
+  Future<void> _moveOrphanWordsToGeneral() {
+    return (update(wordEntries)..where((t) => t.deckId.isNull()))
+        .write(const WordEntriesCompanion(deckId: Value(generalDeckId)));
+  }
 
   /// Leva as fichas iniciais da v1 ao formato do protótipo.
   Future<void> _upgradeSeedToV2() async {
@@ -107,6 +156,23 @@ class AppDatabase extends _$AppDatabase {
             (t) => OrderingTerm.asc(t.id),
           ]))
         .watch();
+  }
+
+  /// Decks em ordem de criação ("Geral" primeiro).
+  Stream<List<Deck>> watchDecks() {
+    return (select(decks)..orderBy([(t) => OrderingTerm.asc(t.id)])).watch();
+  }
+
+  Future<int> addDeck(DecksCompanion entry) => into(decks).insert(entry);
+
+  /// Exclui o deck e move as palavras dele para o "Geral".
+  Future<void> deleteDeck(int id) {
+    if (id == generalDeckId) return Future.value();
+    return transaction(() async {
+      await (update(wordEntries)..where((t) => t.deckId.equals(id)))
+          .write(const WordEntriesCompanion(deckId: Value(generalDeckId)));
+      await (delete(decks)..where((t) => t.id.equals(id))).go();
+    });
   }
 
   Future<int> addWord(WordEntriesCompanion entry) =>
