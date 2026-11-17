@@ -5,8 +5,10 @@ import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
-import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
+import '../../reminders/data/reminder_service.dart';
+import '../../reminders/providers/reminder_provider.dart';
+import '../../settings/presentation/settings_screen.dart';
 import '../../decks/presentation/deck_navigation.dart';
 import '../../decks/presentation/widgets/deck_card.dart';
 import '../../decks/presentation/widgets/new_deck_sheet.dart';
@@ -56,7 +58,7 @@ class HomeScreen extends ConsumerWidget {
     // A lista vem em ordem de cadastro; as mais novas ficam no fim.
     final recent = words.reversed.take(recentCount).toList();
 
-    return _DailyBackup(
+    return _StartupTasks(
       child: Scaffold(
       backgroundColor: p.page,
       body: SafeArea(
@@ -96,7 +98,15 @@ class HomeScreen extends ConsumerWidget {
                             ),
                           ),
                           const Spacer(),
-                          const _BackupButton(),
+                          HeaderIconButton(
+                            icon: Icons.settings_outlined,
+                            tooltip: 'Ajustes',
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -359,43 +369,29 @@ class _ShortcutTile extends StatelessWidget {
   }
 }
 
-/// Ícone de nuvem no topo: abre a tela de backup. Mostra se o backup no
-/// Drive está ligado.
-class _BackupButton extends ConsumerWidget {
-  const _BackupButton();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(backupProvider);
-    return HeaderIconButton(
-      icon: state.connected ? Icons.cloud_done_outlined : Icons.cloud_outlined,
-      tooltip: 'Backup no Google Drive',
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const BackupScreen()),
-      ),
-    );
-  }
-}
-
-/// Dispara o backup diário ao abrir a tela inicial e sempre que o app
-/// volta para a frente. O controlador só envia se ainda não houve backup
-/// hoje.
-class _DailyBackup extends ConsumerStatefulWidget {
-  const _DailyBackup({required this.child});
+/// Tarefas ao abrir a tela inicial e sempre que o app volta para a
+/// frente: backup diário (se ainda não houve hoje), renovar a fila de
+/// lembretes e abrir a ficha da notificação que abriu o app.
+class _StartupTasks extends ConsumerStatefulWidget {
+  const _StartupTasks({required this.child});
 
   final Widget child;
 
   @override
-  ConsumerState<_DailyBackup> createState() => _DailyBackupState();
+  ConsumerState<_StartupTasks> createState() => _StartupTasksState();
 }
 
-class _DailyBackupState extends ConsumerState<_DailyBackup>
+class _StartupTasksState extends ConsumerState<_StartupTasks>
     with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    Future.microtask(_check);
+    Future.microtask(() {
+      _run();
+      final wordId = ReminderService.instance.takeLaunchWordId();
+      if (wordId != null && mounted) openWordDetail(context, wordId);
+    });
   }
 
   @override
@@ -406,12 +402,13 @@ class _DailyBackupState extends ConsumerState<_DailyBackup>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _check();
+    if (state == AppLifecycleState.resumed) _run();
   }
 
-  void _check() {
+  void _run() {
     if (!mounted) return;
     ref.read(backupProvider.notifier).backupIfDue();
+    ref.read(reminderProvider.notifier).refresh();
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 /// Configuração do login Google (backup no Drive).
 ///
 /// [googleServerClientId] é o ID do client OAuth do tipo **Aplicativo da
@@ -12,3 +14,7 @@ const String googleServerClientId =
 
 /// `true` quando o client ID acima já foi preenchido.
 bool get isGoogleConfigured => !googleServerClientId.startsWith('COLE_AQUI');
+
+/// O backup no Drive só está configurado para Android. No iOS, o login
+/// Google precisa de um client iOS e do esquema de URL no Info.plist.
+bool get isDriveBackupSupported => Platform.isAndroid;

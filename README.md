@@ -84,6 +84,31 @@ não deixa instalar por cima do app atual: será preciso desinstalar, e os
 dados do aparelho se perdem. Faça antes um backup no Drive para restaurar
 depois, e cadastre um novo client Android com o SHA-1 da nova chave.
 
+## Instalar no iPhone (conta Apple gratuita)
+
+Precisa de um Mac com Xcode e do iPhone conectado por cabo.
+
+1. Abra `ios/Runner.xcworkspace` no Xcode.
+2. Em **Runner › Signing & Capabilities**, marque *Automatically manage
+   signing* e escolha o seu **Personal Team** (a conta Apple gratuita). Se o
+   Xcode disser que o identificador `com.brunodiedrich.meinNotizbuch` já
+   está em uso, troque por outro único (ex.: acrescente um sufixo).
+3. No terminal, na pasta do projeto:
+
+   ```bash
+   flutter run --release
+   ```
+
+4. Na primeira vez, o iPhone bloqueia o app: em *Ajustes › Geral › VPN e
+   Gerenciamento de Dispositivos*, confie no seu certificado de
+   desenvolvedor. Em iOS 16+, ative também o *Modo de Desenvolvedor*
+   (*Ajustes › Privacidade e Segurança*).
+
+Com a conta gratuita, o app instalado vale por **7 dias**: depois disso,
+rode o `flutter run --release` de novo (os dados ficam no aparelho). No
+iPhone, o lembrete diário funciona; o backup no Google Drive ainda é só para
+Android.
+
 ## Pronúncia offline
 
 O app usa a voz do próprio aparelho. Se o botão de áudio avisar que não há voz
@@ -148,6 +173,33 @@ O app reproduz o protótipo HTML (Tailwind):
   `onUpgrade` no `MigrationStrategy`, senão o app já instalado quebra.
 - O layout de caderno aberto (duas fichas) aparece a partir de 840 px de
   largura.
+
+## Lembrete diário (palavra do dia)
+
+Em **Ajustes** (engrenagem da tela inicial), "Palavra do dia" liga uma
+notificação diária, no horário escolhido, com a palavra em alemão, a classe
+gramatical e o significado. Tocar na notificação abre a ficha da palavra.
+
+- Uma notificação agendada não escolhe a palavra na hora de aparecer: o app
+  agenda os próximos 14 dias (cada dia com uma palavra) e refaz essa fila
+  sempre que é aberto. Se o app ficar mais de 14 dias sem ser aberto, os
+  lembretes param até a próxima abertura.
+- O agendamento é inexato (`inexactAllowWhileIdle`): a notificação pode
+  chegar alguns minutos depois do horário, mas o app não precisa da
+  permissão de alarmes exatos.
+- Hoje a palavra é sorteada (sem repetir até passar por todas). A escolha
+  fica em `ReminderService.pickWords`, onde entra a repetição espaçada.
+- O texto da notificação vem de `ReminderContent` e `translationOf`, o ponto
+  para acrescentar outros idiomas de tradução.
+
+No iOS, a permissão é pedida ao ligar o lembrete, e o `AppDelegate.swift`
+registra o app como delegate do `UNUserNotificationCenter` (para mostrar a
+notificação com o app aberto e tratar o toque).
+
+Configuração no Android (já feita): permissões `POST_NOTIFICATIONS` e
+`RECEIVE_BOOT_COMPLETED`, os receivers do `flutter_local_notifications` no
+`AndroidManifest.xml`, o *core library desugaring* no `build.gradle.kts` e o
+ícone `ic_notification` (silhueta da logo) em `res/drawable-*`.
 
 ## Backup no Google Drive
 

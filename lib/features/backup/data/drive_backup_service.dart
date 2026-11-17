@@ -57,6 +57,11 @@ class DriveBackupService {
   /// Login com escolha de conta e pedido de permissão do Drive.
   /// Retorna o e-mail da conta.
   Future<String> connect() async {
+    if (!isDriveBackupSupported) {
+      throw const DriveAuthException(
+        'O backup no Google Drive ainda não está disponível no iPhone.',
+      );
+    }
     if (!isGoogleConfigured) {
       throw const DriveAuthException(
         'O login Google ainda não foi configurado no app '
@@ -77,7 +82,7 @@ class DriveBackupService {
   /// Reconecta sem mostrar nada (usado no backup automático).
   /// Retorna `false` se for preciso entrar de novo pela tela de backup.
   Future<bool> reconnectSilently() async {
-    if (!isGoogleConfigured) return false;
+    if (!isDriveBackupSupported || !isGoogleConfigured) return false;
     await _ensureInitialized();
     try {
       final result = _signIn.attemptLightweightAuthentication();

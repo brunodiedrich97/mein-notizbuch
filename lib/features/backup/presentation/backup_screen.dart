@@ -168,11 +168,14 @@ class BackupScreen extends ConsumerWidget {
                       '${BackupController.keepBackups} mais recentes.',
                       style: AppText.body(p),
                     ),
-                    if (!isGoogleConfigured) ...[
+                    if (!isDriveBackupSupported || !isGoogleConfigured) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'O login Google ainda não foi configurado neste '
-                        'build (google_config.dart).',
+                        isDriveBackupSupported
+                            ? 'O login Google ainda não foi configurado neste '
+                                'build (google_config.dart).'
+                            : 'O backup no Google Drive ainda não está '
+                                'disponível no iPhone.',
                         style: AppText.body(p).copyWith(
                           color: Theme.of(context).colorScheme.error,
                         ),
@@ -196,7 +199,7 @@ class BackupScreen extends ConsumerWidget {
               if (!state.connected)
                 PrimaryButton(
                   label: 'Conectar Google Drive',
-                  onPressed: busy || !isGoogleConfigured
+                  onPressed: busy || !isGoogleConfigured || !isDriveBackupSupported
                       ? null
                       : () => _run(
                             context,
