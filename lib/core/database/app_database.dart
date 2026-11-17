@@ -80,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
   static const int generalDeckId = 1;
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +102,9 @@ class AppDatabase extends _$AppDatabase {
             await _createGeneralDeck();
             await _moveOrphanWordsToGeneral();
           }
+          if (from < 4) {
+            await _restoreSchoenExampleTranslation();
+          }
         },
       );
 
@@ -114,6 +117,21 @@ class AppDatabase extends _$AppDatabase {
         icon: DeckIcon.general,
       ),
       mode: InsertMode.insertOrIgnore,
+    );
+  }
+
+  /// Devolve a tradução do exemplo de "schön", tirada na v2. Só mexe na
+  /// ficha original, e só se o usuário não tiver escrito outra. (v4)
+  Future<void> _restoreSchoenExampleTranslation() {
+    return (update(wordEntries)
+          ..where((t) =>
+              t.germanWord.equals('schön') &
+              t.exampleGerman.equals(_schoenExample) &
+              t.examplePortuguese.isNull()))
+        .write(
+      const WordEntriesCompanion(
+        examplePortuguese: Value(_schoenExampleTranslation),
+      ),
     );
   }
 
@@ -214,6 +232,9 @@ LazyDatabase _openConnection() {
   });
 }
 
+const _schoenExample = 'Das Wetter ist schön.';
+const _schoenExampleTranslation = 'O tempo está bonito.';
+
 const _gehenPresent =
     'ich gehe · du gehst · er geht\nwir gehen · ihr geht · sie gehen';
 
@@ -278,7 +299,8 @@ final List<WordEntriesCompanion> _seedWords = [
     phoneticTip: const Value(
         'Para o ö, diga "ê" com os lábios arredondados como para "ô".'),
     degrees: const Value('schön → schöner → am schönsten'),
-    exampleGerman: const Value('Das Wetter ist schön.'),
+    exampleGerman: const Value(_schoenExample),
+    examplePortuguese: const Value(_schoenExampleTranslation),
   ),
   WordEntriesCompanion.insert(
     germanWord: 'gern',

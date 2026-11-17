@@ -59,14 +59,12 @@ class FlashcardCard extends StatelessWidget {
         ),
       if (degrees != null)
         _Section(label: 'graus', child: _LinesText(degrees, fontSize: 17)),
+      // Todas as classes: rótulo "EXEMPLO", frase e tradução abaixo.
       if (exampleDe != null)
-        // No adjetivo, o exemplo vem logo abaixo dos graus, sem rótulo.
-        degrees != null
-            ? _Example(german: exampleDe, portuguese: examplePt)
-            : _Section(
-                label: 'exemplo',
-                child: _Example(german: exampleDe, portuguese: examplePt),
-              ),
+        _Section(
+          label: 'exemplo',
+          child: _Example(german: exampleDe, portuguese: examplePt),
+        ),
     ];
 
     return Center(
