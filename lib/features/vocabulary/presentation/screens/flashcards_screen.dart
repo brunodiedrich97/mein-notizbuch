@@ -12,6 +12,7 @@ import '../../../../core/widgets/speak_button.dart';
 import '../../../review/presentation/review_session_screen.dart';
 import '../../../splash/presentation/splash_screen.dart' show kLogoMark;
 import '../../providers/vocabulary_provider.dart';
+import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
 import '../widgets/pronunciation_box.dart';
 import '../widgets/tablet_notebook_view.dart';
@@ -90,27 +91,8 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   }
 
   Future<void> _confirmDelete(WordEntry word) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir ficha?'),
-        content: Text(
-          '"${word.germanWord}" será removida do caderno. '
-          'Essa ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
+    final confirmed = await DeleteWordDialog.show(context, word);
+    if (!confirmed || !mounted) return;
 
     await ref.read(databaseProvider).deleteWord(word.id);
     if (!mounted) return;
