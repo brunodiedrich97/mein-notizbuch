@@ -10,7 +10,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/speak_button.dart';
 import '../../../review/presentation/review_session_screen.dart';
-import '../../../splash/presentation/splash_screen.dart' show kLogoMark;
 import '../../../decks/providers/deck_provider.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
@@ -129,11 +128,11 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
 
     final palette = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Com um deck aberto, o título mostra o nome dele.
+    // Com um deck aberto, o título mostra o nome dele; sem deck, fica vazio.
     final scopeId = ref.watch(deckScopeProvider);
     final scopedDeck =
         scopeId == null ? null : ref.watch(deckByIdProvider(scopeId));
-    final title = scopedDeck?.deck.namePt.toUpperCase() ?? 'MEIN NOTIZBUCH';
+    final title = scopedDeck?.deck.namePt.toUpperCase() ?? '';
     final isTablet = MediaQuery.sizeOf(context).width >= _tabletBreakpoint;
     // max-w-md do protótipo no celular; mais largo no caderno aberto.
     final barMaxWidth = isTablet ? 960.0 : 448.0;
@@ -342,14 +341,6 @@ class _Header extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                           ],
-                          Image.asset(
-                            kLogoMark,
-                            height: 28,
-                            color: p.text600,
-                            colorBlendMode: BlendMode.srcIn,
-                            excludeFromSemantics: true,
-                          ),
-                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               title,
