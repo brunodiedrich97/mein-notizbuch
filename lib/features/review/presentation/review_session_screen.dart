@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/grammar_colors.dart';
+import '../../../core/widgets/screen_header.dart';
+import '../../../core/widgets/speak_button.dart';
 import '../../vocabulary/presentation/widgets/pronunciation_box.dart';
 import '../providers/review_quiz_provider.dart';
 
@@ -15,7 +17,7 @@ class ReviewSessionScreen extends ConsumerWidget {
     final notifier = ref.read(reviewQuizProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Revisão')),
+      appBar: const ScreenHeader(title: 'Revisão'),
       body: quiz.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _CenteredMessage(
@@ -135,9 +137,7 @@ class _QuestionView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.volume_up),
-                  tooltip: 'Ouvir',
+                SpeakButton(
                   onPressed: () => speakWithFeedback(context, shownWord),
                 ),
               ],
@@ -161,34 +161,14 @@ class _QuestionView extends StatelessWidget {
               ),
             if (answered) ...[
               const SizedBox(height: 8),
-              Text(
-                wasCorrect
+              _FeedbackCard(
+                correct: wasCorrect,
+                verdict: wasCorrect
                     ? 'Certo!'
-                    : 'A resposta é «${q.options[q.correctIndex]}».',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                    : 'A resposta é "${q.options[q.correctIndex]}".',
+                example: example,
+                exampleTranslation: examplePt,
               ),
-              if (example != null && example.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  example,
-                  style: AppTheme.serif(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-                if (examplePt != null && examplePt.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      examplePt,
-                      style: TextStyle(fontSize: 15, color: muted),
-                    ),
-                  ),
-              ],
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: onNext,
@@ -361,6 +341,110 @@ class _CenteredMessage extends StatelessWidget {
             color: isDark ? Colors.white70 : Colors.black54,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Rótulo em caixa alta, no mesmo estilo do "EXEMPLO" das fichas.
+class _CapsLabel extends StatelessWidget {
+  const _CapsLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12,
+        height: 16 / 12,
+        letterSpacing: 0.6,
+        fontWeight: FontWeight.w600,
+        color: AppPalette.of(context).text400,
+      ),
+    );
+  }
+}
+
+/// Cartão exibido depois de responder: resultado e, se houver, o exemplo
+/// com a tradução.
+class _FeedbackCard extends StatelessWidget {
+  const _FeedbackCard({
+    required this.correct,
+    required this.verdict,
+    this.example,
+    this.exampleTranslation,
+  });
+
+  final bool correct;
+  final String verdict;
+  final String? example;
+  final String? exampleTranslation;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final error = Theme.of(context).colorScheme.error;
+    final example = this.example;
+    final translation = exampleTranslation;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: p.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                correct ? Icons.check_circle : Icons.cancel,
+                size: 20,
+                color: correct ? p.text900 : error,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  verdict,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: correct ? p.text900 : error,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (example != null && example.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Divider(height: 1, color: p.divider),
+            const SizedBox(height: 14),
+            const _CapsLabel('Exemplo'),
+            const SizedBox(height: 6),
+            Text(
+              example,
+              style: AppTheme.serif(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+                color: p.text900,
+              ),
+            ),
+            if (translation != null && translation.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const _CapsLabel('Tradução'),
+              const SizedBox(height: 6),
+              Text(
+                translation,
+                style: TextStyle(fontSize: 15, color: p.text600),
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }

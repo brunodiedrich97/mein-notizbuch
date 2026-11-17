@@ -6,6 +6,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
+import '../../../../core/widgets/screen_header.dart';
 import '../../models/grammar_type.dart';
 import '../../models/word_parser.dart';
 import '../../providers/vocabulary_provider.dart';
@@ -154,7 +155,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
       await ref.read(databaseProvider).addWord(entry);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('«$german» foi adicionada ao caderno.')),
+        SnackBar(content: Text('"$german" foi adicionada ao caderno.')),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -175,12 +176,17 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     final hasForms = c != GrammarCategory.other;
 
     return Scaffold(
-      appBar: _AddWordHeader(
-        onBack: () => Navigator.of(context).maybePop(),
-        onSpeak: () {
-          if (_german.text.trim().isEmpty) return;
-          speakWithFeedback(context, _germanToStore());
-        },
+      appBar: ScreenHeader(
+        title: 'Registrar Palavra',
+        trailing: HeaderActionButton(
+          iconPath: AppIcons.volumeUp,
+          label: 'TTS',
+          tooltip: 'Ouvir pronúncia',
+          onTap: () {
+            if (_german.text.trim().isEmpty) return;
+            speakWithFeedback(context, _germanToStore());
+          },
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -694,153 +700,6 @@ class _BoxField extends StatelessWidget {
           else
             field,
         ],
-      ),
-    );
-  }
-}
-
-/// Cabeçalho da tela: voltar (círculo), sobretítulo com ponto, título
-/// e botão de pronúncia à direita. Fica sobre uma linha divisória.
-class _AddWordHeader extends StatelessWidget implements PreferredSizeWidget {
-  const _AddWordHeader({required this.onBack, required this.onSpeak});
-
-  final VoidCallback onBack;
-  final VoidCallback onSpeak;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(72);
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: p.page,
-        border: Border(bottom: BorderSide(color: p.divider)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: SizedBox(
-              height: 72,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Tooltip(
-                      message: 'Voltar',
-                      child: Material(
-                        color: p.card,
-                        shape: CircleBorder(side: BorderSide(color: p.outline)),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: onBack,
-                          child: SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: Center(
-                              child: ChevronIcon.left(color: p.text500, size: 18),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              // Container(
-                              //   width: 6,
-                              //   height: 6,
-                              //   decoration: BoxDecoration(
-                              //     color: p.text500,
-                              //     shape: BoxShape.circle,
-                              //   ),
-                              // ),
-                              // const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  'FICHÁRIO NOTIZBUCH',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    height: 14 / 11,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.8,
-                                    color: p.text500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Registrar Palavra',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 16 / 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.3,
-                              color: p.text600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Tooltip(
-                      message: 'Ouvir pronúncia',
-                      child: Material(
-                        color: p.card,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: p.outline),
-                        ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: onSpeak,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPathIcon(
-                                  AppIcons.volumeUp,
-                                  size: 18,
-                                  color: p.text700,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'TTS',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: p.text700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
+import '../../../../core/widgets/speak_button.dart';
 import '../../../review/presentation/review_session_screen.dart';
 import '../../../splash/presentation/splash_screen.dart' show kLogoMark;
 import '../../providers/vocabulary_provider.dart';
@@ -94,7 +95,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir ficha?'),
         content: Text(
-          '«${word.germanWord}» será removida do caderno. '
+          '"${word.germanWord}" será removida do caderno. '
           'Essa ação não pode ser desfeita.',
         ),
         actions: [
@@ -114,7 +115,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     await ref.read(databaseProvider).deleteWord(word.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('«${word.germanWord}» foi excluída.')),
+      SnackBar(content: Text('"${word.germanWord}" foi excluída.')),
     );
   }
 
@@ -176,7 +177,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
       for (final w in visibleCards)
         PopupMenuItem(
           value: () => _confirmDelete(w),
-          child: Text('Excluir «${w.germanWord}»'),
+          child: Text('Excluir "${w.germanWord}"'),
         ),
     ];
 
@@ -647,30 +648,7 @@ class _NavigationFooter extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Tooltip(
-                    message: 'Tocar áudio',
-                    child: SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: OutlinedButton(
-                        onPressed: onSpeak,
-                        style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          backgroundColor: p.footer,
-                          foregroundColor: p.text700,
-                          side: BorderSide(color: p.outline),
-                          shape: shape,
-                          elevation: 0.5, // shadow-xs
-                          shadowColor: Colors.black26,
-                        ),
-                        child: SvgPathIcon(
-                          AppIcons.volumeDown,
-                          size: 20,
-                          color: p.text700,
-                        ),
-                      ),
-                    ),
-                  ),
+                  SpeakButton(onPressed: onSpeak),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
