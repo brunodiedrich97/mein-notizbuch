@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../providers/deck_provider.dart';
 import '../deck_icon_data.dart';
-import 'category_bar.dart';
 
 /// Quadrado claro com o ícone do deck.
 class DeckIconBox extends StatelessWidget {
@@ -98,8 +97,6 @@ class DeckCard extends StatelessWidget {
                 count == 1 ? '1 ficha' : '$count fichas',
                 style: AppTheme.mono(fontSize: 11, color: p.text400),
               ),
-              const SizedBox(height: 6),
-              CategoryBar(words: summary.words),
             ],
           ),
         ),

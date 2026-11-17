@@ -37,6 +37,8 @@ class CategoryBar extends StatelessWidget {
       child: SizedBox(
         height: height,
         child: Row(
+          // Sem "stretch", os ColoredBox (sem filho) ficam com altura zero.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (var i = 0; i < counts.length; i++) ...[
               if (i > 0) const SizedBox(width: 1.5),
@@ -54,7 +56,7 @@ class CategoryBar extends StatelessWidget {
   }
 }
 
-/// Legenda da [CategoryBar]: "● der 2  ● die 1  ● verbo 3".
+/// Legenda da [CategoryBar]: "● der  ● die  ● verbo".
 class CategoryLegend extends StatelessWidget {
   const CategoryLegend({super.key, required this.words});
 
@@ -81,7 +83,7 @@ class CategoryLegend extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                '${_legendLabel(e.key)} ${e.value}',
+                _legendLabel(e.key),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
