@@ -16,13 +16,26 @@ String translationOf(
 
 /// Texto da notificação da palavra do dia.
 class ReminderContent {
-  const ReminderContent({required this.title, required this.body});
+  const ReminderContent({
+    required this.title,
+    required this.category,
+    required this.meaning,
+  });
 
   /// A palavra em alemão: "der Hund".
   final String title;
 
-  /// Classe e significado: "substantivo · masculino — o cachorro".
-  final String body;
+  /// Classe gramatical: "substantivo · masculino".
+  final String category;
+
+  /// Significado: "o cachorro".
+  final String meaning;
+
+  /// Classe numa linha e significado na seguinte.
+  String get twoLines => '$category\n$meaning';
+
+  /// Tudo numa linha só (notificação recolhida no Android).
+  String get oneLine => '$category — $meaning';
 
   factory ReminderContent.fromWord(
     WordEntry word, {
@@ -34,7 +47,8 @@ class ReminderContent {
         : '${word.category.label} · $detail';
     return ReminderContent(
       title: word.germanWord,
-      body: '$category — ${translationOf(word, language: language)}',
+      category: category,
+      meaning: translationOf(word, language: language),
     );
   }
 }

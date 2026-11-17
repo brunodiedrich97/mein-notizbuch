@@ -89,6 +89,11 @@ class ReminderService {
     return await _android?.requestNotificationsPermission() ?? true;
   }
 
+  /// Texto principal: duas linhas no iOS; no Android, uma linha (a
+  /// notificação recolhida só mostra a primeira linha do texto).
+  static String _body(ReminderContent c) =>
+      Platform.isIOS ? c.twoLines : c.oneLine;
+
   NotificationDetails _details(ReminderContent c) {
     return NotificationDetails(
       android: AndroidNotificationDetails(
@@ -97,8 +102,9 @@ class ReminderService {
         channelDescription: 'Uma palavra do seu Notizbuch por dia.',
         icon: 'ic_notification',
         color: const Color(0xFF111827),
+        // Expandida: classe e significado em duas linhas.
         styleInformation: BigTextStyleInformation(
-          c.body,
+          c.twoLines,
           contentTitle: c.title,
         ),
       ),
@@ -158,7 +164,7 @@ class ReminderService {
       await _plugin.zonedSchedule(
         _firstId + i,
         content.title,
-        content.body,
+        _body(content),
         when,
         _details(content),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -181,7 +187,7 @@ class ReminderService {
     await _plugin.show(
       _testId,
       content.title,
-      content.body,
+      _body(content),
       _details(content),
       payload: '${word.id}',
     );
