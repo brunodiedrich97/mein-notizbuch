@@ -1,102 +1,141 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../../../core/theme/app_icons.dart';
+import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
+import '../../../../core/widgets/app_buttons.dart';
+import '../../../../core/widgets/screen_header.dart';
 import '../../../../core/widgets/speak_button.dart';
-import '../../../review/presentation/review_session_screen.dart';
+import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
+import '../../../review/presentation/review_session_screen.dart';
+import '../../../study/presentation/widgets/study_filter_sheet.dart';
+import '../../../study/providers/study_provider.dart';
 import '../../providers/vocabulary_provider.dart';
 import '../widgets/delete_word_dialog.dart';
 import '../widgets/flashcard_card.dart';
 import '../widgets/pronunciation_box.dart';
-import '../widgets/tablet_notebook_view.dart';
-import 'add_word_screen.dart';
+import '../widgets/word_list_card.dart';
 
+/// Sessão de estudo: um lote de fichas (do deck aberto, ou de todos), uma
+/// por vez. Para cada ficha, o usuário diz se sabia ou não; a resposta é
+/// gravada nos mesmos acertos e erros da revisão.
+///
+/// O deck vem de `deckScopeProvider`, e filtro, ordem e tamanho de
+/// `studySettingsProvider`.
 class FlashcardsScreen extends ConsumerStatefulWidget {
   const FlashcardsScreen({super.key});
+
+  /// Largura máxima do conteúdo (`max-w-md` do protótipo).
+  static const double maxWidth = 448;
 
   @override
   ConsumerState<FlashcardsScreen> createState() => _FlashcardsScreenState();
 }
 
 class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
-  /// A partir desta largura, o caderno abre em duas páginas.
-  static const double _tabletBreakpoint = 840;
-  static const Duration _pageDuration = Duration(milliseconds: 300);
+  /// Ids das fichas da sessão, na ordem em que aparecem.
+  List<int> _sessionIds = const [];
 
-  PageController _pageController = PageController();
-  int _currentIndex = 0;
-  bool? _lastLayoutWasTablet;
+  /// Quantas palavras há no deck (ou no caderno), antes do filtro.
+  int _poolSize = 0;
+
+  /// Respostas desta sessão: `true` = sabia.
+  final Map<int, bool> _results = {};
+
+  int _index = 0;
+  bool _ready = false;
+  bool _finished = false;
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _startSession();
   }
 
-  /// Ao voltar do layout de tablet para o de celular, o PageView é criado de
-  /// novo. Recriamos o controller para ele abrir na ficha atual, e não na 0.
-  void _syncControllerWithLayout(bool isTablet, int index) {
-    if (_lastLayoutWasTablet == isTablet) return;
-    _lastLayoutWasTablet = isTablet;
-    if (!isTablet && !_pageController.hasClients) {
-      _pageController.dispose();
-      _pageController = PageController(initialPage: index);
-    }
+  /// Monta uma sessão nova com as configurações atuais.
+  Future<void> _startSession() async {
+    final all = await ref.read(wordListProvider.future);
+    if (!mounted) return;
+    final deckId = ref.read(deckScopeProvider);
+    final pool =
+        deckId == null ? all : all.where((w) => deckOf(w) == deckId).toList();
+    final session = buildSession(pool, ref.read(studySettingsProvider));
+    setState(() {
+      _poolSize = pool.length;
+      _sessionIds = [for (final w in session) w.id];
+      _results.clear();
+      _index = 0;
+      _finished = false;
+      _ready = true;
+    });
   }
 
-  /// Avança ou recua uma ficha (duas no tablet). Como no protótipo, depois
-  /// da última volta para a primeira, e vice-versa.
-  void _step(int direction, int shown, int total, bool isTablet) {
+  Future<void> _openFilters() async {
+    final current = ref.read(studySettingsProvider);
+    final next = await showStudyFilterSheet(context, current);
+    if (next == null || !mounted) return;
+    ref.read(studySettingsProvider.notifier).state = next;
+    await _startSession();
+  }
+
+  Future<void> _clearFilter() async {
+    final s = ref.read(studySettingsProvider);
+    ref.read(studySettingsProvider.notifier).state =
+        s.copyWith(filter: WordFilter.all);
+    await _startSession();
+  }
+
+  void _go(int index, int total) {
     if (total == 0) return;
-    final step = isTablet ? 2 : 1;
-    final lastStart = isTablet ? (total - 1) - (total - 1) % 2 : total - 1;
-
-    var target = shown + direction * step;
-    final wrapped = target > lastStart || target < 0;
-    if (target > lastStart) target = 0;
-    if (target < 0) target = lastStart;
-
-    if (!isTablet && _pageController.hasClients) {
-      if (wrapped) {
-        _pageController.jumpToPage(target);
-      } else {
-        _pageController.animateToPage(
-          target,
-          duration: _pageDuration,
-          curve: Curves.easeOut,
-        );
-      }
-    } else {
-      setState(() => _currentIndex = target);
-    }
+    setState(() => _index = index.clamp(0, total - 1));
   }
 
-  Future<void> _openAddWord() {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            AddWordScreen(initialDeckId: ref.read(deckScopeProvider)),
+  /// Registra a resposta e vai para a próxima ficha ainda sem resposta.
+  void _grade(List<WordEntry> session, int at, bool knew) {
+    if (session.isEmpty) return;
+    final word = session[at];
+    // Grava só a primeira resposta, para não contar a mesma ficha duas vezes.
+    if (!_results.containsKey(word.id)) {
+      ref.read(databaseProvider).recordReview(word.id, correct: knew);
+    }
+    setState(() {
+      _results[word.id] = knew;
+      final next = _nextUnanswered(session, at);
+      if (next == null) {
+        _finished = true;
+      } else {
+        _index = next;
+      }
+    });
+  }
+
+  int? _nextUnanswered(List<WordEntry> session, int from) {
+    for (var k = 1; k <= session.length; k++) {
+      final i = (from + k) % session.length;
+      if (!_results.containsKey(session[i].id)) return i;
+    }
+    return null;
+  }
+
+  Future<void> _openJumpSheet(List<WordEntry> session) async {
+    final target = await showAppSheet<int>(
+      context,
+      (_) => _JumpSheet(
+        session: session,
+        current: _index,
+        results: _results,
       ),
     );
-  }
-
-  Future<void> _openReview() {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ReviewSessionScreen()),
-    );
+    if (target != null && mounted) _go(target, session.length);
   }
 
   Future<void> _confirmDelete(WordEntry word) async {
     final confirmed = await DeleteWordDialog.show(context, word);
     if (!confirmed || !mounted) return;
-
     await ref.read(databaseProvider).deleteWord(word.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -104,170 +143,321 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     );
   }
 
-  String _counterText(int shown, int total, bool isTablet) {
-    if (total == 0) return '0 de 0';
-    if (isTablet && shown + 1 < total) {
-      return '${shown + 1}–${shown + 2} de $total';
-    }
-    return '${shown + 1} de $total';
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Ao trocar o filtro, volta para a primeira ficha da nova lista.
-    ref.listen<WordFilter>(wordFilterProvider, (previous, next) {
-      if (previous == next) return;
-      setState(() => _currentIndex = 0);
-      if (_pageController.hasClients) _pageController.jumpToPage(0);
-    });
-
-    final wordsAsync = ref.watch(filteredWordsProvider);
-    final filter = ref.watch(wordFilterProvider);
-    final notebookIsEmpty =
-        ref.watch(wordListProvider).valueOrNull?.isEmpty ?? false;
-
-    final palette = AppPalette.of(context);
+    final p = AppPalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Com um deck aberto, o título mostra o nome dele; sem deck, fica vazio.
-    final scopeId = ref.watch(deckScopeProvider);
-    final scopedDeck =
-        scopeId == null ? null : ref.watch(deckByIdProvider(scopeId));
-    final title = scopedDeck?.deck.namePt.toUpperCase() ?? '';
-    final isTablet = MediaQuery.sizeOf(context).width >= _tabletBreakpoint;
-    // max-w-md do protótipo no celular; mais largo no caderno aberto.
-    final barMaxWidth = isTablet ? 960.0 : 448.0;
+    final settings = ref.watch(studySettingsProvider);
+    final deckId = ref.watch(deckScopeProvider);
+    final deck = deckId == null ? null : ref.watch(deckByIdProvider(deckId));
+    final deckName = deck?.deck.namePt;
 
-    final words = wordsAsync.valueOrNull ?? const <WordEntry>[];
-    final total = words.length;
-    // O índice é limitado ao tamanho atual (a lista pode encolher após
-    // excluir uma ficha ou trocar de filtro).
-    final index = total == 0 ? 0 : math.min(_currentIndex, total - 1);
-    final shown = isTablet ? index - index % 2 : index;
-    _syncControllerWithLayout(isTablet, shown);
-
-    final visibleCards = <WordEntry>[
-      if (total > 0) words[shown],
-      if (isTablet && shown + 1 < total) words[shown + 1],
+    // A sessão guarda só os ids; os dados vêm sempre atualizados do banco
+    // (e fichas excluídas saem da sessão).
+    final all = ref.watch(wordListProvider).valueOrNull ?? const <WordEntry>[];
+    final byId = {for (final w in all) w.id: w};
+    final session = [
+      for (final id in _sessionIds)
+        if (byId[id] != null) byId[id]!,
     ];
-    final progress = total == 0
-        ? 0.0
-        : math.min(shown + (isTablet ? 2 : 1), total) / total;
+    final total = session.length;
+    final index = total == 0 ? 0 : _index.clamp(0, total - 1);
+    final current = total == 0 ? null : session[index];
+    final answered = _results.length;
 
-    void next() => _step(1, shown, total, isTablet);
-    void previous() => _step(-1, shown, total, isTablet);
+    final eyebrow = (deckName ?? 'Todas as fichas').toUpperCase();
+    final title = _finished ? 'Sessão concluída' : 'Sessão de estudo';
 
-    final menuItems = <PopupMenuEntry<VoidCallback>>[
-      _menuItem(
-        palette,
-        icon: Icons.add_rounded,
-        label: 'Adicionar palavra',
-        value: _openAddWord,
-      ),
-      _menuItem(
-        palette,
-        icon: Icons.style_outlined,
-        label: 'Revisar',
-        value: _openReview,
-        enabled: !notebookIsEmpty,
-      ),
-      if (visibleCards.isNotEmpty) ...[
-        const PopupMenuDivider(height: 9),
-        _menuHeading(palette, 'Excluir ficha'),
-        for (final w in visibleCards)
-          _menuItem(
-            palette,
-            icon: Icons.delete_outline_rounded,
-            label: w.germanWord,
-            labelColor: GrammarColors.of(
-              w.category,
-              isDark: Theme.of(context).brightness == Brightness.dark,
+    Widget body;
+    if (!_ready) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (_finished) {
+      body = _SessionSummary(
+        session: session,
+        results: _results,
+        deckName: deckName,
+        onBack: () => Navigator.of(context).maybePop(),
+        onRestart: _startSession,
+      );
+    } else if (total == 0) {
+      body = _poolSize == 0
+          ? _EmptyState(
+              message: deckName == null
+                  ? 'Seu Notizbuch ainda não tem fichas.'
+                  : 'O deck "$deckName" ainda não tem fichas.',
+              actionLabel: 'Adicionar palavra',
+              onAction: () => openAddWord(context, deckId: deckId),
+            )
+          : _EmptyState(
+              message: 'Nenhuma ficha com o filtro '
+                  '"${settings.filter.label}".',
+              actionLabel: 'Limpar filtro',
+              onAction: _clearFilter,
+            );
+    } else {
+      final word = current!;
+      body = Column(
+        children: [
+          _SessionToolbar(
+            progress: answered / total,
+            filterLabel: settings.filter.label,
+            orderLabel: settings.order.label,
+            onFilters: _openFilters,
+          ),
+          Expanded(
+            child: GestureDetector(
+              // Deslizar navega entre as fichas, sem responder.
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragEnd: (d) {
+                final v = d.primaryVelocity ?? 0;
+                if (v < -200) _go(index + 1, total);
+                if (v > 200) _go(index - 1, total);
+              },
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0.04, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                child: FlashcardCard(
+                  key: ValueKey(word.id),
+                  word: word,
+                ),
+              ),
             ),
-            serif: true,
-            value: () => _confirmDelete(w),
           ),
-      ],
-    ];
+          _GradeFooter(
+            answer: _results[word.id],
+            onNotYet: () => _grade(session, index, false),
+            onKnew: () => _grade(session, index, true),
+            onSpeak: () => speakWithFeedback(context, word.germanWord),
+          ),
+        ],
+      );
+    }
 
-    Widget content = wordsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Não foi possível abrir o caderno: $err',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: palette.text600),
-          ),
-        ),
-      ),
-      data: (_) {
-        if (total == 0) {
-          return _EmptyState(
-            notebookIsEmpty: notebookIsEmpty,
-            onAdd: _openAddWord,
-          );
-        }
-        if (isTablet) {
-          // Deslizar para os lados também funciona no caderno aberto.
-          return GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onHorizontalDragEnd: (d) {
-              final v = d.primaryVelocity ?? 0;
-              if (v < -200) next();
-              if (v > 200) previous();
-            },
-            child: TabletNotebookView(
-              left: words[shown],
-              right: shown + 1 < total ? words[shown + 1] : null,
-            ),
-          );
-        }
-        return PageView.builder(
-          controller: _pageController,
-          itemCount: total,
-          onPageChanged: (i) => setState(() => _currentIndex = i),
-          itemBuilder: (_, i) => FlashcardCard(
-            key: ValueKey(words[i].id),
-            word: words[i],
-          ),
-        );
-      },
-    );
+    final showControls = _ready && !_finished && total > 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Ícones da barra de status legíveis sobre o fundo de papel.
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: CallbackShortcuts(
-        // Teclado, como no protótipo: → ou espaço avança, ← volta.
+        // Teclado: ← e → navegam; 1 = ainda não, 2 = sabia.
         bindings: {
-          const SingleActivator(LogicalKeyboardKey.arrowRight): next,
-          const SingleActivator(LogicalKeyboardKey.space): next,
-          const SingleActivator(LogicalKeyboardKey.arrowLeft): previous,
+          const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+              _go(index + 1, total),
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+              _go(index - 1, total),
+          if (showControls) ...{
+            const SingleActivator(LogicalKeyboardKey.digit1): () =>
+                _grade(session, index, false),
+            const SingleActivator(LogicalKeyboardKey.digit2): () =>
+                _grade(session, index, true),
+          },
         },
         child: Focus(
           autofocus: true,
           child: Scaffold(
-            body: Column(
-              children: [
-                _Header(
-                  title: title,
-                  maxWidth: barMaxWidth,
-                  counter: _counterText(shown, total, isTablet),
-                  progress: progress,
-                  filter: filter,
-                  onFilter: (f) =>
-                      ref.read(wordFilterProvider.notifier).state = f,
-                  menuItems: menuItems,
-                ),
-                Expanded(child: content),
-                if (total > 0)
-                  _NavigationFooter(
-                    maxWidth: barMaxWidth,
-                    onBack: previous,
-                    onForward: next,
-                    onSpeak: () =>
-                        speakWithFeedback(context, words[shown].germanWord),
+            backgroundColor: p.page,
+            appBar: ScreenHeader(
+              eyebrow: eyebrow,
+              title: title,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showControls) ...[
+                    _CounterPill(
+                      text: '${index + 1} / $total',
+                      onTap: () => _openJumpSheet(session),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  _SessionMenu(
+                    current: showControls ? current : null,
+                    onWords: () => openWordIndex(context, deckId: deckId),
+                    onAdd: () => openAddWord(context, deckId: deckId),
+                    onReview: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ReviewSessionScreen(),
+                      ),
+                    ),
+                    onDelete: _confirmDelete,
                   ),
+                ],
+              ),
+            ),
+            body: body,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Progresso da sessão e os botões de filtro e ordem.
+class _SessionToolbar extends StatelessWidget {
+  const _SessionToolbar({
+    required this.progress,
+    required this.filterLabel,
+    required this.orderLabel,
+    required this.onFilters,
+  });
+
+  final double progress;
+  final String filterLabel;
+  final String orderLabel;
+  final VoidCallback onFilters;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: FlashcardsScreen.maxWidth),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                label: 'Progresso da sessão',
+                value: '${(progress * 100).round()}%',
+                child: Container(
+                  height: 6,
+                  alignment: Alignment.centerLeft,
+                  decoration: BoxDecoration(
+                    color: p.track,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: AnimatedFractionallySizedBox(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    widthFactor: progress.clamp(0.0, 1.0).toDouble(),
+                    heightFactor: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: p.progress,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _ToolbarButton(
+                      icon: Icons.tune_rounded,
+                      label: 'Filtro · $filterLabel',
+                      onTap: onFilters,
+                    ),
+                    const SizedBox(width: 8),
+                    _ToolbarButton(
+                      icon: Icons.swap_vert_rounded,
+                      label: orderLabel,
+                      onTap: onFilters,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolbarButton extends StatelessWidget {
+  const _ToolbarButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final radius = BorderRadius.circular(10);
+    return Material(
+      color: p.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: p.outline),
+      ),
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: p.text500),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppText.meta(p).copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: p.text700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Contador "3 / 12" tocável, no cabeçalho.
+class _CounterPill extends StatelessWidget {
+  const _CounterPill({required this.text, required this.onTap});
+
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final radius = BorderRadius.circular(12);
+    return Tooltip(
+      message: 'Ir para outra ficha',
+      child: Material(
+        color: p.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: p.outline),
+        ),
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  text,
+                  style: AppTheme.mono(fontSize: 12, color: p.text700),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.expand_more_rounded, size: 16, color: p.text500),
               ],
             ),
           ),
@@ -277,371 +467,29 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
   }
 }
 
-/// `<header>` do protótipo: título, contador, barra de progresso e filtros.
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.title,
-    required this.maxWidth,
-    required this.counter,
-    required this.progress,
-    required this.filter,
-    required this.onFilter,
-    required this.menuItems,
-  });
-
-  final String title;
-  final double maxWidth;
-  final String counter;
-  final double progress;
-  final WordFilter filter;
-  final ValueChanged<WordFilter> onFilter;
-  final List<PopupMenuEntry<VoidCallback>> menuItems;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: p.page,
-        border: Border(bottom: BorderSide(color: p.divider)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Título + contador (+ menu, que não existe no protótipo)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 4),
-                    child: SizedBox(
-                      height: 24,
-                      child: Row(
-                        children: [
-                          // Voltar para a tela inicial.
-                          if (Navigator.of(context).canPop()) ...[
-                            Tooltip(
-                              message: 'Voltar',
-                              child: InkResponse(
-                                radius: 18,
-                                onTap: () => Navigator.of(context).maybePop(),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4),
-                                  child: ChevronIcon.left(
-                                    color: p.text500,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Expanded(
-                            child: Text(
-                              title,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 16 / 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.3,
-                                color: p.text600,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            counter,
-                            style: AppTheme.mono(
-                              fontSize: 11,
-                              letterSpacing: 0.275,
-                              color: p.text500,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 32,
-                            height: 24,
-                            child: PopupMenuButton<VoidCallback>(
-                              tooltip: 'Mais opções',
-                              padding: EdgeInsets.zero,
-                              iconSize: 18,
-                              icon: Icon(Icons.more_vert, color: p.text500),
-                              position: PopupMenuPosition.under,
-                              offset: const Offset(0, 6),
-                              color: p.card,
-                              surfaceTintColor: Colors.transparent,
-                              elevation: 6,
-                              shadowColor: Colors.black26,
-                              constraints: const BoxConstraints(minWidth: 220),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(color: p.cardBorder),
-                              ),
-                              onSelected: (action) => action(),
-                              itemBuilder: (_) => menuItems,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Barra fina: h-1.5, gray-200/70, preenchimento gray-800
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Semantics(
-                      label: 'Progresso no caderno',
-                      value: counter,
-                      child: Container(
-                        height: 6,
-                        alignment: Alignment.centerLeft,
-                        decoration: BoxDecoration(
-                          color: p.track,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: AnimatedFractionallySizedBox(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                          widthFactor: progress.clamp(0.0, 1.0).toDouble(),
-                          heightFactor: 1,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: p.progress,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Filtros (rolagem horizontal, gap-1.5)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 2,
-                    ),
-                    child: Row(
-                      children: [
-                        for (final f in WordFilter.values) ...[
-                          if (f != WordFilter.values.first)
-                            const SizedBox(width: 6),
-                          _FilterPill(
-                            filter: f,
-                            selected: f == filter,
-                            onTap: () => onFilter(f),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Ponto verde com `animate-pulse` (opacidade 1 → 0,5 → 1 a cada 2 s).
-class _PulsingDot extends StatefulWidget {
-  const _PulsingDot();
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 2),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Respeita "reduzir movimento" do sistema.
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _controller.stop();
-    } else if (!_controller.isAnimating) {
-      _controller.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const curve = Cubic(0.4, 0, 0.6, 1);
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, child) {
-        final t = _controller.value;
-        // 0→0,5: some até 50%; 0,5→1: volta.
-        final phase = t < 0.5 ? t * 2 : (1 - t) * 2;
-        final opacity = 1 - 0.5 * curve.transform(phase);
-        return Opacity(opacity: opacity, child: child);
-      },
-      child: Container(
-        width: 8,
-        height: 8,
-        decoration: const BoxDecoration(
-          color: GrammarColors.brandDot,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
-/// Pílula de filtro: `px-3 py-1 rounded-full text-xs font-semibold`.
-class _FilterPill extends StatelessWidget {
-  const _FilterPill({
-    required this.filter,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final WordFilter filter;
-  final bool selected;
-  final VoidCallback onTap;
-
-  static ChipColors? _colorsFor(WordFilter f, bool isDark) => switch (f) {
-        WordFilter.all => null, // "Todos" não tem borda no protótipo
-        WordFilter.der => isDark ? ChipColors.derDark : ChipColors.der,
-        WordFilter.die => isDark ? ChipColors.dieDark : ChipColors.die,
-        WordFilter.das => isDark ? ChipColors.dasDark : ChipColors.das,
-        WordFilter.verbs => isDark ? ChipColors.verbDark : ChipColors.verb,
-        WordFilter.adjectives =>
-          isDark ? ChipColors.adjectiveDark : ChipColors.adjective,
-        WordFilter.prepositions =>
-          isDark ? ChipColors.prepositionDark : ChipColors.preposition,
-        WordFilter.others =>
-          isDark ? ChipColors.neutralDark : ChipColors.neutral,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final c = _colorsFor(filter, isDark) ??
-        (isDark ? ChipColors.neutralDark : ChipColors.neutral);
-    final hasBorder = filter != WordFilter.all;
-    final shape = StadiumBorder(
-      side: hasBorder ? BorderSide(color: c.border) : BorderSide.none,
-    );
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: Material(
-        color: selected ? p.ink : p.card,
-        shape: shape,
-        elevation: selected ? 0.5 : 0, // shadow-xs
-        shadowColor: Colors.black26,
-        child: InkWell(
-          customBorder: shape,
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12,
-              // py-1 + a borda de 1 px que só os chips coloridos têm
-              vertical: hasBorder ? 4 : 5,
-            ),
-            child: Text(
-              filter.label,
-              style: TextStyle(
-                fontSize: 12,
-                height: 16 / 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? p.onInk : c.text,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.notebookIsEmpty, required this.onAdd});
-
-  final bool notebookIsEmpty;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              notebookIsEmpty
-                  ? 'Seu caderno está vazio.'
-                  : 'Nenhuma ficha nesta categoria ainda.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: p.text600),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Adicionar palavra'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// `<footer>` do protótipo: Anterior · Ouvir · Próximo.
-class _NavigationFooter extends StatelessWidget {
-  const _NavigationFooter({
-    required this.maxWidth,
-    required this.onBack,
-    required this.onForward,
+/// Rodapé: "Ainda não", áudio e "Sabia".
+class _GradeFooter extends StatelessWidget {
+  const _GradeFooter({
+    required this.answer,
+    required this.onNotYet,
+    required this.onKnew,
     required this.onSpeak,
   });
 
-  final double maxWidth;
-  final VoidCallback onBack;
-  final VoidCallback onForward;
+  /// Resposta já dada para a ficha atual (`null` = nenhuma).
+  final bool? answer;
+  final VoidCallback onNotYet;
+  final VoidCallback onKnew;
   final VoidCallback onSpeak;
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    );
-    const label = TextStyle(
-      fontFamily: AppTheme.sansFamily,
-      fontSize: 14,
-      height: 20 / 14,
-      fontWeight: FontWeight.w600,
-    );
-    // py-3 + linha de 20 px
-    const buttonSize = Size.fromHeight(44);
-    const buttonPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
+    final caption = switch (answer) {
+      null => 'VOCÊ SABIA ESTA?',
+      true => 'VOCÊ MARCOU: SABIA',
+      false => 'VOCÊ MARCOU: AINDA NÃO',
+    };
 
     return Container(
       decoration: BoxDecoration(
@@ -651,58 +499,36 @@ class _NavigationFooter extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Center(
+          heightFactor: 1,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
+            constraints:
+                const BoxConstraints(maxWidth: FlashcardsScreen.maxWidth),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: onBack,
-                      style: TextButton.styleFrom(
-                        minimumSize: buttonSize,
-                        padding: buttonPadding,
-                        backgroundColor: p.softButton,
-                        foregroundColor: p.text700,
-                        textStyle: label,
-                        shape: shape,
+                  Text(caption, style: AppText.caption(p)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SoftButton(
+                          label: 'Ainda não',
+                          onPressed: onNotYet,
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ChevronIcon.left(color: p.text700),
-                          const SizedBox(width: 6),
-                          const Text('Anterior'),
-                        ],
+                      const SizedBox(width: 12),
+                      SpeakButton(onPressed: onSpeak),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: PrimaryButton(
+                          label: 'Sabia',
+                          chevron: true,
+                          onPressed: onKnew,
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SpeakButton(onPressed: onSpeak),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: onForward,
-                      style: FilledButton.styleFrom(
-                        minimumSize: buttonSize,
-                        padding: buttonPadding,
-                        backgroundColor: p.ink,
-                        foregroundColor: p.onInk,
-                        textStyle: label,
-                        shape: shape,
-                        elevation: 1, // shadow-sm
-                        shadowColor: Colors.black26,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('Próximo'),
-                          const SizedBox(width: 6),
-                          ChevronIcon.right(color: p.onInk),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -714,64 +540,309 @@ class _NavigationFooter extends StatelessWidget {
   }
 }
 
-/// Item do menu "⋮": ícone + texto, no estilo da interface.
-PopupMenuItem<VoidCallback> _menuItem(
-  AppPalette p, {
-  required IconData icon,
-  required String label,
-  required VoidCallback value,
-  bool enabled = true,
-  Color? labelColor,
-  bool serif = false,
-}) {
-  final color = enabled ? (labelColor ?? p.text700) : p.text400;
-  return PopupMenuItem<VoidCallback>(
-    value: value,
-    enabled: enabled,
-    height: 44,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    child: Row(
+/// Lista das fichas da sessão, para pular para qualquer uma.
+class _JumpSheet extends StatelessWidget {
+  const _JumpSheet({
+    required this.session,
+    required this.current,
+    required this.results,
+  });
+
+  final List<WordEntry> session;
+  final int current;
+  final Map<int, bool> results;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final error = Theme.of(context).colorScheme.error;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(icon, size: 18, color: enabled ? p.text500 : p.text400),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: serif
-                ? AppTheme.serif(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  )
-                : TextStyle(
-                    fontFamily: AppTheme.sansFamily,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: color,
+        Text('FICHAS DA SESSÃO', style: AppText.section(p)),
+        const SizedBox(height: 8),
+        for (var i = 0; i < session.length; i++)
+          InkWell(
+            onTap: () => Navigator.of(context).pop(i),
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                border: i == session.length - 1
+                    ? null
+                    : Border(bottom: BorderSide(color: p.divider)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      '${i + 1}',
+                      style: AppTheme.mono(fontSize: 11, color: p.text400),
+                    ),
                   ),
+                  Expanded(
+                    child: Text(
+                      session[i].germanWord,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.serif(
+                        fontSize: 17,
+                        fontWeight: i == current
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: GrammarColors.titleOf(
+                          session[i].category,
+                          isDark: isDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  switch (results[session[i].id]) {
+                    true => Icon(Icons.check_rounded, size: 18, color: p.text700),
+                    false => Icon(Icons.close_rounded, size: 18, color: error),
+                    null => i == current
+                        ? Text('atual', style: AppText.meta(p))
+                        : const SizedBox.shrink(),
+                  },
+                ],
+              ),
+            ),
           ),
-        ),
       ],
-    ),
-  );
+    );
+  }
 }
 
-/// Rótulo de grupo do menu, em caixa alta (não clicável).
-PopupMenuItem<VoidCallback> _menuHeading(AppPalette p, String text) {
-  return PopupMenuItem<VoidCallback>(
-    enabled: false,
-    height: 28,
-    padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
-    child: Text(
-      text.toUpperCase(),
-      style: TextStyle(
-        fontFamily: AppTheme.sansFamily,
-        fontSize: 11,
-        letterSpacing: 0.6,
-        fontWeight: FontWeight.w600,
-        color: p.text400,
+/// Menu "⋮" da sessão.
+class _SessionMenu extends StatelessWidget {
+  const _SessionMenu({
+    required this.current,
+    required this.onWords,
+    required this.onAdd,
+    required this.onReview,
+    required this.onDelete,
+  });
+
+  /// Ficha na tela (para "Excluir esta ficha"), se houver.
+  final WordEntry? current;
+  final VoidCallback onWords;
+  final VoidCallback onAdd;
+  final VoidCallback onReview;
+  final ValueChanged<WordEntry> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final word = current;
+
+    PopupMenuItem<VoidCallback> item(
+      IconData icon,
+      String label,
+      VoidCallback action,
+    ) {
+      return PopupMenuItem<VoidCallback>(
+        value: action,
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: p.text500),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: AppText.item(p))),
+          ],
+        ),
+      );
+    }
+
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Mais opções',
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 6),
+      color: p.card,
+      surfaceTintColor: Colors.transparent,
+      elevation: 6,
+      shadowColor: Colors.black26,
+      constraints: const BoxConstraints(minWidth: 220),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: p.cardBorder),
       ),
-    ),
-  );
+      onSelected: (action) => action(),
+      itemBuilder: (_) => [
+        item(Icons.list_rounded, 'Ver palavras', onWords),
+        item(Icons.add_rounded, 'Adicionar palavra', onAdd),
+        item(Icons.style_outlined, 'Revisar (quiz)', onReview),
+        if (word != null) ...[
+          const PopupMenuDivider(height: 9),
+          item(
+            Icons.delete_outline_rounded,
+            'Excluir esta ficha',
+            () => onDelete(word),
+          ),
+        ],
+      ],
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: p.outline),
+        ),
+        child: Icon(Icons.more_vert, size: 20, color: p.text700),
+      ),
+    );
+  }
+}
+
+/// Resumo no fim da sessão.
+class _SessionSummary extends StatelessWidget {
+  const _SessionSummary({
+    required this.session,
+    required this.results,
+    required this.deckName,
+    required this.onBack,
+    required this.onRestart,
+  });
+
+  final List<WordEntry> session;
+  final Map<int, bool> results;
+  final String? deckName;
+  final VoidCallback onBack;
+  final VoidCallback onRestart;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final knew = results.values.where((r) => r).length;
+    final notYet = results.values.where((r) => !r).length;
+    final toReview = [
+      for (final w in session)
+        if (results[w.id] == false) w,
+    ];
+    final total = session.length;
+    final great = total > 0 && knew / total >= 0.7;
+    final studied = total == 1 ? '1 ficha' : '$total fichas';
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: FlashcardsScreen.maxWidth),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
+          children: [
+            Text('SESSÃO CONCLUÍDA', style: AppText.section(p)),
+            const SizedBox(height: 8),
+            Text(
+              great ? 'Gut gemacht!' : 'Weiter so!',
+              style: AppText.display(p, fontSize: 40),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              deckName == null
+                  ? 'Você estudou $studied.'
+                  : 'Você estudou $studied do deck $deckName.',
+              style: AppText.body(p),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: _StatTile(value: knew, label: 'sabia')),
+                const SizedBox(width: 12),
+                Expanded(child: _StatTile(value: notYet, label: 'ainda não')),
+              ],
+            ),
+            if (toReview.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Text('PARA REVER', style: AppText.section(p)),
+              const SizedBox(height: 12),
+              WordListCard(
+                words: toReview,
+                onTap: (w) => openWordDetail(context, w.id),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: SoftButton(label: 'Voltar', onPressed: onBack)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: PrimaryButton(
+                    label: 'Nova sessão',
+                    onPressed: onRestart,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.value, required this.label});
+
+  final int value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: p.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$value', style: AppText.display(p, fontSize: 32)),
+          const SizedBox(height: 4),
+          Text(label, style: AppText.meta(p)),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 320),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: AppText.body(p),
+              ),
+              const SizedBox(height: 16),
+              PrimaryButton(label: actionLabel, onPressed: onAction),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

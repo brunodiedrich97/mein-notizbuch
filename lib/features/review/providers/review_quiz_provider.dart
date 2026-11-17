@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../study/providers/study_provider.dart';
 import '../../vocabulary/models/grammar_type.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 
@@ -84,9 +85,6 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
     return ReviewQuizState(questions: _buildQuestions(pool, words));
   }
 
-  /// Palavras erradas e nunca revisadas aparecem primeiro.
-  int _priority(WordEntry w) =>
-      w.wrongCount * 2 - w.correctCount + (w.lastReviewedAt == null ? 2 : 0);
 
   /// [words] são as palavras perguntadas; [all] fornece as traduções
   /// usadas como opções erradas (mais variedade num deck pequeno).
@@ -97,7 +95,7 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
     if (words.isEmpty) return const [];
 
     final pool = [...words]..shuffle(_random);
-    pool.sort((a, b) => _priority(b).compareTo(_priority(a)));
+    pool.sort((a, b) => studyPriority(b).compareTo(studyPriority(a)));
     final chosen = pool.take(sessionSize).toList()..shuffle(_random);
 
     final translations =

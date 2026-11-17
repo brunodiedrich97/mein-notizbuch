@@ -177,7 +177,7 @@ class HomeScreen extends ConsumerWidget {
                           'ÚLTIMAS PALAVRAS',
                           trailing: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: () => openFlashcards(context, ref),
+                            onTap: () => openWordIndex(context),
                             child: Padding(
                               padding: const EdgeInsets.all(4),
                               child: Row(
@@ -202,7 +202,10 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        WordListCard(words: recent),
+                        WordListCard(
+                          words: recent,
+                          onTap: (w) => openWordDetail(context, w.id),
+                        ),
                       ],
                     ],
                   ),

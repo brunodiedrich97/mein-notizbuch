@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
 import '../../home/presentation/home_screen.dart' show HomeScreen;
 import '../../vocabulary/presentation/widgets/word_list_card.dart';
@@ -18,6 +20,9 @@ class DeckScreen extends ConsumerWidget {
   const DeckScreen({super.key, required this.deckId});
 
   final int deckId;
+
+  /// Quantas palavras aparecem antes de "Ver todas".
+  static const int previewCount = 8;
 
   Future<void> _confirmDelete(
     BuildContext context,
@@ -55,16 +60,6 @@ class DeckScreen extends ConsumerWidget {
     final words = summary.words.reversed.toList();
     final count = words.length;
     final canReview = count >= HomeScreen.minWordsForReview;
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    );
-    const label = TextStyle(
-      fontFamily: AppTheme.sansFamily,
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-    );
-    const buttonSize = Size.fromHeight(44);
-
     return Scaffold(
       appBar: ScreenHeader(
         eyebrow: 'DECK',
@@ -114,13 +109,13 @@ class DeckScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               Text(
                 count == 1 ? '1 ficha' : '$count fichas',
-                style: TextStyle(fontSize: 12, color: p.text500),
+                style: AppText.meta(p),
               ),
               if (count > 0) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 CategoryBar(words: summary.words, height: 8),
                 const SizedBox(height: 8),
                 CategoryLegend(words: summary.words),
@@ -129,36 +124,20 @@ class DeckScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: FilledButton(
+                    child: PrimaryButton(
+                      label: 'Estudar fichas',
                       onPressed: count == 0
                           ? null
                           : () => openFlashcards(context, ref, deckId: deckId),
-                      style: FilledButton.styleFrom(
-                        minimumSize: buttonSize,
-                        backgroundColor: p.ink,
-                        foregroundColor: p.onInk,
-                        textStyle: label,
-                        shape: shape,
-                        elevation: 1, // shadow-sm, como "Próximo"
-                        shadowColor: Colors.black26,
-                      ),
-                      child: const Text('Estudar fichas'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: TextButton(
+                    child: SoftButton(
+                      label: 'Revisar deck',
                       onPressed: canReview
                           ? () => openReview(context, ref, deckId: deckId)
                           : null,
-                      style: TextButton.styleFrom(
-                        minimumSize: buttonSize,
-                        backgroundColor: p.softButton,
-                        foregroundColor: p.text700,
-                        textStyle: label,
-                        shape: shape,
-                      ),
-                      child: const Text('Revisar deck'),
                     ),
                   ),
                 ],
@@ -166,38 +145,17 @@ class DeckScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'PALAVRAS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: p.text600,
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(8),
+                  Expanded(child: Text('PALAVRAS', style: AppText.section(p))),
+                  _LinkButton(
+                    label: '+ Adicionar',
                     onTap: () => openAddWord(context, deckId: deckId),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Text(
-                        '+ Adicionar',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: p.text500,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               if (words.isEmpty)
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: p.card,
                     borderRadius: BorderRadius.circular(16),
@@ -207,17 +165,48 @@ class DeckScreen extends ConsumerWidget {
                     'Nenhuma palavra neste deck ainda. Toque em '
                     '"+ Adicionar" para cadastrar a primeira.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.45,
-                      color: p.text500,
-                    ),
+                    style: AppText.body(p),
                   ),
                 )
-              else
-                WordListCard(words: words),
+              else ...[
+                WordListCard(
+                  words: words.take(previewCount).toList(),
+                  onTap: (w) => openWordDetail(context, w.id),
+                ),
+                if (count > previewCount) ...[
+                  const SizedBox(height: 12),
+                  SoftButton(
+                    label: 'Ver todas as $count palavras',
+                    onPressed: () => openWordIndex(context, deckId: deckId),
+                  ),
+                ],
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Link de texto pequeno, à direita de um título de seção.
+class _LinkButton extends StatelessWidget {
+  const _LinkButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Text(
+          label,
+          style: AppText.meta(p).copyWith(fontWeight: FontWeight.w600),
         ),
       ),
     );
