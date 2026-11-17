@@ -12,7 +12,7 @@ Requisitos: Flutter 3.27 ou mais novo (`flutter --version`).
 
    ```bash
    cd ~/Downloads/meus/mein-notizbuch
-   flutter create . --project-name deutsch_notizbuch --org com.seunome --platforms android,ios
+   flutter create . --project-name mein_notizbuch --org com.seunome --platforms android,ios
    ```
 
 2. Android 11+: libere o acesso ao serviço de voz. Em
