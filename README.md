@@ -247,8 +247,10 @@ a ficha da palavra.
   (`android/app/src/main/kotlin/.../DailyWordWidgetProvider.kt`) escolhe a
   entrada do dia sozinho e atualiza a cada hora, então troca de palavra
   logo depois da meia-noite mesmo com o app fechado.
-- **Layouts:** `res/layout/daily_word_widget.xml` (largo, 4×2) e
-  `daily_word_widget_small.xml` (quadrado, a partir de ~2×2); as cores de
+- **Layouts:** o widget escolhe pelo tamanho: `daily_word_widget_compact`
+  (4×1, o padrão: palavra, classe e significado), `daily_word_widget_small`
+  (quadrado), `daily_word_widget` (4×2, com cabeçalho e data) e
+  `daily_word_widget_large` (4×3 ou maior, textos maiores). As cores de
   fundo e texto acompanham o tema em `values`/`values-night`.
 - **Convite:** um cartão na tela inicial oferece adicionar o widget (janela
   do sistema no Android 8+, ou instruções se o launcher não permitir). Ele

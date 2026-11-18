@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Palavra do dia", compacto (4x1, o tamanho padrão): a palavra
+     numa linha; a classe e o significado na seguinte. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingStart="18dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/word"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/newsreader_display_bold"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="der Hund"
+        android:textColor="#1D5FA7"
+        android:textSize="24sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/category"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:text="(substantivo · masculino)"
+            android:textColor="#1D5FA7"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+
+        <TextView
+            android:id="@+id/meaning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="o cachorro"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

@@ -37,7 +37,7 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         for (id in appWidgetIds) render(context, appWidgetManager, id, widgetData)
     }
 
-    /** Ao redimensionar, troca entre os layouts quadrado, largo e alto. */
+    /** Ao redimensionar, troca entre os layouts compacto, quadrado, largo e alto. */
     override fun onAppWidgetOptionsChanged(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -59,8 +59,11 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
         val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 110)
         val small = width < 200
+        // Compacto (4x1) e quadrado não têm cabeçalho nem data.
+        val compact = !small && height < 100
         val layout = when {
             small -> R.layout.daily_word_widget_small
+            compact -> R.layout.daily_word_widget_compact
             height >= 180 -> R.layout.daily_word_widget_large
             else -> R.layout.daily_word_widget
         }
@@ -86,7 +89,7 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
             views.setViewVisibility(R.id.meaning, View.VISIBLE)
             uri = Uri.parse("meinnotizbuch://word?id=" + entry.getInt("id"))
         }
-        if (!small) views.setTextViewText(R.id.date, todayLabel())
+        if (!small && !compact) views.setTextViewText(R.id.date, todayLabel())
 
         // Tocar no widget abre o app (na ficha da palavra).
         views.setOnClickPendingIntent(
