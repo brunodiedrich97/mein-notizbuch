@@ -5,6 +5,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../../l10n/app_strings.dart';
 import '../../home/presentation/home_screen.dart' show HomeScreen;
 import '../../vocabulary/presentation/widgets/word_list_card.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
@@ -39,7 +40,7 @@ class DeckScreen extends ConsumerWidget {
     await ref.read(databaseProvider).deleteDeck(summary.deck.id);
     navigator.pop();
     messenger.showSnackBar(
-      SnackBar(content: Text('Deck "${summary.deck.namePt}" excluído.')),
+      SnackBar(content: Text(tr.deckDeleted(summary.deck.displayName))),
     );
   }
 
@@ -49,9 +50,9 @@ class DeckScreen extends ConsumerWidget {
     final summary = ref.watch(deckByIdProvider(deckId));
 
     if (summary == null) {
-      return const Scaffold(
-        appBar: ScreenHeader(title: '', eyebrow: 'DECK'),
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: ScreenHeader(title: '', eyebrow: tr.deckCaps),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -62,8 +63,8 @@ class DeckScreen extends ConsumerWidget {
     final canReview = count >= HomeScreen.minWordsForReview;
     return Scaffold(
       appBar: ScreenHeader(
-        eyebrow: 'DECK',
-        title: deck.namePt,
+        eyebrow: tr.deckCaps,
+        title: deck.displayName,
         trailing: summary.isGeneral
             ? null
             : _DeckMenu(onDelete: () => _confirmDelete(context, ref, summary)),
@@ -83,7 +84,7 @@ class DeckScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          deck.namePt,
+                          deck.displayName,
                           style: AppTheme.serif(
                             fontSize: 36,
                             fontWeight: FontWeight.w700,
@@ -111,7 +112,7 @@ class DeckScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                count == 1 ? '1 ficha' : '$count fichas',
+                tr.cardsCount(count),
                 style: AppText.meta(p),
               ),
               if (count > 0) ...[
@@ -122,7 +123,7 @@ class DeckScreen extends ConsumerWidget {
               ],
               const SizedBox(height: 16),
               PrimaryButton(
-                label: 'Estudar fichas',
+                label: tr.studyCards,
                 onPressed: count == 0
                     ? null
                     : () => openFlashcards(context, ref, deckId: deckId),
@@ -132,7 +133,7 @@ class DeckScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: SoftButton(
-                      label: 'Revisar deck',
+                      label: tr.reviewDeck,
                       onPressed: canReview
                           ? () => openReview(context, ref, deckId: deckId)
                           : null,
@@ -141,7 +142,7 @@ class DeckScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: SoftButton(
-                      label: 'Escrever',
+                      label: tr.write,
                       onPressed: count == 0
                           ? null
                           : () =>
@@ -153,9 +154,9 @@ class DeckScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(child: Text('PALAVRAS', style: AppText.section(p))),
+                  Expanded(child: Text(tr.wordsCaps, style: AppText.section(p))),
                   _LinkButton(
-                    label: '+ Adicionar',
+                    label: tr.addPlus,
                     onTap: () => openAddWord(context, deckId: deckId),
                   ),
                 ],
@@ -170,8 +171,7 @@ class DeckScreen extends ConsumerWidget {
                     border: Border.all(color: p.cardBorder),
                   ),
                   child: Text(
-                    'Nenhuma palavra neste deck ainda. Toque em '
-                    '"+ Adicionar" para cadastrar a primeira.',
+                    tr.deckNoWords(tr.addPlus),
                     textAlign: TextAlign.center,
                     style: AppText.body(p),
                   ),
@@ -184,7 +184,7 @@ class DeckScreen extends ConsumerWidget {
                 if (count > previewCount) ...[
                   const SizedBox(height: 12),
                   SoftButton(
-                    label: 'Ver todas as $count palavras',
+                    label: tr.seeAllWords(count),
                     onPressed: () => openWordIndex(context, deckId: deckId),
                   ),
                 ],
@@ -231,7 +231,7 @@ class _DeckMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'Mais opções',
+      tooltip: tr.moreOptions,
       position: PopupMenuPosition.under,
       offset: const Offset(0, 6),
       color: p.card,
@@ -252,7 +252,7 @@ class _DeckMenu extends StatelessWidget {
               Icon(Icons.delete_outline_rounded, size: 18, color: p.text500),
               const SizedBox(width: 12),
               Text(
-                'Excluir deck',
+                tr.deleteDeck,
                 style: TextStyle(
                   fontFamily: AppTheme.sansFamily,
                   fontSize: 14,
@@ -300,13 +300,7 @@ class _DeleteDeckDialog extends StatelessWidget {
     );
     const buttonSize = Size.fromHeight(44);
 
-    final message = switch (count) {
-      0 => 'O deck está vazio. Essa ação não pode ser desfeita.',
-      1 => 'A palavra deste deck vai para o deck "Geral". '
-          'Essa ação não pode ser desfeita.',
-      _ => 'As $count palavras deste deck vão para o deck "Geral". '
-          'Essa ação não pode ser desfeita.',
-    };
+    final message = tr.deleteDeckWarning(count, tr.deckGeneral);
 
     return Dialog(
       backgroundColor: p.card,
@@ -341,7 +335,7 @@ class _DeleteDeckDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'EXCLUIR DECK',
+                    tr.deleteDeckTitle,
                     style: TextStyle(
                       fontSize: 12,
                       height: 16 / 12,
@@ -354,7 +348,7 @@ class _DeleteDeckDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                summary.deck.namePt,
+                summary.deck.displayName,
                 style: AppTheme.serif(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
@@ -380,7 +374,7 @@ class _DeleteDeckDialog extends StatelessWidget {
                         textStyle: label,
                         shape: shape,
                       ),
-                      child: const Text('Cancelar'),
+                      child: Text(tr.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -396,7 +390,7 @@ class _DeleteDeckDialog extends StatelessWidget {
                         elevation: 1,
                         shadowColor: Colors.black26,
                       ),
-                      child: const Text('Excluir'),
+                      child: Text(tr.delete),
                     ),
                   ),
                 ],

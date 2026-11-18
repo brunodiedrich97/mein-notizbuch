@@ -11,6 +11,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_icon_data.dart';
 import '../../../decks/presentation/widgets/new_deck_sheet.dart';
 import '../../../decks/providers/deck_provider.dart';
@@ -153,12 +154,12 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   String? _validateGerman(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return 'Digite a palavra em ${StudyLanguages.active.namePt}.';
+      return tr.enterWordIn(tr.languageName(StudyLanguages.active.code));
     }
     if (_category.isNoun && GrammarCategory.fromArticle(text) != null) {
-      return 'Digite o substantivo depois do artigo.';
+      return tr.enterNounAfterArticle;
     }
-    if (_germanToStore().length > 100) return 'Use no máximo 100 caracteres.';
+    if (_germanToStore().length > 100) return tr.max100Chars;
     return null;
   }
 
@@ -198,14 +199,14 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
       await ref.read(databaseProvider).addWord(entry);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"$german" foi adicionada ao Notizbuch.')),
+        SnackBar(content: Text(tr.wordAdded(german))),
       );
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível salvar a ficha: $e')),
+        SnackBar(content: Text(tr.saveCardFailed(e))),
       );
     }
   }
@@ -225,11 +226,11 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Registrar Palavra',
+        title: tr.addWordTitle,
         trailing: HeaderActionButton(
           iconPath: AppIcons.volumeUp,
           label: 'TTS',
-          tooltip: 'Ouvir pronúncia',
+          tooltip: tr.listenPronunciation,
           onTap: () {
             if (_german.text.trim().isEmpty) return;
             speakWithFeedback(context, _germanToStore());
@@ -246,8 +247,8 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
               children: [
                 _SectionCard(
                   icon: Icons.edit_note_rounded,
-                  title: 'Palavra em ${lang.namePt} *',
-                  trailing: const _MetaText('Obrigatório'),
+                  title: tr.wordInLanguage(tr.languageName(lang.code)),
+                  trailing: _MetaText(tr.required),
                   accent: accent,
                   children: [
                     _InlineField(
@@ -262,12 +263,12 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   ],
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.only(top: 4, bottom: 10),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 10),
                   child: Row(
                     children: [
-                      Expanded(child: _SectionLabel('Deck')),
-                      _MetaText('Toque para escolher'),
+                      Expanded(child: _SectionLabel(tr.deck)),
+                      _MetaText(tr.tapToChoose),
                     ],
                   ),
                 ),
@@ -284,13 +285,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     children: [
                       Expanded(
                         child: _SectionLabel(
-                          'Classe gramatical (${lang.terms.wordClass})',
+                          tr.wordClassTitle(lang.terms.wordClass),
                         ),
                       ),
                       _MetaText(
                         _categoryChosenByUser || _german.text.trim().isEmpty
-                            ? 'Toque para ajustar'
-                            : 'Sugerida',
+                            ? tr.tapToAdjust
+                            : tr.suggested,
                       ),
                     ],
                   ),
@@ -329,8 +330,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      '"die" também é o artigo do plural. Se você digitou um '
-                      'plural, cadastre a forma no singular.',
+                      tr.pluralArticleWarning(
+                        GrammarCategory.feminineNoun.article ?? '',
+                      ),
                       style: TextStyle(fontSize: 12, color: p.text500),
                     ),
                   ),
@@ -338,15 +340,15 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.translate_rounded,
-                  title: 'Tradução em ${nativeLang.namePt} *',
-                  trailing: const _MetaText('Obrigatório'),
+                  title: tr.translationIn(tr.languageName(nativeLang.code)),
+                  trailing: _MetaText(tr.required),
                   accent: accent,
                   children: [
                     _InlineField(
                       controller: _translation,
                       hint: nativeLang.translationHint,
                       validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Digite a tradução.'
+                          ? tr.enterTranslation
                           : null,
                     ),
                   ],
@@ -355,8 +357,8 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                 if (hasForms)
                   _SectionCard(
                     icon: Icons.inventory_2_outlined,
-                    title: c.isNoun ? 'Forma de plural' : 'Formas',
-                    trailing: const _MetaText('Opcional'),
+                    title: c.isNoun ? tr.pluralForm : tr.forms,
+                    trailing: _MetaText(tr.optional),
                     accent: accent,
                     children: [
                       if (c.isNoun)
@@ -369,21 +371,21 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                       if (!c.isNoun)
                         _BoxField(
                           controller: _tagDetail,
-                          label: 'Detalhe da classe',
+                          label: tr.classDetail,
                           hint: c == GrammarCategory.preposition
-                              ? 'dativo'
-                              : 'irregular',
+                              ? tr.dativeHint
+                              : tr.irregularHint,
                         ),
                       if (c == GrammarCategory.verb) ...[
                         _BoxField(
                           controller: _verbForms,
-                          label: 'Pretérito e particípio',
+                          label: tr.pastForms,
                           hint: lang.verbFormsHint,
                           germanInput: true,
                         ),
                         _BoxField(
                           controller: _conjugation,
-                          label: 'Presente (uma linha por grupo)',
+                          label: tr.presentTense,
                           hint: lang.conjugationHint,
                           germanInput: true,
                           maxLines: 3,
@@ -393,23 +395,23 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                           c == GrammarCategory.adverb)
                         _BoxField(
                           controller: _degrees,
-                          label: 'Graus',
+                          label: tr.degrees,
                           hint: lang.degreesHint,
                           germanInput: true,
                         ),
                       if (c == GrammarCategory.preposition)
                         _BoxField(
                           controller: _prepositionCase,
-                          label: 'Regra de regência',
-                          hint: 'sempre com dativo: aus · bei · mit · nach',
+                          label: tr.prepositionRule,
+                          hint: tr.prepositionRuleHint(lang.code),
                         ),
                     ],
                   ),
 
                 _SectionCard(
                   icon: Icons.record_voice_over_outlined,
-                  title: 'Pronúncia (${lang.terms.pronunciation})',
-                  trailing: const _MetaText('Opcional'),
+                  title: tr.pronunciationTitle(lang.terms.pronunciation),
+                  trailing: _MetaText(tr.optional),
                   accent: accent,
                   children: [
                     Row(
@@ -418,7 +420,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                         Expanded(
                           child: _BoxField(
                             controller: _ipa,
-                            label: 'Transcrição IPA',
+                            label: tr.ipaTranscription,
                             hint: lang.ipaHint,
                             germanInput: true,
                             mono: true,
@@ -429,7 +431,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                         Expanded(
                           child: _BoxField(
                             controller: _approximation,
-                            label: 'Aproximação ${nativeLang.tag}',
+                            label: tr.approximation(nativeLang.tag),
                             hint: lang.approximationHintFor(nativeLang.code),
                           ),
                         ),
@@ -437,7 +439,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     ),
                     Divider(height: 1, color: p.outline),
                     const SizedBox(height: 12),
-                    const _FieldLabel('Dica fonética'),
+                    _FieldLabel(tr.phoneticTip),
                     _InlineField(
                       controller: _tip,
                       hint: lang.tipHintFor(nativeLang.code),
@@ -449,13 +451,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Frase de exemplo (${lang.terms.example})',
-                  trailing: const _MetaText('Opcional'),
+                  title: tr.exampleTitle(lang.terms.example),
+                  trailing: _MetaText(tr.optional),
                   accent: accent,
                   children: [
                     _BoxField(
                       controller: _exampleDe,
-                      label: 'Em ${lang.namePt}',
+                      label: tr.inLanguage(tr.languageName(lang.code)),
                       hint: lang.exampleHint,
                       germanInput: true,
                       serif: true,
@@ -463,7 +465,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     ),
                     _BoxField(
                       controller: _examplePt,
-                      label: 'Tradução em ${nativeLang.namePt}',
+                      label: tr.translationInOptional(tr.languageName(nativeLang.code)),
                       hint: nativeLang.exampleTranslationHint,
                       maxLines: 3,
                     ),
@@ -497,7 +499,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Salvar no Notizbuch'),
+                      : Text(tr.saveToNotizbuch),
                 ),
               ),
             ),
@@ -861,7 +863,7 @@ class _DeckPicker extends ConsumerWidget {
           for (final d in ordered) ...[
             chip(
               icon: d.deck.icon.data,
-              label: d.deck.namePt,
+              label: d.deck.displayName,
               selected: d.deck.id == selectedId,
               onTap: () => onSelected(d.deck.id),
             ),
@@ -869,7 +871,7 @@ class _DeckPicker extends ConsumerWidget {
           ],
           chip(
             icon: Icons.add_rounded,
-            label: 'Novo',
+            label: tr.newDeckChip,
             selected: false,
             dashed: true,
             onTap: onCreate,
@@ -957,7 +959,7 @@ class _NewClassChip extends StatelessWidget {
               Icon(Icons.add_rounded, size: 16, color: p.text500),
               const SizedBox(width: 6),
               Text(
-                'Nova',
+                tr.newClassChip,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

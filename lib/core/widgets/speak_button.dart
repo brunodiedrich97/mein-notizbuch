@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_strings.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
@@ -9,17 +10,17 @@ class SpeakButton extends StatelessWidget {
   const SpeakButton({
     super.key,
     required this.onPressed,
-    this.tooltip = 'Tocar áudio',
+    this.tooltip,
   });
 
   final VoidCallback? onPressed;
-  final String tooltip;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     return Tooltip(
-      message: tooltip,
+      message: tooltip ?? tr.playAudio,
       child: SizedBox(
         width: 48,
         height: 48,

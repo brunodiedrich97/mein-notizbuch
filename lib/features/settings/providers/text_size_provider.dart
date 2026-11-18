@@ -1,14 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../l10n/app_strings.dart';
+
 /// Tamanho do texto do app, além do ajuste de acessibilidade do aparelho.
 enum TextSizeLevel {
-  normal('Normal', 1.0),
-  large('Grande', 1.15),
-  extraLarge('Muito grande', 1.3);
+  normal(1.0),
+  large(1.15),
+  extraLarge(1.3);
 
-  const TextSizeLevel(this.label, this.factor);
-  final String label;
+  const TextSizeLevel(this.factor);
+
+  String get label => switch (this) {
+        TextSizeLevel.normal => tr.textSizeNormal,
+        TextSizeLevel.large => tr.textSizeLarge,
+        TextSizeLevel.extraLarge => tr.textSizeExtraLarge,
+      };
 
   /// Multiplica a escala de texto do sistema.
   final double factor;

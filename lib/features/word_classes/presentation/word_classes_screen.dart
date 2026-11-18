@@ -8,6 +8,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/grammar_colors.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/models/grammar_type.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../providers/word_class_provider.dart';
@@ -20,15 +21,15 @@ class WordClassesScreen extends ConsumerWidget {
   const WordClassesScreen({super.key});
 
   static String _builtInName(GrammarCategory c) => switch (c) {
-        GrammarCategory.noun => 'Substantivo',
-        GrammarCategory.masculineNoun => 'Substantivo masculino (der)',
-        GrammarCategory.feminineNoun => 'Substantivo feminino (die)',
-        GrammarCategory.neuterNoun => 'Substantivo neutro (das)',
-        GrammarCategory.verb => 'Verbo',
-        GrammarCategory.adjective => 'Adjetivo',
-        GrammarCategory.adverb => 'Advérbio',
-        GrammarCategory.preposition => 'Preposição',
-        GrammarCategory.other => 'Outros',
+        GrammarCategory.noun => tr.builtInNoun,
+        GrammarCategory.masculineNoun => tr.builtInMasc(c.article ?? ''),
+        GrammarCategory.feminineNoun => tr.builtInFem(c.article ?? ''),
+        GrammarCategory.neuterNoun => tr.builtInNeut(c.article ?? ''),
+        GrammarCategory.verb => tr.builtInVerb,
+        GrammarCategory.adjective => tr.builtInAdjective,
+        GrammarCategory.adverb => tr.builtInAdverb,
+        GrammarCategory.preposition => tr.builtInPreposition,
+        GrammarCategory.other => tr.builtInOther,
       };
 
   void _openForm(BuildContext context, {WordClass? existing}) {
@@ -49,9 +50,9 @@ class WordClassesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: p.page,
-      appBar: const ScreenHeader(
-        eyebrow: 'AJUSTES',
-        title: 'Classes gramaticais',
+      appBar: ScreenHeader(
+        eyebrow: tr.settingsCaps,
+        title: tr.grammarClasses,
       ),
       body: Center(
         child: ConstrainedBox(
@@ -60,10 +61,8 @@ class WordClassesScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
               _Title(
-                'MINHAS CLASSES',
-                trailing: classes.length == 1
-                    ? '1 classe'
-                    : '${classes.length} classes',
+                tr.myClassesCaps,
+                trailing: tr.classesCount(classes.length),
               ),
               const SizedBox(height: 12),
               _Group(
@@ -72,9 +71,7 @@ class WordClassesScreen extends ConsumerWidget {
                     _ClassRow(
                       color: customClassColor(Color(c.color), isDark: isDark),
                       name: c.name,
-                      meta: countOf(c.id) == 1
-                          ? '1 palavra'
-                          : '${countOf(c.id)} palavras',
+                      meta: tr.wordsCount(countOf(c.id)),
                       onTap: () => _openForm(context, existing: c),
                     ),
                   _AddRow(onTap: () => _openForm(context)),
@@ -84,13 +81,12 @@ class WordClassesScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  'Classes novas funcionam como "outros": tradução, pronúncia '
-                  'e exemplo, sem campos especiais.',
+                  tr.customClassesExplanation,
                   style: AppText.meta(p),
                 ),
               ),
               const SizedBox(height: 24),
-              const _Title('DO MÉTODO', trailing: 'cores fixas'),
+              _Title(tr.fromTheMethodCaps, trailing: tr.fixedColors),
               const SizedBox(height: 12),
               _Group(
                 children: [
@@ -239,7 +235,7 @@ class _AddRow extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Nova classe',
+                tr.newClass,
                 style: AppText.item(p).copyWith(
                   fontWeight: FontWeight.w600,
                   color: p.text700,

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../vocabulary/models/grammar_type.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
 import '../../../word_classes/presentation/word_appearance.dart';
@@ -64,7 +65,7 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
         );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Frase salva na ficha.')),
+      SnackBar(content: Text(tr.sentenceSaved)),
     );
     Navigator.of(context).pop();
   }
@@ -78,9 +79,9 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
     final WordEntry? word = matches.isEmpty ? null : matches.first;
 
     if (word == null) {
-      return const Scaffold(
-        appBar: ScreenHeader(title: 'Escrever frase'),
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: ScreenHeader(title: tr.writeSentence),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -95,7 +96,7 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
       backgroundColor: p.page,
       appBar: ScreenHeader(
         eyebrow: word.germanWord.toUpperCase(),
-        title: 'Escrever frase',
+        title: tr.writeSentence,
       ),
       body: Center(
         child: ConstrainedBox(
@@ -103,7 +104,7 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
-              Text('ESCREVA UMA FRASE COM', style: AppText.caption(p)),
+              Text(tr.writeASentenceWith, style: AppText.caption(p)),
               const SizedBox(height: 8),
               Text(
                 word.germanWord,
@@ -120,7 +121,9 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
               WritingField(
                 controller: _german,
                 focusNode: _focus,
-                hint: 'Escreva aqui em ${StudyLanguages.active.namePt}…',
+                hint: tr.writeHereIn(
+                  tr.languageName(StudyLanguages.active.code),
+                ),
                 autofocus: true,
               ),
               const SizedBox(height: 8),
@@ -143,8 +146,8 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
                     Expanded(
                       child: Text(
                         uses
-                            ? 'A frase usa "$lemma".'
-                            : 'A frase ainda não usa "$lemma".',
+                            ? tr.sentenceUsesWord(lemma)
+                            : tr.sentenceDoesNotUseWord(lemma),
                         style: AppText.meta(p).copyWith(
                           fontWeight: FontWeight.w600,
                           color: uses
@@ -160,14 +163,14 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
                 ),
               const SizedBox(height: 16),
               _BoxField(
-                label: 'Tradução (opcional)',
+                label: tr.translationOptional,
                 controller: _portuguese,
-                hint: 'O que a frase quer dizer',
+                hint: tr.whatTheSentenceMeans,
               ),
               if (example != null && example.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 ReferenceBox(
-                  label: 'Exemplo da ficha, para comparar',
+                  label: tr.cardExampleToCompare,
                   german: example,
                   portuguese: examplePt,
                 ),
@@ -180,14 +183,14 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
         children: [
           Expanded(
             child: SoftButton(
-              label: 'Cancelar',
+              label: tr.cancel,
               onPressed: () => Navigator.of(context).maybePop(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: PrimaryButton(
-              label: 'Salvar na ficha',
+              label: tr.saveToCard,
               onPressed: text.isEmpty || _saving ? null : _save,
             ),
           ),

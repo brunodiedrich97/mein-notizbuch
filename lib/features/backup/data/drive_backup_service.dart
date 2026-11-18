@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 
 import '../../../core/config/google_config.dart';
+import '../../../l10n/app_strings.dart';
 
 /// Um arquivo de backup no Drive.
 class DriveBackup {
@@ -58,15 +59,10 @@ class DriveBackupService {
   /// Retorna o e-mail da conta.
   Future<String> connect() async {
     if (!isDriveBackupSupported) {
-      throw const DriveAuthException(
-        'O backup no Google Drive ainda não está disponível no iPhone.',
-      );
+      throw DriveAuthException(tr.driveNotOnIos);
     }
     if (!isGoogleConfigured) {
-      throw const DriveAuthException(
-        'O login Google ainda não foi configurado no app '
-        '(google_config.dart).',
-      );
+      throw DriveAuthException(tr.googleNotConfigured);
     }
     await _ensureInitialized();
     try {
@@ -105,9 +101,8 @@ class DriveBackupService {
   }
 
   static String _describe(GoogleSignInException e) => switch (e.code) {
-        GoogleSignInExceptionCode.canceled => 'Login cancelado.',
-        _ => 'Não foi possível entrar com o Google: '
-            '${e.description ?? e.code.name}',
+        GoogleSignInExceptionCode.canceled => tr.loginCanceled,
+        _ => tr.googleLoginFailed(e.description ?? e.code.name),
       };
 
   /// Drive API com um cliente HTTP autenticado. Com [interactive], pode
@@ -115,7 +110,7 @@ class DriveBackupService {
   Future<drive.DriveApi> _api({required bool interactive}) async {
     final account = _account;
     if (account == null) {
-      throw const DriveAuthException('Conecte sua conta Google primeiro.');
+      throw DriveAuthException(tr.connectGoogleFirst);
     }
     final authz = account.authorizationClient;
     var authorization = await authz.authorizationForScopes(scopes);
@@ -127,7 +122,7 @@ class DriveBackupService {
       }
     }
     if (authorization == null) {
-      throw const DriveAuthException('Permissão do Google Drive necessária.');
+      throw DriveAuthException(tr.drivePermissionNeeded);
     }
     return drive.DriveApi(authorization.authClient(scopes: scopes));
   }

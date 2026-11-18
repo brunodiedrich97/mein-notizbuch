@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Textos do widget em inglês (padrão). Traduções em values-pt e values-es;
+     o Android escolhe pelo idioma do aparelho. -->
 <resources>
-    <string name="widget_label">Palavra do dia</string>
-    <string name="widget_description">Uma palavra do seu Notizbuch por dia, com a classe e o significado.</string>
+    <string name="widget_label">Word of the day</string>
+    <string name="widget_description">One word from your Notizbuch each day, with its word class and meaning.</string>
+    <string name="widget_empty">Add a word to the Notizbuch</string>
 </resources>

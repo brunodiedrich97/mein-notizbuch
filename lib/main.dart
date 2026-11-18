@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/language/native_language_provider.dart';
 import 'core/language/study_language_provider.dart';
+import 'core/language/ui_language_provider.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home_widget/data/daily_word_widget.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
 
   // Os idiomas salvos valem desde a primeira tela. O nativo vem antes:
   // as fichas iniciais são criadas nele.
+  await UiLanguageController.restore();
   await NativeLanguageController.restore();
   final container = ProviderContainer();
   await StudyLanguageController.restore(container.read(databaseProvider));
@@ -52,6 +54,12 @@ class DeutschNotizbuchApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, _) => _app(ref.watch(uiLanguageProvider)),
+    );
+  }
+
+  Widget _app(String uiChoice) {
     return MaterialApp(
       navigatorKey: appNavigatorKey,
       title: 'Mein Notizbuch',
@@ -59,8 +67,15 @@ class DeutschNotizbuchApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('pt', 'BR'), Locale('pt')],
+      locale: UiLanguageController.localeOf(
+        UiLanguageController.resolve(uiChoice),
+      ),
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+        Locale('pt'),
+        Locale('en'),
+        Locale('es'),
+      ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

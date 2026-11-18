@@ -6,6 +6,7 @@ import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
+import '../../../l10n/app_strings.dart';
 import '../../backup/providers/backup_provider.dart';
 import '../../home_widget/data/daily_word_widget.dart';
 import '../../home_widget/presentation/widget_invite_card.dart';
@@ -41,10 +42,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   static String _countText(int words, int decks) {
-    if (words == 0) return 'Seu Notizbuch ainda está vazio';
-    final w = words == 1 ? '1 ficha' : '$words fichas';
-    final d = decks == 1 ? '1 deck' : '$decks decks';
-    return '$w em $d';
+    if (words == 0) return tr.notebookEmptyShort;
+    return tr.cardsInDecks(tr.cardsCount(words), tr.decksCount(decks));
   }
 
   Future<void> _createDeck(BuildContext context) async {
@@ -108,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
                           const Spacer(),
                           HeaderIconButton(
                             icon: Icons.settings_outlined,
-                            tooltip: 'Ajustes',
+                            tooltip: tr.settings,
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
                                 builder: (_) => const SettingsScreen(),
@@ -153,10 +152,10 @@ class HomeScreen extends ConsumerWidget {
                             Expanded(
                               child: _ShortcutTile(
                                 icon: Icons.style_outlined,
-                                title: 'Revisar tudo',
+                                title: tr.reviewAll,
                                 subtitle: total >= minWordsForReview
-                                    ? 'Quiz com todos os decks'
-                                    : 'Precisa de 2 fichas',
+                                    ? tr.quizAllDecks
+                                    : tr.needsTwoCards,
                                 onTap: total >= minWordsForReview
                                     ? () => openReview(context, ref)
                                     : null,
@@ -166,8 +165,8 @@ class HomeScreen extends ConsumerWidget {
                             Expanded(
                               child: _ShortcutTile(
                                 icon: Icons.add_rounded,
-                                title: 'Adicionar',
-                                subtitle: 'Nova palavra',
+                                title: tr.add,
+                                subtitle: tr.newWord,
                                 onTap: () => openAddWord(context),
                               ),
                             ),
@@ -178,9 +177,9 @@ class HomeScreen extends ConsumerWidget {
                       // ---------- Decks ----------
                       const SizedBox(height: 24),
                       _SectionTitle(
-                        'MEUS DECKS',
+                        tr.myDecks,
                         trailing: Text(
-                          decks.length == 1 ? '1 deck' : '${decks.length} decks',
+                          tr.decksCount(decks.length),
                           style: TextStyle(fontSize: 12, color: p.text400),
                         ),
                       ),
@@ -200,7 +199,7 @@ class HomeScreen extends ConsumerWidget {
                       if (recent.isNotEmpty) ...[
                         const SizedBox(height: 24),
                         _SectionTitle(
-                          'ÚLTIMAS PALAVRAS',
+                          tr.latestWords,
                           trailing: InkWell(
                             borderRadius: BorderRadius.circular(8),
                             onTap: () => openWordIndex(context),
@@ -210,7 +209,7 @@ class HomeScreen extends ConsumerWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Ver todas',
+                                    tr.seeAll,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_strings.dart';
 import '../models/deck_icon.dart';
 
 /// Ícone do Material para cada [DeckIcon].
@@ -21,17 +22,17 @@ extension DeckIconData on DeckIcon {
 
   /// Nome do tema, para leitores de tela.
   String get label => switch (this) {
-        DeckIcon.general => 'Geral',
-        DeckIcon.health => 'Saúde',
-        DeckIcon.food => 'Comida',
-        DeckIcon.home => 'Casa',
-        DeckIcon.travel => 'Viagem',
-        DeckIcon.work => 'Trabalho',
-        DeckIcon.school => 'Estudos',
-        DeckIcon.clothes => 'Roupas',
-        DeckIcon.family => 'Pessoas',
-        DeckIcon.nature => 'Natureza',
-        DeckIcon.time => 'Tempo',
-        DeckIcon.shopping => 'Compras',
+        DeckIcon.general => tr.deckGeneral,
+        DeckIcon.health => tr.deckHealth,
+        DeckIcon.food => tr.deckFood,
+        DeckIcon.home => tr.deckHome,
+        DeckIcon.travel => tr.deckTravel,
+        DeckIcon.work => tr.deckWork,
+        DeckIcon.school => tr.deckSchool,
+        DeckIcon.clothes => tr.deckClothes,
+        DeckIcon.family => tr.deckPeople,
+        DeckIcon.nature => tr.deckNature,
+        DeckIcon.time => tr.deckTime,
+        DeckIcon.shopping => tr.deckShopping,
       };
 }

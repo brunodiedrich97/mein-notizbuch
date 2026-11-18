@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/language/study_language_provider.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 
 /// Decks do idioma de estudo ativo. Atualiza sozinha a cada mudança.
@@ -9,6 +10,12 @@ final deckListProvider = StreamProvider<List<Deck>>((ref) {
   final language = ref.watch(studyLanguageProvider);
   return ref.watch(databaseProvider).watchDecks(language);
 });
+
+/// Nome exibido do deck. O "Geral" aparece no idioma do app.
+extension DeckDisplayName on Deck {
+  String get displayName =>
+      AppDatabase.isGeneralDeck(id) ? tr.deckGeneral : namePt;
+}
 
 /// Um deck com as palavras dele.
 class DeckSummary {

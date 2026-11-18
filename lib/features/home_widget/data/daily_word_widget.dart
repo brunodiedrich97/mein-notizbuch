@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:home_widget/home_widget.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../l10n/app_strings.dart';
 import '../../reminders/data/daily_word_plan.dart';
 import '../../reminders/models/reminder_content.dart';
 import '../../word_classes/presentation/word_appearance.dart';
@@ -77,6 +78,8 @@ class DailyWordWidget {
     final dark = appearanceFor(word.category, custom, isDark: true);
     return {
       'date': DailyWordPlan.dateKey(day.date),
+      // "ter, 18/11", no idioma do app.
+      'label': tr.widgetDate(day.date),
       'id': word.id,
       'word': word.germanWord,
       'category': content.category,

@@ -6,6 +6,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../../l10n/app_strings.dart';
 import '../data/drive_backup_service.dart';
 import '../providers/backup_provider.dart';
 
@@ -17,9 +18,11 @@ String formatBackupDate(DateTime d) {
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(d.year, d.month, d.day);
   final time = '${_two(d.hour)}:${_two(d.minute)}';
-  if (day == today) return 'hoje às $time';
-  if (day == today.subtract(const Duration(days: 1))) return 'ontem às $time';
-  return '${_two(d.day)}/${_two(d.month)}/${d.year} às $time';
+  if (day == today) return tr.todayAt(time);
+  if (day == today.subtract(const Duration(days: 1))) {
+    return tr.yesterdayAt(time);
+  }
+  return tr.dateAt(_two(d.day), _two(d.month), d.year, time);
 }
 
 /// Backup no Google Drive: conectar a conta, fazer backup agora, restaurar
@@ -44,7 +47,7 @@ class BackupScreen extends ConsumerWidget {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível concluir: $e')),
+        SnackBar(content: Text(tr.actionFailed(e))),
       );
     }
   }
@@ -58,7 +61,7 @@ class BackupScreen extends ConsumerWidget {
     if (!context.mounted || backups.isEmpty) {
       if (context.mounted && backups.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nenhum backup no Drive ainda.')),
+          SnackBar(content: Text(tr.noDriveBackupsYet)),
         );
       }
       return;
@@ -79,7 +82,7 @@ class BackupScreen extends ConsumerWidget {
     await _run(
       context,
       () => controller.restore(chosen),
-      success: 'Backup de ${formatBackupDate(chosen.createdAt)} restaurado.',
+      success: tr.backupRestored(formatBackupDate(chosen.createdAt)),
     );
   }
 
@@ -93,9 +96,9 @@ class BackupScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: p.page,
-      appBar: const ScreenHeader(
+      appBar: ScreenHeader(
         eyebrow: 'MEIN NOTIZBUCH',
-        title: 'Backup no Google Drive',
+        title: tr.driveBackupTitle,
       ),
       body: Center(
         child: ConstrainedBox(
@@ -136,12 +139,12 @@ class BackupScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                state.connected ? 'CONECTADO' : 'DESLIGADO',
+                                state.connected ? tr.connected : tr.disconnected,
                                 style: AppText.caption(p),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                state.email ?? 'Nenhuma conta conectada',
+                                state.email ?? tr.noAccountConnected,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppText.item(p),
                               ),
@@ -154,28 +157,25 @@ class BackupScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                       Text(
                         last == null
-                            ? 'Nenhum backup feito ainda.'
-                            : 'Último backup: ${formatBackupDate(last)}.',
+                            ? tr.noBackupYet
+                            : tr.lastBackup(formatBackupDate(last)),
                         style: AppText.meta(p),
                       ),
                     ],
                     const SizedBox(height: 12),
                     Text(
-                      'Uma vez por dia, ao abrir o app, o Notizbuch envia um '
-                      'backup das palavras, decks e frases para a pasta '
-                      '"${DriveBackupService.folderName}" do seu Google '
-                      'Drive. Ficam guardados os '
-                      '${BackupController.keepBackups} mais recentes.',
+                      tr.driveBackupExplanation(
+                        DriveBackupService.folderName,
+                        BackupController.keepBackups,
+                      ),
                       style: AppText.body(p),
                     ),
                     if (!isDriveBackupSupported || !isGoogleConfigured) ...[
                       const SizedBox(height: 12),
                       Text(
                         isDriveBackupSupported
-                            ? 'O login Google ainda não foi configurado neste '
-                                'build (google_config.dart).'
-                            : 'O backup no Google Drive ainda não está '
-                                'disponível no iPhone.',
+                            ? tr.googleNotConfiguredBuild
+                            : tr.driveNotOnIos,
                         style: AppText.body(p).copyWith(
                           color: Theme.of(context).colorScheme.error,
                         ),
@@ -198,29 +198,29 @@ class BackupScreen extends ConsumerWidget {
               ],
               if (!state.connected)
                 PrimaryButton(
-                  label: 'Conectar Google Drive',
+                  label: tr.connectDrive,
                   onPressed: busy || !isGoogleConfigured || !isDriveBackupSupported
                       ? null
                       : () => _run(
                             context,
                             controller.connect,
-                            success: 'Conectado. Primeiro backup enviado.',
+                            success: tr.connectedFirstBackup,
                           ),
                 )
               else ...[
                 PrimaryButton(
-                  label: 'Fazer backup agora',
+                  label: tr.backupNow,
                   onPressed: busy
                       ? null
                       : () => _run(
                             context,
                             controller.backupNow,
-                            success: 'Backup enviado para o Drive.',
+                            success: tr.backupUploaded,
                           ),
                 ),
                 const SizedBox(height: 12),
                 SoftButton(
-                  label: 'Restaurar um backup',
+                  label: tr.restoreBackup,
                   onPressed: busy ? null : () => _restore(context, ref),
                 ),
                 const SizedBox(height: 24),
@@ -231,12 +231,11 @@ class BackupScreen extends ConsumerWidget {
                         : () => _run(
                               context,
                               controller.disconnect,
-                              success: 'Conta desconectada. Os backups '
-                                  'continuam no seu Drive.',
+                              success: tr.accountDisconnected,
                             ),
                     style: TextButton.styleFrom(foregroundColor: p.text500),
                     child: Text(
-                      'Desconectar conta',
+                      tr.disconnectAccount,
                       style: AppText.meta(p).copyWith(
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
@@ -266,7 +265,7 @@ class _BackupListSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('BACKUPS NO DRIVE', style: AppText.section(p)),
+        Text(tr.driveBackups, style: AppText.section(p)),
         const SizedBox(height: 8),
         for (var i = 0; i < backups.length; i++)
           InkWell(
@@ -316,17 +315,15 @@ class _ConfirmRestoreSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('RESTAURAR BACKUP', style: AppText.section(p)),
+        Text(tr.restoreBackupSheetTitle, style: AppText.section(p)),
         const SizedBox(height: 12),
         Text(
-          'De ${formatBackupDate(backup.createdAt)}',
+          tr.fromDate(formatBackupDate(backup.createdAt)),
           style: AppText.display(p, fontSize: 24),
         ),
         const SizedBox(height: 8),
         Text(
-          'As palavras, decks e frases deste aparelho serão substituídos '
-          'pelos do backup. Antes disso, o app envia um backup do estado '
-          'atual, para você poder voltar atrás.',
+          tr.restoreWarning,
           style: AppText.body(p),
         ),
         const SizedBox(height: 24),
@@ -334,14 +331,14 @@ class _ConfirmRestoreSheet extends StatelessWidget {
           children: [
             Expanded(
               child: SoftButton(
-                label: 'Cancelar',
+                label: tr.cancel,
                 onPressed: () => Navigator.of(context).pop(false),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: PrimaryButton(
-                label: 'Restaurar',
+                label: tr.restore,
                 onPressed: () => Navigator.of(context).pop(true),
               ),
             ),

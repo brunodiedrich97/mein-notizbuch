@@ -1,14 +1,18 @@
 import '../../../core/database/app_database.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart' show WordFilter;
 
 /// Em que ordem as fichas entram na sessão.
 enum SessionOrder {
-  smart('Novas e erradas primeiro'),
-  random('Aleatória'),
-  recent('Mais recentes');
+  smart,
+  random,
+  recent;
 
-  const SessionOrder(this.label);
-  final String label;
+  String get label => switch (this) {
+        SessionOrder.smart => tr.orderSmart,
+        SessionOrder.random => tr.orderRandom,
+        SessionOrder.recent => tr.orderRecent,
+      };
 }
 
 /// Filtro, ordem e tamanho da sessão de estudo.
@@ -49,7 +53,7 @@ class StudySettings {
   String filterLabel(Map<int, WordClass> classes) {
     final custom = customClassId;
     if (custom == null) return filter.label;
-    return classes[custom]?.name ?? 'Classe excluída';
+    return classes[custom]?.name ?? tr.deletedClass;
   }
 
   /// Escolher uma classe do método limpa a classe criada, e vice-versa.

@@ -79,7 +79,7 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         if (entry == null) {
             // Sem palavras cadastradas (ou o app ainda não foi aberto).
             views.setTextViewText(R.id.word, "Mein Notizbuch")
-            views.setTextViewText(R.id.category, "Cadastre uma palavra no Notizbuch")
+            views.setTextViewText(R.id.category, context.getString(R.string.widget_empty))
             views.setViewVisibility(R.id.meaning, View.GONE)
         } else {
             val color = (if (dark) entry.getLong("colorDark") else entry.getLong("colorLight")).toInt()
@@ -94,7 +94,7 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
             views.setViewVisibility(R.id.meaning, View.VISIBLE)
             uri = Uri.parse("meinnotizbuch://word?id=" + entry.getInt("id"))
         }
-        if (!small && !compact) views.setTextViewText(R.id.date, todayLabel())
+        if (!small && !compact) views.setTextViewText(R.id.date, dateLabel(entry))
 
         // Tocar no widget abre o app (na ficha da palavra).
         views.setOnClickPendingIntent(
@@ -123,7 +123,14 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         }
     }
 
-    /** "ter, 18/11". */
+    /** Data no idioma do app, enviada pelo Flutter com a palavra de hoje. */
+    private fun dateLabel(entry: JSONObject?): String {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val label = entry?.optString("label").orEmpty()
+        return if (entry?.optString("date") == today && label.isNotEmpty()) label else todayLabel()
+    }
+
+    /** "ter, 18/11" (para entradas antigas, sem "label"). */
     private fun todayLabel(): String {
         val days = arrayOf("dom", "seg", "ter", "qua", "qui", "sex", "sáb")
         val c = Calendar.getInstance()

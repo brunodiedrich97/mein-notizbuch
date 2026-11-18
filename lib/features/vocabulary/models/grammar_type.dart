@@ -1,4 +1,5 @@
 import '../../../core/language/study_language.dart';
+import '../../../l10n/app_strings.dart';
 
 /// Classes gramaticais do caderno.
 ///
@@ -28,28 +29,31 @@ enum GrammarCategory {
 
   /// Rótulo completo, usado no topo da ficha.
   String get label => switch (this) {
-        GrammarCategory.noun => 'substantivo',
-        GrammarCategory.masculineNoun => 'substantivo · masculino',
-        GrammarCategory.feminineNoun => 'substantivo · feminino',
-        GrammarCategory.neuterNoun => 'substantivo · neutro',
-        GrammarCategory.verb => 'verbo',
-        GrammarCategory.adjective => 'adjetivo',
-        GrammarCategory.adverb => 'advérbio',
-        GrammarCategory.preposition => 'preposição',
-        GrammarCategory.other => 'outros',
+        GrammarCategory.noun => tr.catNoun,
+        GrammarCategory.masculineNoun => tr.catMasculineNoun,
+        GrammarCategory.feminineNoun => tr.catFeminineNoun,
+        GrammarCategory.neuterNoun => tr.catNeuterNoun,
+        GrammarCategory.verb => tr.catVerb,
+        GrammarCategory.adjective => tr.catAdjective,
+        GrammarCategory.adverb => tr.catAdverb,
+        GrammarCategory.preposition => tr.catPreposition,
+        GrammarCategory.other => tr.catOther,
       };
 
   /// Rótulo curto, usado nos seletores.
   String get shortLabel => switch (this) {
-        GrammarCategory.noun => 'substantivo',
-        GrammarCategory.masculineNoun => '${article ?? 'Subst.'} (Masc.)',
-        GrammarCategory.feminineNoun => '${article ?? 'Subst.'} (Fem.)',
-        GrammarCategory.neuterNoun => '${article ?? 'Subst.'} (Neutro)',
-        GrammarCategory.verb => 'verbo',
-        GrammarCategory.adjective => 'adjetivo',
-        GrammarCategory.adverb => 'advérbio',
-        GrammarCategory.preposition => 'preposição',
-        GrammarCategory.other => 'outros',
+        GrammarCategory.noun => tr.catNoun,
+        GrammarCategory.masculineNoun =>
+          '${article ?? tr.catNounShort} (${tr.genderMascShort})',
+        GrammarCategory.feminineNoun =>
+          '${article ?? tr.catNounShort} (${tr.genderFemShort})',
+        GrammarCategory.neuterNoun =>
+          '${article ?? tr.catNounShort} (${tr.genderNeutShort})',
+        GrammarCategory.verb => tr.catVerb,
+        GrammarCategory.adjective => tr.catAdjective,
+        GrammarCategory.adverb => tr.catAdverb,
+        GrammarCategory.preposition => tr.catPreposition,
+        GrammarCategory.other => tr.catOther,
       };
 
   /// Gênero pelo artigo, no idioma de estudo ("der" → masculino).

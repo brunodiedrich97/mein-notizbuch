@@ -5,6 +5,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../writing/presentation/sentence_actions.dart';
 import '../../../writing/providers/sentence_provider.dart';
@@ -30,7 +31,7 @@ class WordDetailScreen extends ConsumerWidget {
     await ref.read(databaseProvider).deleteWord(word.id);
     navigator.pop();
     messenger.showSnackBar(
-      SnackBar(content: Text('"${word.germanWord}" foi excluída.')),
+      SnackBar(content: Text(tr.wordDeleted(word.germanWord))),
     );
   }
 
@@ -44,13 +45,13 @@ class WordDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: p.page,
       appBar: ScreenHeader(
-        eyebrow: 'FICHA',
+        eyebrow: tr.card,
         title: word?.germanWord ?? '',
         trailing: word == null
             ? null
             : HeaderIconButton(
                 icon: Icons.delete_outline_rounded,
-                tooltip: 'Excluir ficha',
+                tooltip: tr.deleteCard,
                 onPressed: () => _delete(context, ref, word),
               ),
       ),

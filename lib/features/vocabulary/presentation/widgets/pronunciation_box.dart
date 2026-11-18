@@ -4,6 +4,7 @@ import '../../../../core/language/study_language.dart';
 import '../../../../core/services/tts_service.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 
 /// Fala [text] no idioma de estudo e avisa se não houver voz instalada.
 Future<void> speakWithFeedback(BuildContext context, String text) async {
@@ -15,8 +16,10 @@ Future<void> speakWithFeedback(BuildContext context, String text) async {
     ..showSnackBar(
       SnackBar(
         content: Text(
-          'Não há voz em ${language.namePt} neste aparelho. Instale a voz '
-          '"${language.nameNative}" nas configurações de texto para fala.',
+          tr.noVoiceInstalled(
+            tr.languageName(language.code),
+            language.nameNative,
+          ),
         ),
       ),
     );
@@ -52,7 +55,7 @@ class PronunciationBox extends StatelessWidget {
         children: [
           Semantics(
             button: true,
-            label: 'Ouvir pronúncia',
+            label: tr.listenPronunciation,
             child: InkResponse(
               onTap: () => speakWithFeedback(context, speakText),
               radius: 20,
@@ -93,7 +96,7 @@ class PronunciationBox extends StatelessWidget {
                       ),
                     if (ipa == null && approximation == null)
                       TextSpan(
-                        text: 'Ouvir pronúncia',
+                        text: tr.listenPronunciation,
                         style: TextStyle(color: p.text500),
                       ),
                   ],

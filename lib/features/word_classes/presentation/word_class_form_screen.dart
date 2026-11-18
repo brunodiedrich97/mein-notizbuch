@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/grammar_colors.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import 'word_appearance.dart';
 
@@ -100,16 +101,12 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('EXCLUIR CLASSE', style: AppText.section(p)),
+          Text(tr.deleteClassTitle, style: AppText.section(p)),
           const SizedBox(height: 12),
           Text(wc.name, style: AppText.display(p, fontSize: 24)),
           const SizedBox(height: 8),
           Text(
-            switch (count) {
-              0 => 'Nenhuma palavra usa esta classe.',
-              1 => 'A palavra desta classe passa a ser "Outros".',
-              _ => 'As $count palavras desta classe passam a ser "Outros".',
-            },
+            tr.deleteClassWarning(count, tr.builtInOther),
             style: AppText.body(p),
           ),
           const SizedBox(height: 24),
@@ -117,14 +114,14 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
             children: [
               Expanded(
                 child: SoftButton(
-                  label: 'Cancelar',
+                  label: tr.cancel,
                   onPressed: () => Navigator.of(ctx).pop(false),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: PrimaryButton(
-                  label: 'Excluir',
+                  label: tr.delete,
                   onPressed: () => Navigator.of(ctx).pop(true),
                 ),
               ),
@@ -148,13 +145,13 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
     return Scaffold(
       backgroundColor: p.page,
       appBar: ScreenHeader(
-        eyebrow: 'CLASSES GRAMATICAIS',
-        title: existing == null ? 'Nova classe' : 'Editar classe',
+        eyebrow: tr.grammarClassesCaps,
+        title: existing == null ? tr.newClass : tr.editClass,
         trailing: existing == null
             ? null
             : HeaderIconButton(
                 icon: Icons.delete_outline_rounded,
-                tooltip: 'Excluir classe',
+                tooltip: tr.deleteClass,
                 onPressed: () => _delete(existing),
               ),
       ),
@@ -166,7 +163,7 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
             children: [
               _NameField(controller: _name),
               const SizedBox(height: 24),
-              Text('COR', style: AppText.section(p)),
+              Text(tr.colorCaps, style: AppText.section(p)),
               const SizedBox(height: 12),
               _SaturationValuePicker(hsv: _hsv, onChanged: _setHsv),
               const SizedBox(height: 16),
@@ -220,7 +217,7 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
                 children: [
                   Expanded(
                     child: _Preview(
-                      name: name.isEmpty ? 'Classe' : name,
+                      name: name.isEmpty ? tr.classPlaceholder : name,
                       base: _color,
                       dark: false,
                     ),
@@ -228,7 +225,7 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _Preview(
-                      name: name.isEmpty ? 'Classe' : name,
+                      name: name.isEmpty ? tr.classPlaceholder : name,
                       base: _color,
                       dark: true,
                     ),
@@ -238,8 +235,7 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
               if (similar != null) ...[
                 const SizedBox(height: 12),
                 _Warning(
-                  'Parecida com "${similar.shortLabel}". Escolha um tom mais '
-                  'distante para não confundir as classes.',
+                  tr.similarColorWarning(similar.shortLabel),
                 ),
               ],
             ],
@@ -259,14 +255,14 @@ class _WordClassFormScreenState extends ConsumerState<WordClassFormScreen> {
               children: [
                 Expanded(
                   child: SoftButton(
-                    label: 'Cancelar',
+                    label: tr.cancel,
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: existing == null ? 'Criar classe' : 'Salvar',
+                    label: existing == null ? tr.createClass : tr.save,
                     onPressed: name.isEmpty || _saving ? null : _save,
                   ),
                 ),
@@ -297,7 +293,7 @@ class _NameField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('NOME', style: AppText.caption(p)),
+          Text(tr.nameCaps, style: AppText.caption(p)),
           const SizedBox(height: 6),
           TextField(
             controller: controller,
@@ -306,7 +302,7 @@ class _NameField extends StatelessWidget {
             textCapitalization: TextCapitalization.sentences,
             style: AppText.item(p).copyWith(fontSize: 16),
             decoration: InputDecoration(
-              hintText: 'Conjunção, Pronome, Expressão…',
+              hintText: tr.classNameHint,
               hintStyle: AppText.item(p).copyWith(
                 fontSize: 16,
                 color: p.text400,
@@ -495,7 +491,7 @@ class _Preview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            dark ? 'TEMA ESCURO' : 'TEMA CLARO',
+            dark ? tr.darkTheme : tr.lightTheme,
             style: AppText.caption(palette),
           ),
           const SizedBox(height: 8),

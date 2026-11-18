@@ -5,6 +5,7 @@ import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
 import '../../../../core/widgets/app_buttons.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../vocabulary/models/grammar_type.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
 import '../../models/study_settings.dart';
@@ -66,7 +67,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('CLASSE GRAMATICAL', style: AppText.section(p)),
+        Text(tr.wordClassCaps, style: AppText.section(p)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -92,7 +93,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
         ),
         if (widget.sessionOptions) ...[
           const SizedBox(height: 24),
-          Text('ORDEM DA SESSÃO', style: AppText.section(p)),
+          Text(tr.sessionOrderCaps, style: AppText.section(p)),
           const SizedBox(height: 4),
           for (final o in SessionOrder.values)
             _RadioRow(
@@ -102,7 +103,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
               onTap: () => setState(() => _s = _s.copyWith(order: o)),
             ),
           const SizedBox(height: 20),
-          Text('TAMANHO DA SESSÃO', style: AppText.section(p)),
+          Text(tr.sessionSizeCaps, style: AppText.section(p)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -110,7 +111,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
                 if (size != StudySettings.sizeOptions.first)
                   const SizedBox(width: 8),
                 _SizePill(
-                  label: size == null ? 'Todas' : '$size',
+                  label: size == null ? tr.allFem : '$size',
                   selected: size == _s.size,
                   onTap: () => setState(
                     () => _s = size == null
@@ -124,7 +125,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
         ],
         const SizedBox(height: 24),
         PrimaryButton(
-          label: 'Aplicar',
+          label: tr.apply,
           onPressed: () => Navigator.of(context).pop(_s),
         ),
       ],

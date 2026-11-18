@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../word_classes/presentation/word_appearance.dart';
 
 /// Confirmação de exclusão no estilo dos cartões do app: a palavra aparece
@@ -70,7 +71,7 @@ class DeleteWordDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'EXCLUIR FICHA',
+                    tr.deleteCardTitle,
                     style: TextStyle(
                       fontSize: 12,
                       height: 16 / 12,
@@ -98,8 +99,7 @@ class DeleteWordDialog extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'Esta ficha será removida do Notizbuch. '
-                'Essa ação não pode ser desfeita.',
+                tr.deleteCardWarning,
                 style: TextStyle(fontSize: 14, height: 1.45, color: p.text600),
               ),
               const SizedBox(height: 20),
@@ -115,7 +115,7 @@ class DeleteWordDialog extends StatelessWidget {
                         textStyle: label,
                         shape: shape,
                       ),
-                      child: const Text('Cancelar'),
+                      child: Text(tr.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -131,7 +131,7 @@ class DeleteWordDialog extends StatelessWidget {
                         elevation: 1,
                         shadowColor: Colors.black26,
                       ),
-                      child: const Text('Excluir'),
+                      child: Text(tr.delete),
                     ),
                   ),
                 ],

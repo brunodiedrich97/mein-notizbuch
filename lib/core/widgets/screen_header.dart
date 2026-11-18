@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_strings.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
@@ -9,13 +10,13 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
   const ScreenHeader({
     super.key,
     required this.title,
-    this.eyebrow = 'FICHÁRIO NOTIZBUCH',
+    this.eyebrow,
     this.onBack,
     this.trailing,
   });
 
   final String title;
-  final String eyebrow;
+  final String? eyebrow;
 
   /// Padrão: fecha a tela atual.
   final VoidCallback? onBack;
@@ -47,7 +48,7 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
                 child: Row(
                   children: [
                     Tooltip(
-                      message: 'Voltar',
+                      message: tr.back,
                       child: Material(
                         color: p.card,
                         shape: CircleBorder(side: BorderSide(color: p.outline)),
@@ -76,7 +77,7 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  eyebrow,
+                                  eyebrow ?? tr.screenEyebrow,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,

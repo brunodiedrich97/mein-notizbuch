@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../core/database/app_database.dart';
+import '../../../l10n/app_strings.dart';
 import '../models/reminder_content.dart';
 import 'daily_word_plan.dart';
 
@@ -99,8 +100,8 @@ class ReminderService {
     return NotificationDetails(
       android: AndroidNotificationDetails(
         'daily_word',
-        'Palavra do dia',
-        channelDescription: 'Uma palavra do seu Notizbuch por dia.',
+        tr.reminderChannel,
+        channelDescription: tr.reminderChannelDescription,
         icon: 'ic_notification',
         color: const Color(0xFF111827),
         // Classe em itálico (HTML). Recolhida: tudo numa linha (texto

@@ -52,7 +52,6 @@ class LanguageTerms {
 class StudyLanguageProfile {
   const StudyLanguageProfile({
     required this.code,
-    required this.namePt,
     required this.nameNative,
     required this.ttsLocale,
     required this.categories,
@@ -79,8 +78,6 @@ class StudyLanguageProfile {
   /// Código guardado no banco ("de").
   final String code;
 
-  /// Nome em português, minúsculo: "alemão" ("Palavra em alemão").
-  final String namePt;
 
   /// Nome no próprio idioma: "Deutsch".
   final String nameNative;
@@ -164,7 +161,6 @@ class StudyLanguageProfile {
 
 const StudyLanguageProfile german = StudyLanguageProfile(
   code: 'de',
-  namePt: 'alemão',
   nameNative: 'Deutsch',
   ttsLocale: 'de-DE',
   categories: [
@@ -234,7 +230,6 @@ const StudyLanguageProfile german = StudyLanguageProfile(
 
 const StudyLanguageProfile english = StudyLanguageProfile(
   code: 'en',
-  namePt: 'inglês',
   nameNative: 'English',
   ttsLocale: 'en-US',
   // Sem gênero: um único "substantivo", sem artigo que indique a classe.

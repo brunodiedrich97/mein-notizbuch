@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
 import '../../../../core/widgets/speak_button.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
 import '../../../review/presentation/review_session_screen.dart';
@@ -141,7 +142,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     await ref.read(databaseProvider).deleteWord(word.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"${word.germanWord}" foi excluída.')),
+      SnackBar(content: Text(tr.wordDeleted(word.germanWord))),
     );
   }
 
@@ -152,7 +153,7 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     final settings = ref.watch(studySettingsProvider);
     final deckId = ref.watch(deckScopeProvider);
     final deck = deckId == null ? null : ref.watch(deckByIdProvider(deckId));
-    final deckName = deck?.deck.namePt;
+    final deckName = deck?.deck.displayName;
 
     // A sessão guarda só os ids; os dados vêm sempre atualizados do banco
     // (e fichas excluídas saem da sessão).
@@ -167,8 +168,8 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
     final current = total == 0 ? null : session[index];
     final answered = _results.length;
 
-    final eyebrow = (deckName ?? 'Todas as fichas').toUpperCase();
-    final title = _finished ? 'Sessão concluída' : 'Sessão de estudo';
+    final eyebrow = (deckName ?? tr.allCards).toUpperCase();
+    final title = _finished ? tr.sessionFinished : tr.studySession;
 
     Widget body;
     if (!_ready) {
@@ -186,15 +187,16 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
       body = _poolSize == 0
           ? _EmptyState(
               message: deckName == null
-                  ? 'Seu Notizbuch ainda não tem fichas.'
-                  : 'O deck "$deckName" ainda não tem fichas.',
-              actionLabel: 'Adicionar palavra',
+                  ? tr.notebookEmpty
+                  : tr.deckEmpty(deckName),
+              actionLabel: tr.addWord,
               onAction: () => openAddWord(context, deckId: deckId),
             )
           : _EmptyState(
-              message: 'Nenhuma ficha com o filtro '
-                  '"${settings.filterLabel(WordClassScope.of(context))}".',
-              actionLabel: 'Limpar filtro',
+              message: tr.noCardsWithFilter(
+                settings.filterLabel(WordClassScope.of(context)),
+              ),
+              actionLabel: tr.clearFilter,
               onAction: _clearFilter,
             );
     } else {
@@ -337,7 +339,7 @@ class _SessionToolbar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Semantics(
-                label: 'Progresso da sessão',
+                label: tr.sessionProgress,
                 value: '${(progress * 100).round()}%',
                 child: Container(
                   height: 6,
@@ -367,7 +369,7 @@ class _SessionToolbar extends StatelessWidget {
                   children: [
                     _ToolbarButton(
                       icon: Icons.tune_rounded,
-                      label: 'Filtro · $filterLabel',
+                      label: tr.filterLabel(filterLabel),
                       onTap: onFilters,
                     ),
                     const SizedBox(width: 8),
@@ -445,7 +447,7 @@ class _CounterPill extends StatelessWidget {
     final p = AppPalette.of(context);
     final radius = BorderRadius.circular(12);
     return Tooltip(
-      message: 'Ir para outra ficha',
+      message: tr.goToAnotherCard,
       child: Material(
         color: p.card,
         shape: RoundedRectangleBorder(
@@ -495,9 +497,9 @@ class _GradeFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final caption = switch (answer) {
-      null => 'VOCÊ SABIA ESTA?',
-      true => 'VOCÊ MARCOU: SABIA',
-      false => 'VOCÊ MARCOU: AINDA NÃO',
+      null => tr.didYouKnowIt,
+      true => tr.youMarkedKnew,
+      false => tr.youMarkedNotYet,
     };
 
     return Container(
@@ -523,7 +525,7 @@ class _GradeFooter extends StatelessWidget {
                     children: [
                       Expanded(
                         child: SoftButton(
-                          label: 'Ainda não',
+                          label: tr.notYet,
                           onPressed: onNotYet,
                         ),
                       ),
@@ -532,7 +534,7 @@ class _GradeFooter extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: PrimaryButton(
-                          label: 'Sabia',
+                          label: tr.knewIt,
                           chevron: true,
                           onPressed: onKnew,
                         ),
@@ -570,7 +572,7 @@ class _JumpSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('FICHAS DA SESSÃO', style: AppText.section(p)),
+        Text(tr.sessionCards, style: AppText.section(p)),
         const SizedBox(height: 8),
         for (var i = 0; i < session.length; i++)
           InkWell(
@@ -611,7 +613,7 @@ class _JumpSheet extends StatelessWidget {
                     true => Icon(Icons.check_rounded, size: 18, color: p.text700),
                     false => Icon(Icons.close_rounded, size: 18, color: error),
                     null => i == current
-                        ? Text('atual', style: AppText.meta(p))
+                        ? Text(tr.currentCard, style: AppText.meta(p))
                         : const SizedBox.shrink(),
                   },
                 ],
@@ -667,7 +669,7 @@ class _SessionMenu extends StatelessWidget {
     }
 
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'Mais opções',
+      tooltip: tr.moreOptions,
       position: PopupMenuPosition.under,
       offset: const Offset(0, 6),
       color: p.card,
@@ -681,15 +683,15 @@ class _SessionMenu extends StatelessWidget {
       ),
       onSelected: (action) => action(),
       itemBuilder: (_) => [
-        item(Icons.list_rounded, 'Ver palavras', onWords),
-        item(Icons.add_rounded, 'Adicionar palavra', onAdd),
-        item(Icons.style_outlined, 'Revisar (quiz)', onReview),
-        item(Icons.edit_outlined, 'Praticar escrita', onWrite),
+        item(Icons.list_rounded, tr.viewWords, onWords),
+        item(Icons.add_rounded, tr.addWord, onAdd),
+        item(Icons.style_outlined, tr.reviewQuiz, onReview),
+        item(Icons.edit_outlined, tr.practiceWriting, onWrite),
         if (word != null) ...[
           const PopupMenuDivider(height: 9),
           item(
             Icons.delete_outline_rounded,
-            'Excluir esta ficha',
+            tr.deleteThisCard,
             () => onDelete(word),
           ),
         ],

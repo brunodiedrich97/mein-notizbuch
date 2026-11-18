@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../providers/deck_provider.dart';
 import '../deck_icon_data.dart';
 
@@ -67,7 +68,7 @@ class DeckCard extends StatelessWidget {
               DeckIconBox(icon: deck.icon.data),
               const SizedBox(height: 12),
               Text(
-                deck.namePt,
+                deck.displayName,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTheme.serif(
@@ -94,7 +95,7 @@ class DeckCard extends StatelessWidget {
               const Spacer(),
               const SizedBox(height: 10),
               Text(
-                count == 1 ? '1 ficha' : '$count fichas',
+                tr.cardsCount(count),
                 style: AppTheme.mono(fontSize: 11, color: p.text400),
               ),
             ],
@@ -133,7 +134,7 @@ class NewDeckCard extends StatelessWidget {
                 Icon(Icons.add_rounded, size: 22, color: p.text500),
                 const SizedBox(height: 6),
                 Text(
-                  'Novo deck',
+                  tr.newDeck,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

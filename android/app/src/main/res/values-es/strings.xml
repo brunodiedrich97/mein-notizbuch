@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">Palabra del día</string>
+    <string name="widget_description">Una palabra de tu Notizbuch cada día, con su clase gramatical y su significado.</string>
+    <string name="widget_empty">Añade una palabra al Notizbuch</string>
+</resources>

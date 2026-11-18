@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../l10n/app_strings.dart';
 
 /// Backup como arquivo .json escolhido pelo usuário: no iPhone, o app
 /// Arquivos (incluindo o iCloud Drive); no Android, qualquer pasta ou
@@ -24,7 +25,7 @@ class FileBackup {
       utf8.encode(const JsonEncoder.withIndent('  ').convert(data)),
     );
     final path = await FilePicker.platform.saveFile(
-      dialogTitle: 'Exportar backup do Notizbuch',
+      dialogTitle: tr.exportBackupTitle,
       fileName: _fileName(DateTime.now()),
       type: FileType.custom,
       allowedExtensions: const ['json'],
@@ -38,7 +39,7 @@ class FileBackup {
   /// Não grava nada: use [AppDatabase.importData] depois de confirmar.
   static Future<Map<String, dynamic>?> pick() async {
     final result = await FilePicker.platform.pickFiles(
-      dialogTitle: 'Importar backup do Notizbuch',
+      dialogTitle: tr.importBackupTitle,
       type: FileType.custom,
       allowedExtensions: const ['json'],
       withData: true,
@@ -47,7 +48,7 @@ class FileBackup {
     if (bytes == null) return null;
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('O arquivo não é um backup do Notizbuch.');
+      throw FormatException(tr.notABackupFile);
     }
     return decoded;
   }

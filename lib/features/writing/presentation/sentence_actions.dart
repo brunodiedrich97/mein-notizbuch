@@ -5,6 +5,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 
 /// Pergunta se a frase deve ser excluída de "Minhas frases" e exclui.
@@ -19,7 +20,7 @@ Future<void> confirmDeleteSentence(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('EXCLUIR FRASE', style: AppText.section(p)),
+        Text(tr.deleteSentenceTitle, style: AppText.section(p)),
         const SizedBox(height: 12),
         Text(
           sentence.german,
@@ -32,7 +33,7 @@ Future<void> confirmDeleteSentence(
         ),
         const SizedBox(height: 8),
         Text(
-          'A frase sai de "Minhas frases". A ficha não muda.',
+          tr.deleteSentenceWarning,
           style: AppText.body(p),
         ),
         const SizedBox(height: 24),
@@ -40,14 +41,14 @@ Future<void> confirmDeleteSentence(
           children: [
             Expanded(
               child: SoftButton(
-                label: 'Cancelar',
+                label: tr.cancel,
                 onPressed: () => Navigator.of(ctx).pop(false),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: PrimaryButton(
-                label: 'Excluir',
+                label: tr.delete,
                 onPressed: () => Navigator.of(ctx).pop(true),
               ),
             ),

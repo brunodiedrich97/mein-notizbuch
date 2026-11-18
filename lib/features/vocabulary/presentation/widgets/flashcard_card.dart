@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 import 'pronunciation_box.dart';
 import '../../../word_classes/presentation/word_appearance.dart';
 
@@ -66,15 +67,15 @@ class FlashcardCard extends StatelessWidget {
     final lower = <Widget>[
       if (conjugation != null)
         _Section(
-          label: 'presente',
+          label: tr.sectionPresent,
           child: _LinesText(conjugation, fontSize: 17),
         ),
       if (degrees != null)
-        _Section(label: 'graus', child: _LinesText(degrees, fontSize: 17)),
+        _Section(label: tr.sectionDegrees, child: _LinesText(degrees, fontSize: 17)),
       // Todas as classes: rótulo "EXEMPLO", frase e tradução abaixo.
       if (exampleDe != null)
         _Section(
-          label: 'exemplo',
+          label: tr.sectionExample,
           child: _Example(german: exampleDe, portuguese: examplePt),
         ),
     ];
@@ -230,7 +231,7 @@ class _SupportLine extends StatelessWidget {
       return Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: 'plural: $plural'),
+            TextSpan(text: tr.pluralLabel(plural)),
             TextSpan(
               text: '  ·  ',
               style: TextStyle(color: color.withValues(alpha: 0.6)),
@@ -360,15 +361,15 @@ class _SentencesSection extends StatelessWidget {
 
   static String _date(DateTime d) {
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(d.day)}/${two(d.month)}';
+    return tr.dayMonth(two(d.day), two(d.month));
   }
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final label = sentences.isEmpty
-        ? 'minhas frases'
-        : 'minhas frases · ${sentences.length}';
+        ? tr.mySentences
+        : '${tr.mySentences} · ${sentences.length}';
 
     return _Section(
       label: label,
@@ -444,7 +445,7 @@ class _SentencesSection extends StatelessWidget {
                       Icon(Icons.edit_outlined, size: 16, color: p.text700),
                       const SizedBox(width: 6),
                       Text(
-                        'Escrever frase',
+                        tr.writeSentence,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -472,7 +473,7 @@ class _RuleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colon = rule.indexOf(':');
-    final label = colon > 0 ? rule.substring(0, colon).trim() : 'regência';
+    final label = colon > 0 ? rule.substring(0, colon).trim() : tr.sectionUsage;
     final body = colon > 0 ? rule.substring(colon + 1).trim() : rule;
     return _Section(
       label: label,

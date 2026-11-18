@@ -1,4 +1,5 @@
 import '../../../core/language/study_language.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/models/grammar_type.dart';
 
 /// Comparação simples de frases, feita no aparelho (sem internet).
@@ -155,8 +156,12 @@ String? _explain(String? got, String want, List<String> gotBlock) {
     final (prep, article) = contraction;
     final block = gotBlock.map((t) => t.toLowerCase()).toList();
     if (block.contains(prep) || block.contains(article)) {
-      return '"$wantLower" = $prep + $article. Em ${language.namePt}, essa '
-          'junção é obrigatória.';
+      return tr.contractionRequired(
+        wantLower,
+        prep,
+        article,
+        tr.languageName(language.code),
+      );
     }
   }
 
@@ -166,23 +171,21 @@ String? _explain(String? got, String want, List<String> gotBlock) {
   // Artigo no caso errado.
   if (language.articleForms.contains(gotLower) &&
       language.articleForms.contains(wantLower)) {
-    return 'Artigo: o esperado é "$want", e não "$got". Confira o caso '
-        '(nominativo, acusativo, dativo) e o gênero da palavra.';
+    return tr.articleMismatch(want, got);
   }
 
   // Só a maiúscula/minúscula está diferente.
   if (gotLower == wantLower) {
     final upper = want[0] == want[0].toUpperCase();
-    if (!upper) return '"$want" é escrita com minúscula.';
+    if (!upper) return tr.writtenLowercase(want);
     return language.capitalizeNouns
-        ? '"$want" começa com maiúscula: em ${language.namePt}, todo '
-            'substantivo é escrito com inicial maiúscula.'
-        : '"$want" começa com maiúscula.';
+        ? tr.nounCapitalized(want, tr.languageName(language.code))
+        : tr.startsCapitalized(want);
   }
 
   // Só o trema (ou ß) está diferente.
   if (foldGerman(got) == foldGerman(want)) {
-    return 'Trema: o esperado é "$want", e não "$got".';
+    return tr.umlautMismatch(want, got);
   }
   return null;
 }

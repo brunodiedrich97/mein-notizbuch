@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 import 'flashcard_card.dart';
 
 /// Caderno aberto: duas fichas lado a lado, com a lombada no meio.
@@ -72,7 +73,7 @@ class _EndPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
-        'Fim do caderno.',
+        tr.endOfNotebook,
         style: AppTheme.serif(
           fontSize: 18,
           fontStyle: FontStyle.italic,

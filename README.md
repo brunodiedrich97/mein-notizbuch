@@ -192,7 +192,7 @@ gênero: os substantivos ficam numa classe só ("substantivo"), "the dog"
 vira "dog", verbos são reconhecidos por "to …", não há fileira de letras
 especiais e a revisão não pergunta o artigo.
 
-O idioma é trocado em **Ajustes → Idioma → Idioma de estudo** e fica salvo
+O idioma é trocado em **Ajustes → Idiomas → Idioma de estudo** e fica salvo
 (`study.language` nas preferências). Cada idioma tem as próprias fichas,
 decks e frases (coluna `language`, schema v7); nada é apagado ao trocar.
 Na primeira vez de um idioma, o app cria o deck "Geral" dele com algumas
@@ -206,17 +206,36 @@ e acrescentar as fichas iniciais em `_seedWordsByLanguage`.
 
 O idioma em que o usuário escreve as traduções, a aproximação da pronúncia
 e as dicas: **português** (padrão), **inglês** ou **espanhol**
-(`lib/core/language/native_language.dart`). Fica em **Ajustes → Idioma →
+(`lib/core/language/native_language.dart`). Fica em **Ajustes → Idiomas →
 Idioma nativo** e é salvo em `native.language`.
 
 - Os rótulos e exemplos do cadastro seguem o idioma nativo ("Tradução em
   espanhol", "Aproximação ES", "el perro"…), assim como a busca e o nome do
-  deck novo. A interface em si continua em português.
+  deck novo.
 - As fichas iniciais e o deck "Geral" são criados no idioma nativo
   (`lib/core/database/seed_translations.dart`).
 - Trocar o idioma nativo não altera as fichas já cadastradas.
 - O idioma nativo e o de estudo não podem ser o mesmo: a opção aparece
   desativada nas duas listas.
+
+## Idioma do app (interface)
+
+Menus, botões e mensagens em **português**, **inglês** ou **espanhol**.
+Fica em **Ajustes → Idiomas → Idioma do app**; o padrão é "Automático"
+(o idioma do aparelho, ou inglês se não for um dos três). A escolha é
+salva em `ui.language` e vale também para a notificação, o widget e os
+seletores de data e hora.
+
+Os textos ficam em `lib/l10n/` (`tr.chave` no código), gerados a partir
+de `tool/l10n/entries/*.py`, com os três idiomas lado a lado:
+
+```bash
+# depois de editar ou acrescentar uma entrada
+python3 tool/l10n/gen.py
+```
+
+O nome do widget na lista de widgets do Android segue o idioma do aparelho
+(`android/app/src/main/res/values*/strings.xml`).
 
 ## Classes gramaticais criadas pelo usuário
 

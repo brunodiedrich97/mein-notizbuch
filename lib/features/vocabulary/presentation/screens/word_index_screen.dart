@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
 import '../../../study/models/study_settings.dart';
@@ -19,13 +20,17 @@ import '../widgets/word_list_card.dart';
 
 /// Ordenações do índice.
 enum IndexSort {
-  az('A–Z'),
-  recent('Recentes'),
-  mistakes('Mais erradas'),
-  article('Gênero');
+  az,
+  recent,
+  mistakes,
+  article;
 
-  const IndexSort(this._fallbackLabel);
-  final String _fallbackLabel;
+  String get _fallbackLabel => switch (this) {
+        IndexSort.az => tr.sortAz,
+        IndexSort.recent => tr.sortRecent,
+        IndexSort.mistakes => tr.sortMistakes,
+        IndexSort.article => tr.sortGender,
+      };
 
   /// "der · die · das" (artigos do idioma de estudo) na ordenação por
   /// gênero.
@@ -105,10 +110,10 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
           });
         return [(null, sorted)];
       case IndexSort.article:
-        String label(WordEntry w) => w.category.article ?? 'Outras classes';
+        String label(WordEntry w) => w.category.article ?? tr.otherClasses;
         final order = [
           ...StudyLanguages.active.articles.values,
-          'Outras classes',
+          tr.otherClasses,
         ];
         final groups = <String, List<WordEntry>>{};
         for (final w in [...words]..sort(_compareAz)) {
@@ -147,11 +152,7 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
     }).toList();
     final groups = _group(words);
 
-    final countText = switch (words.length) {
-      0 => 'Nenhuma palavra',
-      1 => '1 palavra',
-      _ => '${words.length} palavras',
-    };
+    final countText = tr.wordsCount(words.length);
     final filterText =
         _filter.filter == WordFilter.all && _filter.customClassId == null
             ? ''
@@ -160,11 +161,11 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
     return Scaffold(
       backgroundColor: p.page,
       appBar: ScreenHeader(
-        eyebrow: (deck?.deck.namePt ?? 'Mein Notizbuch').toUpperCase(),
-        title: 'Palavras',
+        eyebrow: (deck?.deck.displayName ?? 'Mein Notizbuch').toUpperCase(),
+        title: tr.words,
         trailing: HeaderIconButton(
           icon: Icons.tune_rounded,
-          tooltip: 'Filtrar por classe',
+          tooltip: tr.filterByClass,
           onPressed: _openFilter,
         ),
       ),
@@ -213,9 +214,8 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
                   sliver: SliverToBoxAdapter(
                     child: Text(
                       query.isNotEmpty
-                          ? 'Nenhuma palavra encontrada para '
-                              '"${_search.text.trim()}".'
-                          : 'Nenhuma palavra por aqui ainda.',
+                          ? tr.noWordsFoundFor(_search.text.trim())
+                          : tr.noWordsHereYet,
                       textAlign: TextAlign.center,
                       style: AppText.body(p),
                     ),
@@ -292,8 +292,10 @@ class _SearchField extends StatelessWidget {
               style: AppText.item(p),
               decoration: InputDecoration(
                 hintText:
-                    'Buscar em ${StudyLanguages.active.namePt} ou '
-                    '${NativeLanguages.active.namePt}',
+                    tr.searchIn(
+                  tr.languageName(StudyLanguages.active.code),
+                  tr.languageName(NativeLanguages.active.code),
+                ),
                 hintStyle: AppText.item(p).copyWith(
                   color: p.text400,
                   fontWeight: FontWeight.w400,

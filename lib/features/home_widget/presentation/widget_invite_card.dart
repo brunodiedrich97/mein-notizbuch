@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
+import '../../../l10n/app_strings.dart';
 import '../data/daily_word_widget.dart';
 import '../providers/widget_invite_provider.dart';
 
@@ -34,15 +35,14 @@ Future<void> addDailyWordWidget(BuildContext context) async {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('ADICIONAR WIDGET', style: AppText.section(p)),
+        Text(tr.addWidgetCaps, style: AppText.section(p)),
         const SizedBox(height: 12),
-        step('1', 'Toque e segure num espaço vazio da tela inicial.'),
-        step('2', 'Toque em "Widgets".'),
-        step('3', 'Procure "Mein Notizbuch" e arraste "Palavra do dia" '
-            'para a tela.'),
+        step('1', tr.widgetStep1),
+        step('2', tr.widgetStep2),
+        step('3', tr.widgetStep3),
         const SizedBox(height: 14),
         PrimaryButton(
-          label: 'Entendi',
+          label: tr.gotIt,
           onPressed: () => Navigator.of(ctx).pop(),
         ),
       ],
@@ -82,7 +82,7 @@ class WidgetInviteCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Palavra do dia na tela inicial',
+                        tr.widgetInviteTitle,
                         style: AppText.item(p).copyWith(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -90,8 +90,7 @@ class WidgetInviteCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Uma palavra nova por dia, com a classe e o '
-                        'significado, sem abrir o app.',
+                        tr.widgetInviteText,
                         style: AppText.body(p).copyWith(
                           fontSize: 13,
                           color: p.text500,
@@ -113,14 +112,14 @@ class WidgetInviteCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: SoftButton(
-                    label: 'Agora não',
+                    label: tr.notNow,
                     onPressed: controller.dismiss,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Adicionar widget',
+                    label: tr.addWidget,
                     onPressed: () async {
                       await controller.dismiss();
                       if (context.mounted) await addDailyWordWidget(context);

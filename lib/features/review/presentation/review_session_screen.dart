@@ -5,6 +5,7 @@ import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/screen_header.dart';
 import '../../../core/widgets/speak_button.dart';
+import '../../../l10n/app_strings.dart';
 import '../../vocabulary/presentation/widgets/pronunciation_box.dart';
 import '../../word_classes/presentation/word_appearance.dart';
 import '../providers/review_quiz_provider.dart';
@@ -18,18 +19,15 @@ class ReviewSessionScreen extends ConsumerWidget {
     final notifier = ref.read(reviewQuizProvider.notifier);
 
     return Scaffold(
-      appBar: const ScreenHeader(title: 'Revisão'),
+      appBar: ScreenHeader(title: tr.review),
       body: quiz.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => _CenteredMessage(
-          text: 'Não foi possível montar a revisão: $err',
+          text: tr.reviewBuildFailed(err),
         ),
         data: (state) {
           if (state.isEmpty) {
-            return const _CenteredMessage(
-              text: 'Ainda não há fichas suficientes para revisar. '
-                  'Cadastre pelo menos duas palavras e volte aqui.',
-            );
+            return _CenteredMessage(text: tr.notEnoughCards);
           }
           if (state.isFinished) {
             return _ResultView(
@@ -100,7 +98,7 @@ class _QuestionView extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Pergunta ${state.current + 1} de $total',
+              tr.questionOf(state.current + 1, total),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -120,7 +118,7 @@ class _QuestionView extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              isArticle ? 'Qual é o artigo?' : 'O que significa?',
+              isArticle ? tr.whichArticle : tr.whatDoesItMean,
               style: TextStyle(fontSize: 16, color: muted),
             ),
             const SizedBox(height: 8),
@@ -165,8 +163,8 @@ class _QuestionView extends StatelessWidget {
               _FeedbackCard(
                 correct: wasCorrect,
                 verdict: wasCorrect
-                    ? 'Certo!'
-                    : 'A resposta é "${q.options[q.correctIndex]}".',
+                    ? tr.correct
+                    : tr.theAnswerIs(q.options[q.correctIndex]),
                 example: example,
                 exampleTranslation: examplePt,
               ),
@@ -180,7 +178,7 @@ class _QuestionView extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  state.current + 1 < total ? 'Próxima' : 'Ver resultado',
+                  state.current + 1 < total ? tr.nextFem : tr.seeResult,
                 ),
               ),
             ],
@@ -271,11 +269,10 @@ class _ResultView extends StatelessWidget {
     final ratio = total == 0 ? 0 : score / total;
     final terms = StudyLanguages.active.terms;
     final message = ratio >= 0.8
-        ? '${terms.excellent} Revisão excelente.'
+        ? '${terms.excellent} ${tr.reviewExcellent}'
         : ratio >= 0.5
-            ? '${terms.wellDone} Continue praticando.'
-            : '${terms.keepGoing} As fichas que você errou voltam primeiro '
-                'na próxima revisão.';
+            ? '${terms.wellDone} ${tr.keepPracticing}'
+            : '${terms.keepGoing} ${tr.missedCardsFirst}';
 
     return Center(
       child: ConstrainedBox(
@@ -286,7 +283,7 @@ class _ResultView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$score de $total',
+                tr.scoreOf(score, total),
                 style: AppTheme.serif(fontSize: 48, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
@@ -304,7 +301,7 @@ class _ResultView extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: onRestart,
-                  child: const Text('Revisar de novo'),
+                  child: Text(tr.reviewAgain),
                 ),
               ),
               const SizedBox(height: 8),
@@ -312,7 +309,7 @@ class _ResultView extends StatelessWidget {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: onExit,
-                  child: const Text('Voltar ao caderno'),
+                  child: Text(tr.backToNotebook),
                 ),
               ),
             ],
@@ -425,7 +422,7 @@ class _FeedbackCard extends StatelessWidget {
             const SizedBox(height: 14),
             Divider(height: 1, color: p.divider),
             const SizedBox(height: 14),
-            const _CapsLabel('Exemplo'),
+            _CapsLabel(tr.exampleLabel),
             const SizedBox(height: 6),
             Text(
               example,
@@ -438,7 +435,7 @@ class _FeedbackCard extends StatelessWidget {
             ),
             if (translation != null && translation.isNotEmpty) ...[
               const SizedBox(height: 14),
-              const _CapsLabel('Tradução'),
+              _CapsLabel(tr.translationLabel),
               const SizedBox(height: 6),
               Text(
                 translation,

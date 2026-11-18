@@ -5,6 +5,7 @@ import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../vocabulary/presentation/widgets/word_list_card.dart';
 
 /// Resumo no fim de uma sessão (fichas ou escrita): título, contagem de
@@ -18,9 +19,9 @@ class SessionSummary extends StatelessWidget {
     required this.onBack,
     required this.onRestart,
     required this.onOpenWord,
-    this.verb = 'estudou',
-    this.rightLabel = 'sabia',
-    this.wrongLabel = 'ainda não',
+    this.practice = false,
+    this.rightLabel,
+    this.wrongLabel,
   });
 
   final List<WordEntry> words;
@@ -32,10 +33,11 @@ class SessionSummary extends StatelessWidget {
   final VoidCallback onRestart;
   final ValueChanged<WordEntry> onOpenWord;
 
-  /// "Você estudou 12 fichas", "Você praticou 10 frases"…
-  final String verb;
-  final String rightLabel;
-  final String wrongLabel;
+  /// Sessão de escrita ("Você praticou…") em vez de estudo ("Você
+  /// estudou…").
+  final bool practice;
+  final String? rightLabel;
+  final String? wrongLabel;
 
   /// Largura máxima do conteúdo.
   static const double maxWidth = 448;
@@ -51,7 +53,6 @@ class SessionSummary extends StatelessWidget {
     ];
     final total = words.length;
     final great = total > 0 && right / total >= 0.7;
-    final studied = total == 1 ? '1 ficha' : '$total fichas';
 
     return Center(
       child: ConstrainedBox(
@@ -59,7 +60,7 @@ class SessionSummary extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
           children: [
-            Text('SESSÃO CONCLUÍDA', style: AppText.section(p)),
+            Text(tr.sessionFinishedCaps, style: AppText.section(p)),
             const SizedBox(height: 8),
             Text(
               great
@@ -69,33 +70,43 @@ class SessionSummary extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              deckName == null
-                  ? 'Você $verb $studied.'
-                  : 'Você $verb $studied do deck $deckName.',
+              practice
+                  ? tr.youPracticed(total, deckName)
+                  : tr.youStudied(total, deckName),
               style: AppText.body(p),
             ),
             const SizedBox(height: 24),
             Row(
               children: [
-                Expanded(child: _StatTile(value: right, label: rightLabel)),
+                Expanded(
+                  child: _StatTile(
+                    value: right,
+                    label: rightLabel ?? tr.knewCount,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _StatTile(value: wrong, label: wrongLabel)),
+                Expanded(
+                  child: _StatTile(
+                    value: wrong,
+                    label: wrongLabel ?? tr.notYetCount,
+                  ),
+                ),
               ],
             ),
             if (toReview.isNotEmpty) ...[
               const SizedBox(height: 24),
-              Text('PARA REVER', style: AppText.section(p)),
+              Text(tr.toReviewCaps, style: AppText.section(p)),
               const SizedBox(height: 12),
               WordListCard(words: toReview, onTap: onOpenWord),
             ],
             const SizedBox(height: 24),
             Row(
               children: [
-                Expanded(child: SoftButton(label: 'Voltar', onPressed: onBack)),
+                Expanded(child: SoftButton(label: tr.back, onPressed: onBack)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Nova sessão',
+                    label: tr.newSession,
                     onPressed: onRestart,
                   ),
                 ),

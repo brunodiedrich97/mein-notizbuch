@@ -10,6 +10,7 @@ import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
 import '../../../study/presentation/widgets/session_summary.dart';
@@ -154,7 +155,7 @@ class _TranslationExerciseScreenState
     final p = AppPalette.of(context);
     final deckId = ref.watch(deckScopeProvider);
     final deck = deckId == null ? null : ref.watch(deckByIdProvider(deckId));
-    final deckName = deck?.deck.namePt;
+    final deckName = deck?.deck.displayName;
 
     final all = ref.watch(wordListProvider).valueOrNull ?? const <WordEntry>[];
     final byId = {for (final w in all) w.id: w};
@@ -166,8 +167,8 @@ class _TranslationExerciseScreenState
     final index = total == 0 ? 0 : _index.clamp(0, total - 1);
     final word = total == 0 ? null : session[index];
 
-    final eyebrow = '${(deckName ?? 'Todas as fichas').toUpperCase()} · '
-        'ESCREVER';
+    final eyebrow =
+        '${(deckName ?? tr.allCards).toUpperCase()} · ${tr.writeEyebrow}';
 
     Widget body;
     Widget? footer;
@@ -178,9 +179,9 @@ class _TranslationExerciseScreenState
         words: session,
         results: _results,
         deckName: deckName,
-        verb: 'praticou',
-        rightLabel: 'certas',
-        wrongLabel: 'para rever',
+        practice: true,
+        rightLabel: tr.rightCount,
+        wrongLabel: tr.toReviewCount,
         onBack: () => Navigator.of(context).maybePop(),
         onRestart: _start,
         onOpenWord: (w) => openWordDetail(context, w.id),
@@ -198,7 +199,9 @@ class _TranslationExerciseScreenState
               _ProgressBar(value: (_results.length) / total),
               const SizedBox(height: 24),
               Text(
-                'ESCREVA EM ${StudyLanguages.active.namePt.toUpperCase()}',
+                tr.writeIn(
+                  tr.languageName(StudyLanguages.active.code).toUpperCase(),
+                ),
                 style: AppText.caption(p),
               ),
               const SizedBox(height: 8),
@@ -218,7 +221,9 @@ class _TranslationExerciseScreenState
                 WritingField(
                   controller: _input,
                   focusNode: _focus,
-                  hint: 'Escreva a frase em ${StudyLanguages.active.namePt}…',
+                  hint: tr.writeSentenceIn(
+                    tr.languageName(StudyLanguages.active.code),
+                  ),
                   autofocus: true,
                   onSubmitted: () => _verify(word),
                 ),
@@ -243,14 +248,14 @@ class _TranslationExerciseScreenState
             ? [
                 Expanded(
                   child: SoftButton(
-                    label: 'Mostrar resposta',
+                    label: tr.showAnswer,
                     onPressed: () => _reveal(word),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Conferir',
+                    label: tr.check,
                     chevron: true,
                     onPressed: _input.text.trim().isEmpty
                         ? null
@@ -262,7 +267,7 @@ class _TranslationExerciseScreenState
                 if (!check.isPerfect && !_revealed && !_acceptedAnyway) ...[
                   Expanded(
                     child: SoftButton(
-                      label: 'Considerar certa',
+                      label: tr.acceptAsRight,
                       onPressed: () => setState(() => _acceptedAnyway = true),
                     ),
                   ),
@@ -270,7 +275,7 @@ class _TranslationExerciseScreenState
                 ],
                 Expanded(
                   child: PrimaryButton(
-                    label: isLast ? 'Concluir' : 'Próxima',
+                    label: isLast ? tr.finish : tr.nextFem,
                     chevron: true,
                     onPressed: () => _next(session, word),
                   ),
@@ -285,7 +290,7 @@ class _TranslationExerciseScreenState
       backgroundColor: p.page,
       appBar: ScreenHeader(
         eyebrow: eyebrow,
-        title: 'Tradução reversa',
+        title: tr.reverseTranslation,
         trailing: showCounter
             ? _StaticPill(text: '${index + 1} / $total')
             : null,
@@ -356,7 +361,7 @@ class _WordHint extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'use: ${word.germanWord}',
+              tr.useWord(word.germanWord),
               style: TextStyle(
                 fontFamily: AppTheme.sansFamily,
                 fontSize: 12,
@@ -399,24 +404,22 @@ class _ResultCard extends StatelessWidget {
       _ when revealed => (
           Icons.visibility_outlined,
           p.text700,
-          'Esta é a resposta',
+          tr.thisIsTheAnswer,
         ),
       _ when check.isPerfect => (
           Icons.check_circle_rounded,
           success,
-          'Perfeito!',
+          tr.perfect,
         ),
       _ when acceptedAnyway => (
           Icons.check_circle_outline_rounded,
           p.text700,
-          'Considerada certa',
+          tr.acceptedAsRight,
         ),
       _ => (
           Icons.error_outline_rounded,
           error,
-          check.differences == 1
-              ? 'Quase! 1 diferença'
-              : '${check.differences} diferenças',
+          tr.differences(check.differences),
         ),
     };
 
@@ -486,13 +489,13 @@ class _ResultCard extends StatelessWidget {
           ),
           if (!revealed && !check.isPerfect) ...[
             const SizedBox(height: 16),
-            Text('SUA RESPOSTA', style: AppText.caption(p)),
+            Text(tr.yourAnswer, style: AppText.caption(p)),
             const SizedBox(height: 4),
             Text.rich(line(check.answer, isAnswer: true)),
           ],
           const SizedBox(height: 16),
           Text(
-            check.isPerfect && !revealed ? 'SUA RESPOSTA' : 'RESPOSTA ESPERADA',
+            check.isPerfect && !revealed ? tr.yourAnswer : tr.expectedAnswer,
             style: AppText.caption(p),
           ),
           const SizedBox(height: 4),
@@ -526,7 +529,7 @@ class _ResultCard extends StatelessWidget {
                 Icon(Icons.check_rounded, size: 16, color: success),
                 const SizedBox(width: 6),
                 Text(
-                  'Salva em "Minhas frases"',
+                  tr.savedInMySentences,
                   style: AppText.meta(p).copyWith(
                     fontWeight: FontWeight.w600,
                     color: success,
@@ -547,7 +550,7 @@ class _ResultCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        'Salvar a frase correta em "Minhas frases"',
+                        tr.saveCorrectSentence,
                         style: AppText.item(p).copyWith(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -595,8 +598,10 @@ class _EmptyMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final where = deckName == null ? 'Nenhuma ficha' : 'Nenhuma ficha do deck '
-        '"$deckName"';
+    final deck = deckName;
+    final message = deck == null
+        ? tr.noExamplesInNotebook(tr.addWordTitle)
+        : tr.noExamplesInDeck(deck, tr.addWordTitle);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 320),
@@ -606,14 +611,13 @@ class _EmptyMessage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$where tem exemplo com tradução. Cadastre a frase de '
-                'exemplo e a tradução dela em "Registrar Palavra".',
+                message,
                 textAlign: TextAlign.center,
                 style: AppText.body(p),
               ),
               const SizedBox(height: 16),
               PrimaryButton(
-                label: 'Voltar',
+                label: tr.back,
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
             ],

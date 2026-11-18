@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/language/study_language.dart';
 import '../../../core/language/study_language_provider.dart';
+import '../../../l10n/app_strings.dart';
 import '../models/grammar_type.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -19,18 +20,27 @@ final wordListProvider = StreamProvider<List<WordEntry>>((ref) {
 });
 
 enum WordFilter {
-  all('Todos'),
-  nouns('Substantivos'),
-  masculine('Masculino'),
-  feminine('Feminino'),
-  neuter('Neutro'),
-  verbs('Verbos'),
-  adjectives('Adjetivos'),
-  prepositions('Preposições'),
-  others('Outros');
+  all,
+  nouns,
+  masculine,
+  feminine,
+  neuter,
+  verbs,
+  adjectives,
+  prepositions,
+  others;
 
-  const WordFilter(this._fallbackLabel);
-  final String _fallbackLabel;
+  String get _fallbackLabel => switch (this) {
+        WordFilter.all => tr.filterAll,
+        WordFilter.nouns => tr.filterNouns,
+        WordFilter.masculine => tr.filterMasculine,
+        WordFilter.feminine => tr.filterFeminine,
+        WordFilter.neuter => tr.filterNeuter,
+        WordFilter.verbs => tr.filterVerbs,
+        WordFilter.adjectives => tr.filterAdjectives,
+        WordFilter.prepositions => tr.filterPrepositions,
+        WordFilter.others => tr.filterOthers,
+      };
 
   /// Rótulo do chip: o artigo do idioma de estudo para os gêneros ("der",
   /// "die", "das"); sem artigo no idioma, o nome do gênero.

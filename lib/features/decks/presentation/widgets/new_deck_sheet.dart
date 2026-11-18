@@ -6,6 +6,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/language/native_language.dart';
 import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_strings.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
 import '../../models/deck_icon.dart';
 import '../deck_icon_data.dart';
@@ -66,7 +67,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível criar o deck: $e')),
+        SnackBar(content: Text(tr.createDeckFailed(e))),
       );
     }
   }
@@ -111,7 +112,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'NOVO DECK',
+                  tr.newDeckCaps,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -122,26 +123,28 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                 const SizedBox(height: 12),
                 _SheetField(
                   controller: _namePt,
-                  label: 'Nome em ${NativeLanguages.active.namePt}',
+                  label: tr.nameIn(tr.languageName(NativeLanguages.active.code)),
                   hint: NativeLanguages.active.deckNameHint,
                   autofocus: true,
                   validator: (v) {
                     final t = v?.trim() ?? '';
-                    if (t.isEmpty) return 'Dê um nome ao deck.';
-                    if (t.length > 40) return 'Use no máximo 40 caracteres.';
+                    if (t.isEmpty) return tr.giveDeckName;
+                    if (t.length > 40) return tr.max40Chars;
                     return null;
                   },
                 ),
                 _SheetField(
                   controller: _nameDe,
                   label:
-                      'Nome em ${StudyLanguages.active.namePt} (opcional)',
+                      tr.nameInOptional(
+                    tr.languageName(StudyLanguages.active.code),
+                  ),
                   hint: StudyLanguages.active.deckNameHint,
                   german: true,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'ÍCONE',
+                  tr.iconCaps,
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
@@ -184,7 +187,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                           textStyle: label,
                           shape: shape,
                         ),
-                        child: const Text('Cancelar'),
+                        child: Text(tr.cancel),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -198,7 +201,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                           textStyle: label,
                           shape: shape,
                         ),
-                        child: const Text('Criar deck'),
+                        child: Text(tr.createDeck),
                       ),
                     ),
                   ],

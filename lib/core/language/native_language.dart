@@ -4,7 +4,6 @@
 class NativeLanguageProfile {
   const NativeLanguageProfile({
     required this.code,
-    required this.namePt,
     required this.nameNative,
     required this.tag,
     required this.generalDeckName,
@@ -16,8 +15,6 @@ class NativeLanguageProfile {
   /// Código ("pt", "en", "es").
   final String code;
 
-  /// Nome em português, minúsculo: "espanhol" ("Tradução em espanhol").
-  final String namePt;
 
   /// Nome no próprio idioma: "Español".
   final String nameNative;
@@ -36,7 +33,6 @@ class NativeLanguageProfile {
 
 const NativeLanguageProfile portuguese = NativeLanguageProfile(
   code: 'pt',
-  namePt: 'português',
   nameNative: 'Português',
   tag: 'PT',
   generalDeckName: 'Geral',
@@ -47,7 +43,6 @@ const NativeLanguageProfile portuguese = NativeLanguageProfile(
 
 const NativeLanguageProfile englishNative = NativeLanguageProfile(
   code: 'en',
-  namePt: 'inglês',
   nameNative: 'English',
   tag: 'EN',
   generalDeckName: 'General',
@@ -58,7 +53,6 @@ const NativeLanguageProfile englishNative = NativeLanguageProfile(
 
 const NativeLanguageProfile spanish = NativeLanguageProfile(
   code: 'es',
-  namePt: 'espanhol',
   nameNative: 'Español',
   tag: 'ES',
   generalDeckName: 'General',

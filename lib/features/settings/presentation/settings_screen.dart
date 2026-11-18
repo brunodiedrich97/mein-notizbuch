@@ -5,14 +5,17 @@ import '../../../core/language/native_language.dart';
 import '../../../core/language/native_language_provider.dart';
 import '../../../core/language/study_language.dart';
 import '../../../core/language/study_language_provider.dart';
+import '../../../core/language/ui_language_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/screen_header.dart';
+import '../../../l10n/app_strings.dart';
 import '../../backup/data/file_backup.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
+import '../../home/presentation/home_screen.dart';
 import '../../home_widget/data/daily_word_widget.dart';
 import '../../home_widget/presentation/widget_invite_card.dart';
 import '../../home_widget/providers/widget_invite_provider.dart';
@@ -35,12 +38,7 @@ class SettingsScreen extends ConsumerWidget {
     final ok = await ref.read(reminderProvider.notifier).setEnabled(value);
     if (!ok) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Sem permissão para notificações. Libere em Configurações › '
-            'Apps › Mein Notizbuch › Notificações.',
-          ),
-        ),
+        SnackBar(content: Text(tr.notificationsDenied)),
       );
     }
   }
@@ -50,7 +48,7 @@ class SettingsScreen extends ConsumerWidget {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: s.hour, minute: s.minute),
-      helpText: 'Horário do lembrete',
+      helpText: tr.reminderTimeHelp,
     );
     if (picked == null) return;
     await ref
@@ -65,9 +63,8 @@ class SettingsScreen extends ConsumerWidget {
       SnackBar(
         content: Text(
           ok
-              ? 'Notificação de teste enviada.'
-              : 'Não foi possível enviar: cadastre uma palavra e libere as '
-                  'notificações.',
+              ? tr.testNotificationSent
+              : tr.testNotificationFailed,
         ),
       ),
     );
@@ -79,12 +76,12 @@ class SettingsScreen extends ConsumerWidget {
       final saved = await FileBackup.export(ref.read(databaseProvider));
       if (saved) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Backup exportado.')),
+          SnackBar(content: Text(tr.backupExported)),
         );
       }
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível exportar: $e')),
+        SnackBar(content: Text(tr.exportFailed(e))),
       );
     }
   }
@@ -99,7 +96,7 @@ class SettingsScreen extends ConsumerWidget {
       return;
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível abrir o arquivo: $e')),
+        SnackBar(content: Text(tr.openFileFailed(e))),
       );
       return;
     }
@@ -115,13 +112,13 @@ class SettingsScreen extends ConsumerWidget {
     try {
       await ref.read(databaseProvider).importData(backup);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Backup importado.')),
+        SnackBar(content: Text(tr.backupImported)),
       );
     } on FormatException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível importar: $e')),
+        SnackBar(content: Text(tr.importFailed(e))),
       );
     }
   }
@@ -132,17 +129,16 @@ class SettingsScreen extends ConsumerWidget {
     final code = await showAppSheet<String>(
       context,
       (_) => _LanguageSheet(
-        title: 'IDIOMA DE ESTUDO',
-        description: 'Cada idioma tem as próprias fichas, decks e frases. '
-            'Nada é apagado ao trocar.',
+        title: tr.studyLanguageSheetTitle,
+        description: tr.studyLanguageSheetText,
         selected: current,
         options: [
           for (final l in StudyLanguages.all)
             _LanguageOption(
               l.code,
-              _capitalize(l.namePt),
+              _capitalize(tr.languageName(l.code)),
               l.nameNative,
-              note: l.code == nativeLang ? 'É o seu idioma nativo' : null,
+              note: l.code == nativeLang ? tr.isYourNativeLanguage : null,
             ),
         ],
       ),
@@ -171,17 +167,16 @@ class SettingsScreen extends ConsumerWidget {
     final code = await showAppSheet<String>(
       context,
       (_) => _LanguageSheet(
-        title: 'IDIOMA NATIVO',
-        description: 'O idioma das traduções e das dicas. As fichas já '
-            'cadastradas continuam como estão.',
+        title: tr.nativeLanguageSheetTitle,
+        description: tr.nativeLanguageSheetText,
         selected: current,
         options: [
           for (final l in NativeLanguages.all)
             _LanguageOption(
               l.code,
-              _capitalize(l.namePt),
+              _capitalize(tr.languageName(l.code)),
               l.nameNative,
-              note: l.code == study ? 'É o idioma que você estuda' : null,
+              note: l.code == study ? tr.isTheLanguageYouStudy : null,
             ),
         ],
       ),
@@ -190,9 +185,45 @@ class SettingsScreen extends ConsumerWidget {
     await ref.read(nativeLanguageProvider.notifier).select(code);
   }
 
+  Future<void> _chooseAppLanguage(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(uiLanguageProvider);
+    final choice = await showAppSheet<String>(
+      context,
+      (_) => _LanguageSheet(
+        title: tr.appLanguageSheetTitle,
+        description: tr.appLanguageSheetText,
+        selected: current,
+        options: [
+          _LanguageOption(
+            UiLanguageController.system,
+            tr.systemLanguage,
+            tr.systemLanguageSubtitle,
+          ),
+          // Cada idioma com o próprio nome, para quem não lê o atual.
+          const _LanguageOption('pt', 'Português', 'Portuguese'),
+          const _LanguageOption('en', 'English', 'English'),
+          const _LanguageOption('es', 'Español', 'Spanish'),
+        ],
+      ),
+    );
+    if (choice == null || choice == current || !context.mounted) return;
+
+    final navigator = Navigator.of(context);
+    await ref.read(uiLanguageProvider.notifier).select(choice);
+    // Lembrete e widget com os textos no novo idioma.
+    ref.read(reminderProvider.notifier).refresh();
+    refreshDailyWordWidget(ref);
+    // Recria as telas abertas para todas mostrarem o novo idioma.
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = AppPalette.of(context);
+    final uiChoice = ref.watch(uiLanguageProvider);
     final nativeLang =
         NativeLanguages.byCode(ref.watch(nativeLanguageProvider));
     final studyCode = ref.watch(studyLanguageProvider);
@@ -204,14 +235,14 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: p.page,
-      appBar: const ScreenHeader(eyebrow: 'MEIN NOTIZBUCH', title: 'Ajustes'),
+      appBar: ScreenHeader(eyebrow: 'MEIN NOTIZBUCH', title: tr.settings),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
-              Text('TELA', style: AppText.section(p)),
+              Text(tr.sectionDisplay, style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
                 children: [
@@ -220,10 +251,10 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('Tamanho do texto', style: AppText.item(p)),
+                        Text(tr.textSize, style: AppText.item(p)),
                         const SizedBox(height: 2),
                         Text(
-                          'Soma com o ajuste de acessibilidade do celular.',
+                          tr.textSizeHint,
                           style: AppText.meta(p),
                         ),
                         const SizedBox(height: 12),
@@ -240,39 +271,44 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              Text('IDIOMA', style: AppText.section(p)),
+              Text(tr.sectionLanguages, style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
                 children: [
                   _SettingRow(
                     icon: Icons.translate,
-                    title: 'Idioma de estudo',
-                    subtitle: '${_capitalize(study.namePt)} '
+                    title: tr.studyLanguage,
+                    subtitle: '${_capitalize(tr.languageName(study.code))} '
                         '(${study.nameNative})',
                     onTap: () => _chooseStudyLanguage(context, ref),
                   ),
                   _SettingRow(
                     icon: Icons.record_voice_over_outlined,
-                    title: 'Idioma nativo',
-                    subtitle: '${_capitalize(nativeLang.namePt)} '
+                    title: tr.nativeLanguage,
+                    subtitle: '${_capitalize(tr.languageName(nativeLang.code))} '
                         '(${nativeLang.nameNative})',
                     onTap: () => _chooseNativeLanguage(context, ref),
+                  ),
+                  _SettingRow(
+                    icon: Icons.language,
+                    title: tr.appLanguage,
+                    subtitle: uiChoice == UiLanguageController.system
+                        ? '${tr.systemLanguage} · '
+                            '${AppStrings.all[UiLanguageController.deviceLanguage()]!.selfName}'
+                        : AppStrings.all[uiChoice]!.selfName,
+                    onTap: () => _chooseAppLanguage(context, ref),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              Text('VOCABULÁRIO', style: AppText.section(p)),
+              Text(tr.sectionVocabulary, style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
                 children: [
                   _SettingRow(
                     icon: Icons.palette_outlined,
-                    title: 'Classes gramaticais',
-                    subtitle: switch (classCount) {
-                      0 => 'Crie classes novas, com nome e cor',
-                      1 => '1 classe criada',
-                      _ => '$classCount classes criadas',
-                    },
+                    title: tr.grammarClasses,
+                    subtitle: tr.customClassesCount(classCount),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const WordClassesScreen(),
@@ -282,15 +318,14 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              Text('LEMBRETE DIÁRIO', style: AppText.section(p)),
+              Text(tr.sectionDailyReminder, style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
                 children: [
                   _SettingRow(
                     icon: Icons.notifications_none_rounded,
-                    title: 'Palavra do dia',
-                    subtitle: 'Uma notificação por dia com uma palavra, a '
-                        'classe gramatical e o significado.',
+                    title: tr.wordOfTheDay,
+                    subtitle: tr.wordOfTheDayHint,
                     trailing: Switch(
                       value: reminder.enabled,
                       activeTrackColor: p.ink,
@@ -302,27 +337,27 @@ class SettingsScreen extends ConsumerWidget {
                   if (DailyWordWidget.isSupported)
                     _SettingRow(
                       icon: Icons.widgets_outlined,
-                      title: 'Widget na tela inicial',
-                      subtitle: 'A palavra do dia sem abrir o app.',
+                      title: tr.homeWidget,
+                      subtitle: tr.homeWidgetHint,
                       onTap: () => addDailyWordWidget(context),
                     ),
                   if (reminder.enabled) ...[
                     _SettingRow(
                       icon: Icons.schedule_rounded,
-                      title: 'Horário',
+                      title: tr.time,
                       trailing: _Value(reminder.timeLabel, mono: true),
                       onTap: () => _pickTime(context, ref),
                     ),
                     _SettingRow(
                       icon: Icons.send_outlined,
-                      title: 'Enviar um teste agora',
+                      title: tr.sendTestNow,
                       onTap: () => _sendTest(context, ref),
                     ),
                   ],
                 ],
               ),
               const SizedBox(height: 24),
-              Text('BACKUP', style: AppText.section(p)),
+              Text(tr.sectionBackup, style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
                 children: [
@@ -331,7 +366,7 @@ class SettingsScreen extends ConsumerWidget {
                         ? Icons.cloud_done_outlined
                         : Icons.cloud_outlined,
                     title: 'Google Drive',
-                    subtitle: backup.email ?? 'Desligado',
+                    subtitle: backup.email ?? tr.off,
                     trailing: const _Value(''),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -341,15 +376,14 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   _SettingRow(
                     icon: Icons.ios_share_rounded,
-                    title: 'Exportar para um arquivo',
-                    subtitle: 'Salve no app Arquivos, no iCloud Drive ou '
-                        'em outra pasta.',
+                    title: tr.exportToFile,
+                    subtitle: tr.exportToFileHint,
                     onTap: () => _export(context, ref),
                   ),
                   _SettingRow(
                     icon: Icons.file_open_outlined,
-                    title: 'Importar de um arquivo',
-                    subtitle: 'Substitui os dados deste aparelho.',
+                    title: tr.importFromFile,
+                    subtitle: tr.importFromFileHint,
                     onTap: () => _import(context, ref),
                   ),
                 ],
@@ -566,22 +600,20 @@ class _ConfirmImportSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('IMPORTAR BACKUP', style: AppText.section(p)),
+        Text(tr.importBackupSheetTitle, style: AppText.section(p)),
         const SizedBox(height: 12),
         Text(
-          date == null ? 'Backup do Notizbuch' : 'De $date',
+          date == null ? tr.notizbuchBackup : tr.fromDate(date),
           style: AppText.display(p, fontSize: 24),
         ),
         const SizedBox(height: 8),
         Text(
-          '$words palavras · $decks decks · $sentences frases',
+          tr.backupCounts(words, decks, sentences),
           style: AppText.meta(p),
         ),
         const SizedBox(height: 12),
         Text(
-          'As palavras, decks e frases deste aparelho serão substituídos '
-          'pelos do arquivo. Se quiser guardar os dados atuais, exporte '
-          'antes.',
+          tr.importWarning,
           style: AppText.body(p),
         ),
         const SizedBox(height: 24),
@@ -589,14 +621,14 @@ class _ConfirmImportSheet extends StatelessWidget {
           children: [
             Expanded(
               child: SoftButton(
-                label: 'Cancelar',
+                label: tr.cancel,
                 onPressed: () => Navigator.of(context).pop(false),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: PrimaryButton(
-                label: 'Importar',
+                label: tr.importAction,
                 onPressed: () => Navigator.of(context).pop(true),
               ),
             ),
@@ -631,7 +663,7 @@ class _TextSizeSelector extends StatelessWidget {
             child: Semantics(
               button: true,
               selected: level == selected,
-              label: 'Tamanho do texto: ${level.label}',
+              label: tr.textSizeSemantics(level.label),
               child: Material(
                 color: level == selected ? p.ink : p.card,
                 shape: RoundedRectangleBorder(
@@ -699,10 +731,10 @@ class _TextSizePreview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('PRÉVIA', style: AppText.caption(p)),
+          Text(tr.preview, style: AppText.caption(p)),
           const SizedBox(height: 6),
           Text(
-            'Der Hund schläft im Garten.',
+            StudyLanguages.active.exampleHint,
             style: AppTheme.serif(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -711,7 +743,10 @@ class _TextSizePreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text('O cachorro dorme no jardim.', style: AppText.body(p)),
+          Text(
+            NativeLanguages.active.exampleTranslationHint,
+            style: AppText.body(p),
+          ),
         ],
       ),
     );
