@@ -258,6 +258,20 @@ a ficha da palavra.
 - **iOS:** ainda não. O widget do iPhone precisa de um App Group, que exige
   o Apple Developer Program (conta paga).
 
+Para testar, gere um build novo: o widget é código nativo, então o hot
+reload não basta. Com o celular conectado (veja "Instalar no celular
+(Android)"):
+
+```bash
+flutter run --release          # compila, instala e abre
+# ou
+flutter build apk --release    # gera build/app/outputs/flutter-apk/app-release.apk
+flutter install                # instala o APK no celular conectado
+```
+
+Depois, adicione o widget pelo convite da tela inicial, por *Ajustes ›
+Widget na tela inicial* ou pela lista de widgets do launcher.
+
 ## Backup no Google Drive
 
 O app envia um backup por dia (ao abrir) para a pasta **Mein Notizbuch** do
