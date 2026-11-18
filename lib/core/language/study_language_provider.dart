@@ -26,6 +26,16 @@ class StudyLanguageController extends Notifier<String> {
     await db.ensureGeneralDeck(StudyLanguages.active.code);
   }
 
+  /// Idioma escolhido na primeira abertura: cria o banco, o deck "Geral" e
+  /// as fichas iniciais desse idioma.
+  Future<void> start(AppDatabase db, String code) async {
+    StudyLanguages.setActive(code);
+    await db.ensureGeneralDeck(code);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, code);
+    state = code;
+  }
+
   /// Troca o idioma de estudo. Na primeira vez de um idioma, cria o deck
   /// "Geral" dele com algumas fichas iniciais.
   Future<void> select(AppDatabase db, String code) async {

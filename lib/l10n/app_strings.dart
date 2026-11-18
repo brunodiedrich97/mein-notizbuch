@@ -386,6 +386,18 @@ abstract class AppStrings {
   String get addWidget;
   String get currentCard;
   String widgetDate(DateTime d);
+  String onboardingStep(int n);
+  String get welcomeTitle;
+  String get welcomeText;
+  String get nativeTitle;
+  String get nativeText;
+  String get studyTitle;
+  String get studyText;
+  String get yourFirstDeck;
+  String moreSampleCards(int n, String deck);
+  String get continueAction;
+  String get start;
+  String startFailed(Object error);
 }
 
 /// Textos no idioma ativo da interface.

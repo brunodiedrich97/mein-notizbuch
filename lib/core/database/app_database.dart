@@ -127,6 +127,9 @@ class AppDatabase extends _$AppDatabase {
   /// Deck padrão do alemão (criado com o banco).
   static const int germanGeneralDeckId = 1;
 
+  /// Nome do arquivo do banco (o mesmo desde a primeira versão).
+  static const String _fileName = 'notizbuch_deutsch.sqlite';
+
   /// Deck padrão de cada idioma de estudo, por código ("de" → 1).
   static final Map<String, int> _generalDeckIds = {'de': germanGeneralDeckId};
 
@@ -134,6 +137,21 @@ class AppDatabase extends _$AppDatabase {
   /// não pode ser excluído. Garanta que exista com [ensureGeneralDeck].
   static int get generalDeckId =>
       _generalDeckIds[StudyLanguages.active.code] ?? germanGeneralDeckId;
+
+  /// Fichas iniciais do idioma de estudo [study], com os textos no idioma
+  /// nativo [native] (prévia da primeira abertura).
+  static List<WordEntriesCompanion> seedPreview(String study, String native) {
+    final seeds =
+        study == 'de' ? _seedWords : (_seedWordsByLanguage[study] ?? const []);
+    return localizeSeeds(seeds, native);
+  }
+
+  /// O banco já foi criado neste aparelho? (Quem já usava o app não passa
+  /// pela primeira abertura.)
+  static Future<bool> fileExists() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    return File(p.join(dbFolder.path, _fileName)).exists();
+  }
 
   /// O deck é o padrão de algum idioma?
   static bool isGeneralDeck(int id) => _generalDeckIds.containsValue(id);
@@ -474,7 +492,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'notizbuch_deutsch.sqlite'));
+    final file = File(p.join(dbFolder.path, AppDatabase._fileName));
 
     // Corrige a abertura do SQLite em Androids antigos (6 e anteriores).
     if (Platform.isAndroid) {

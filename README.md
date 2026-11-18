@@ -174,6 +174,20 @@ O app reproduz o protótipo HTML (Tailwind):
 - O layout de caderno aberto (duas fichas) aparece a partir de 840 px de
   largura.
 
+## Primeira abertura
+
+Na primeira vez que o app abre, três passos escolhem os idiomas antes de o
+banco ser criado (`lib/features/onboarding/`):
+
+1. idioma do app (já marcado o do aparelho);
+2. idioma nativo (cada opção mostra um exemplo de tradução);
+3. idioma de estudo, com a prévia das fichas iniciais.
+
+Só ao tocar em "Começar" o banco é criado, com o deck "Geral" e as fichas
+iniciais já no idioma nativo escolhido. A conclusão fica salva em
+`onboarding.done`. Quem já tinha o banco (versões anteriores) não passa
+por ela. Para ver de novo: desinstalar o app ou limpar os dados.
+
 ## Idioma de estudo (perfil de idioma)
 
 Tudo o que é específico do idioma estudado vem de um **perfil**

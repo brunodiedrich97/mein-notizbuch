@@ -10,6 +10,7 @@ import 'core/language/ui_language_provider.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home_widget/data/daily_word_widget.dart';
+import 'features/onboarding/data/onboarding.dart';
 import 'features/reminders/data/reminder_service.dart';
 import 'features/settings/providers/text_size_provider.dart';
 import 'features/splash/presentation/splash_screen.dart';
@@ -39,7 +40,11 @@ Future<void> main() async {
   await UiLanguageController.restore();
   await NativeLanguageController.restore();
   final container = ProviderContainer();
-  await StudyLanguageController.restore(container.read(databaseProvider));
+  // Na primeira abertura, o banco só é criado depois da escolha dos
+  // idiomas (OnboardingScreen).
+  if (!await Onboarding.check()) {
+    await StudyLanguageController.restore(container.read(databaseProvider));
+  }
 
   runApp(
     UncontrolledProviderScope(
@@ -94,7 +99,10 @@ class DeutschNotizbuchApp extends StatelessWidget {
             data: media.copyWith(textScaler: TextScaler.linear(scale)),
             // Classes criadas pelo usuário, disponíveis em todas as telas.
             child: WordClassScope(
-              classes: ref.watch(wordClassMapProvider),
+              // Na primeira abertura o banco ainda não existe.
+              classes: ref.watch(onboardingPendingProvider)
+                  ? const {}
+                  : ref.watch(wordClassMapProvider),
               child: child!,
             ),
           );

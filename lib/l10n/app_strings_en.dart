@@ -1465,4 +1465,52 @@ class AppStringsEn extends AppStrings {
   @override
   String widgetDate(DateTime d) =>
       '${const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1]}, ${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  String onboardingStep(int n) =>
+      '$n / 3';
+
+  @override
+  String get welcomeTitle =>
+      'Welcome to your Notizbuch';
+
+  @override
+  String get welcomeText =>
+      'Which language do you want to use the app in? You can change it later in Settings.';
+
+  @override
+  String get nativeTitle =>
+      'What is your native language?';
+
+  @override
+  String get nativeText =>
+      'Translations, pronunciation approximations and tips will be in this language.';
+
+  @override
+  String get studyTitle =>
+      'What will you study?';
+
+  @override
+  String get studyText =>
+      'Each language has its own cards and decks. You can study another one later.';
+
+  @override
+  String get yourFirstDeck =>
+      'YOUR FIRST DECK';
+
+  @override
+  String moreSampleCards(int n, String deck) =>
+      '+ $n sample cards in the "$deck" deck';
+
+  @override
+  String get continueAction =>
+      'Continue';
+
+  @override
+  String get start =>
+      'Start';
+
+  @override
+  String startFailed(Object error) =>
+      'Could not start: $error';
 }

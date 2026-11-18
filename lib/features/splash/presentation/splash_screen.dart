@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../home/presentation/home_screen.dart';
+import '../../onboarding/data/onboarding.dart';
+import '../../onboarding/presentation/onboarding_screen.dart';
 
 /// Caminho da logo recortada, com fundo transparente.
 const String kLogoMark = 'assets/logo/logo_mark.png';
@@ -54,7 +56,9 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, __, ___) => const HomeScreen(),
+        pageBuilder: (_, __, ___) => Onboarding.pending
+            ? const OnboardingScreen()
+            : const HomeScreen(),
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
