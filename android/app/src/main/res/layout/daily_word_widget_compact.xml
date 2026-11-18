@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Widget "Palavra do dia", compacto (4x1, o tamanho padrão): a palavra
-     numa linha; a classe e o significado na seguinte. -->
+     numa linha; na seguinte, "(classe) — significado". -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -45,11 +45,11 @@
             android:id="@+id/meaning"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="o cachorro"
+            android:text="— o cachorro"
             android:textColor="@color/widget_text"
             android:textSize="14sp" />
     </LinearLayout>

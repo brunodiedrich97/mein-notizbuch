@@ -85,7 +85,10 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
             views.setTextColor(R.id.word, color)
             views.setTextViewText(R.id.category, "(" + entry.getString("category") + ")")
             views.setTextColor(R.id.category, color)
-            views.setTextViewText(R.id.meaning, entry.getString("meaning"))
+            // 4x1: tudo numa linha, "(classe) — significado"; nos outros
+            // tamanhos, classe e significado ficam em linhas separadas.
+            val meaning = entry.getString("meaning")
+            views.setTextViewText(R.id.meaning, if (compact) "— $meaning" else meaning)
             views.setViewVisibility(R.id.meaning, View.VISIBLE)
             uri = Uri.parse("meinnotizbuch://word?id=" + entry.getInt("id"))
         }
