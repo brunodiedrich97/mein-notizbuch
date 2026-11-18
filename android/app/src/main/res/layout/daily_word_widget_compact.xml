@@ -13,17 +13,34 @@
     android:paddingEnd="18dp"
     android:paddingBottom="8dp">
 
-    <TextView
-        android:id="@+id/word"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:fontFamily="@font/newsreader_display_bold"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:text="der Hund"
-        android:textColor="#1D5FA7"
-        android:textSize="24sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/word"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/newsreader_display_bold"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="der Hund"
+            android:textColor="#1D5FA7"
+            android:textSize="24sp" />
+
+        <ImageView
+            android:id="@+id/pin"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_widget_pin"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

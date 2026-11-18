@@ -95,6 +95,10 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
             uri = Uri.parse("meinnotizbuch://word?id=" + entry.getInt("id"))
         }
         if (!small && !compact) views.setTextViewText(R.id.date, dateLabel(entry))
+        // Palavra fixa (escolhida em Ajustes): alfinete ao lado da palavra ou
+        // da data, que vira "fixada".
+        val pinned = entry?.optBoolean("pinned", false) == true
+        views.setViewVisibility(R.id.pin, if (pinned) View.VISIBLE else View.GONE)
 
         // Tocar no widget abre o app (na ficha da palavra).
         views.setOnClickPendingIntent(

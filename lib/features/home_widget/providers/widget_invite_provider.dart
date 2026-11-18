@@ -1,18 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language_provider.dart';
 import '../../reminders/data/daily_word_plan.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../../word_classes/providers/word_class_provider.dart';
 import '../data/daily_word_widget.dart';
+import 'pinned_word_provider.dart';
 
-/// Atualiza o widget com o plano da palavra do dia (ao abrir o app).
+/// Atualiza o widget com o plano da palavra do dia (ao abrir o app), ou com
+/// a palavra fixa do idioma de estudo, se houver uma.
 Future<void> refreshDailyWordWidget(WidgetRef ref) async {
   if (!DailyWordWidget.isSupported) return;
   final words = await ref.read(wordListProvider.future);
   final classes = await ref.read(wordClassListProvider.future);
   final plan = await DailyWordPlan.ensure(words);
-  await DailyWordWidget.publish(plan, {for (final c in classes) c.id: c});
+  final pinnedId = await PinnedWordController.savedFor(
+    ref.read(studyLanguageProvider),
+  );
+  WordEntry? pinned;
+  for (final w in words) {
+    if (w.id == pinnedId) pinned = w;
+  }
+  await DailyWordWidget.publish(
+    plan,
+    {for (final c in classes) c.id: c},
+    pinned: pinned,
+  );
 }
 
 final widgetInviteProvider =

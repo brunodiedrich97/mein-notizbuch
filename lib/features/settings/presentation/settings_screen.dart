@@ -18,6 +18,8 @@ import '../../backup/providers/backup_provider.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../home_widget/data/daily_word_widget.dart';
 import '../../home_widget/presentation/widget_invite_card.dart';
+import '../../home_widget/presentation/pinned_word_sheet.dart';
+import '../../home_widget/providers/pinned_word_provider.dart';
 import '../../home_widget/providers/widget_invite_provider.dart';
 import '../../reminders/providers/reminder_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
@@ -220,10 +222,22 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _choosePinnedWord(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(pinnedWordProvider)?.id;
+    // Registro com um campo: distingue "Nenhuma" (null) de fechar a folha.
+    final choice = await showAppSheet<(int?,)>(
+      context,
+      (_) => PinnedWordSheet(selected: current),
+    );
+    if (choice == null || choice.$1 == current) return;
+    await setPinnedWord(ref, choice.$1);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = AppPalette.of(context);
     final uiChoice = ref.watch(uiLanguageProvider);
+    final pinned = ref.watch(pinnedWordProvider);
     final nativeLang =
         NativeLanguages.byCode(ref.watch(nativeLanguageProvider));
     final studyCode = ref.watch(studyLanguageProvider);
@@ -340,6 +354,16 @@ class SettingsScreen extends ConsumerWidget {
                       title: tr.homeWidget,
                       subtitle: tr.homeWidgetHint,
                       onTap: () => addDailyWordWidget(context),
+                    ),
+                  if (DailyWordWidget.isSupported)
+                    _SettingRow(
+                      icon: Icons.push_pin_outlined,
+                      title: tr.pinnedWord,
+                      subtitle: pinned == null
+                          ? tr.pinnedNone
+                          : '${pinned.germanWord} · '
+                              '${pinned.portugueseTranslation}',
+                      onTap: () => _choosePinnedWord(context, ref),
                     ),
                   if (reminder.enabled) ...[
                     _SettingRow(

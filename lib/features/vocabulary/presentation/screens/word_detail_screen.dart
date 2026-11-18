@@ -7,6 +7,9 @@ import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/screen_header.dart';
 import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
+import '../../../home_widget/data/daily_word_widget.dart';
+import '../../../home_widget/presentation/pin_actions.dart';
+import '../../../home_widget/providers/pinned_word_provider.dart';
 import '../../../writing/presentation/sentence_actions.dart';
 import '../../../writing/providers/sentence_provider.dart';
 import '../../providers/vocabulary_provider.dart';
@@ -41,6 +44,7 @@ class WordDetailScreen extends ConsumerWidget {
     final words = ref.watch(wordListProvider).valueOrNull ?? const [];
     final matches = words.where((w) => w.id == wordId);
     final WordEntry? word = matches.isEmpty ? null : matches.first;
+    final pinnedId = ref.watch(pinnedWordProvider)?.id;
 
     return Scaffold(
       backgroundColor: p.page,
@@ -49,10 +53,29 @@ class WordDetailScreen extends ConsumerWidget {
         title: word?.germanWord ?? '',
         trailing: word == null
             ? null
-            : HeaderIconButton(
-                icon: Icons.delete_outline_rounded,
-                tooltip: tr.deleteCard,
-                onPressed: () => _delete(context, ref, word),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Palavra fixa no widget (só Android).
+                  if (DailyWordWidget.isSupported) ...[
+                    HeaderIconButton(
+                      icon: pinnedId == word.id
+                          ? Icons.push_pin
+                          : Icons.push_pin_outlined,
+                      tooltip: pinnedId == word.id
+                          ? tr.unpinFromWidget
+                          : tr.pinToWidget,
+                      active: pinnedId == word.id,
+                      onPressed: () => togglePinnedWord(context, ref, word),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  HeaderIconButton(
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: tr.deleteCard,
+                    onPressed: () => _delete(context, ref, word),
+                  ),
+                ],
               ),
       ),
       body: word == null

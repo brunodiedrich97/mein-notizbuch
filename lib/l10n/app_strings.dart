@@ -398,6 +398,18 @@ abstract class AppStrings {
   String get continueAction;
   String get start;
   String startFailed(Object error);
+  String get pinnedLabel;
+  String get pinnedWord;
+  String get pinnedNone;
+  String get pinnedSheetTitle;
+  String get pinnedSheetText;
+  String get none;
+  String get newWordEachDay;
+  String get pinToWidget;
+  String get unpinFromWidget;
+  String wordPinned(String word);
+  String get wordUnpinned;
+  String get undo;
 }
 
 /// Textos no idioma ativo da interface.

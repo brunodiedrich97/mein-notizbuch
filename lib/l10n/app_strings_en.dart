@@ -1513,4 +1513,52 @@ class AppStringsEn extends AppStrings {
   @override
   String startFailed(Object error) =>
       'Could not start: $error';
+
+  @override
+  String get pinnedLabel =>
+      'pinned';
+
+  @override
+  String get pinnedWord =>
+      'Pinned word on the widget';
+
+  @override
+  String get pinnedNone =>
+      'None · a new word every day';
+
+  @override
+  String get pinnedSheetTitle =>
+      'PINNED WORD ON THE WIDGET';
+
+  @override
+  String get pinnedSheetText =>
+      'The widget always shows this word instead of a new one each day. Handy for memorizing a tricky word.';
+
+  @override
+  String get none =>
+      'None';
+
+  @override
+  String get newWordEachDay =>
+      'A new word every day';
+
+  @override
+  String get pinToWidget =>
+      'Pin to widget';
+
+  @override
+  String get unpinFromWidget =>
+      'Unpin from widget';
+
+  @override
+  String wordPinned(String word) =>
+      '"$word" is pinned to the widget.';
+
+  @override
+  String get wordUnpinned =>
+      'The widget is back to the word of the day.';
+
+  @override
+  String get undo =>
+      'Undo';
 }

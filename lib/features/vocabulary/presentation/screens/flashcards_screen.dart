@@ -11,6 +11,9 @@ import '../../../../core/widgets/speak_button.dart';
 import '../../../../l10n/app_strings.dart';
 import '../../../decks/presentation/deck_navigation.dart';
 import '../../../decks/providers/deck_provider.dart';
+import '../../../home_widget/data/daily_word_widget.dart';
+import '../../../home_widget/presentation/pin_actions.dart';
+import '../../../home_widget/providers/pinned_word_provider.dart';
 import '../../../review/presentation/review_session_screen.dart';
 import '../../../writing/presentation/sentence_actions.dart';
 import '../../../writing/providers/sentence_provider.dart';
@@ -301,6 +304,8 @@ class _FlashcardsScreenState extends ConsumerState<FlashcardsScreen> {
                       ),
                     ),
                     onDelete: _confirmDelete,
+                    pinnedId: ref.watch(pinnedWordProvider)?.id,
+                    onTogglePin: (w) => togglePinnedWord(context, ref, w),
                   ),
                 ],
               ),
@@ -634,6 +639,8 @@ class _SessionMenu extends StatelessWidget {
     required this.onWrite,
     required this.onReview,
     required this.onDelete,
+    required this.pinnedId,
+    required this.onTogglePin,
   });
 
   /// Ficha na tela (para "Excluir esta ficha"), se houver.
@@ -643,6 +650,10 @@ class _SessionMenu extends StatelessWidget {
   final VoidCallback onWrite;
   final VoidCallback onReview;
   final ValueChanged<WordEntry> onDelete;
+
+  /// Palavra fixa no widget (para "Fixar" / "Tirar do widget").
+  final int? pinnedId;
+  final ValueChanged<WordEntry> onTogglePin;
 
   @override
   Widget build(BuildContext context) {
@@ -687,6 +698,14 @@ class _SessionMenu extends StatelessWidget {
         item(Icons.add_rounded, tr.addWord, onAdd),
         item(Icons.style_outlined, tr.reviewQuiz, onReview),
         item(Icons.edit_outlined, tr.practiceWriting, onWrite),
+        if (word != null && DailyWordWidget.isSupported)
+          item(
+            word.id == pinnedId
+                ? Icons.push_pin
+                : Icons.push_pin_outlined,
+            word.id == pinnedId ? tr.unpinFromWidget : tr.pinToWidget,
+            () => onTogglePin(word),
+          ),
         if (word != null) ...[
           const PopupMenuDivider(height: 9),
           item(

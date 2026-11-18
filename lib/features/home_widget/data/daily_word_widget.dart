@@ -55,14 +55,25 @@ class DailyWordWidget {
     }
   }
 
-  /// Envia o [plan] para o widget e pede para ele se redesenhar.
+  /// Envia o [plan] para o widget e pede para ele se redesenhar. Com
+  /// [pinned], todos os dias mostram essa palavra (palavra fixa).
   static Future<void> publish(
     List<DailyWord> plan,
-    Map<int, WordClass> classes,
-  ) async {
+    Map<int, WordClass> classes, {
+    WordEntry? pinned,
+  }) async {
     if (!isSupported) return;
+    final days = [
+      for (final day in plan)
+        pinned == null ? day : DailyWord(day.date, pinned),
+    ];
     final entries = [
-      for (final day in plan) _entry(day, classes[day.word.customClassId]),
+      for (final day in days)
+        _entry(
+          day,
+          classes[day.word.customClassId],
+          pinned: pinned != null,
+        ),
     ];
     await HomeWidget.saveWidgetData<String>(_dataKey, jsonEncode(entries));
     await HomeWidget.updateWidget(
@@ -71,15 +82,20 @@ class DailyWordWidget {
     );
   }
 
-  static Map<String, Object> _entry(DailyWord day, WordClass? custom) {
+  static Map<String, Object> _entry(
+    DailyWord day,
+    WordClass? custom, {
+    required bool pinned,
+  }) {
     final word = day.word;
     final content = ReminderContent.fromWord(word, customClass: custom);
     final light = appearanceFor(word.category, custom, isDark: false);
     final dark = appearanceFor(word.category, custom, isDark: true);
     return {
       'date': DailyWordPlan.dateKey(day.date),
-      // "ter, 18/11", no idioma do app.
-      'label': tr.widgetDate(day.date),
+      // "ter, 18/11" (ou "fixada"), no idioma do app.
+      'label': pinned ? tr.pinnedLabel : tr.widgetDate(day.date),
+      'pinned': pinned,
       'id': word.id,
       'word': word.germanWord,
       'category': content.category,

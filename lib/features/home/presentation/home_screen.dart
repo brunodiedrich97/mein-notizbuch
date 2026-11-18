@@ -10,6 +10,7 @@ import '../../../l10n/app_strings.dart';
 import '../../backup/providers/backup_provider.dart';
 import '../../home_widget/data/daily_word_widget.dart';
 import '../../home_widget/presentation/widget_invite_card.dart';
+import '../../home_widget/providers/pinned_word_provider.dart';
 import '../../home_widget/providers/widget_invite_provider.dart';
 import '../../reminders/data/reminder_service.dart';
 import '../../reminders/providers/reminder_provider.dart';
@@ -426,5 +427,14 @@ class _StartupTasksState extends ConsumerState<_StartupTasks>
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    // Palavra fixa trocada ou excluída: o widget acompanha na hora.
+    ref.listen<int?>(
+      pinnedWordProvider.select((w) => w?.id),
+      (previous, next) {
+        if (previous != next) refreshDailyWordWidget(ref);
+      },
+    );
+    return widget.child;
+  }
 }

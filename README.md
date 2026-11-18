@@ -334,6 +334,13 @@ a ficha da palavra.
   aparece no máximo 3 vezes, com pelo menos 7 dias entre elas, e nunca se o
   widget já estiver na tela. Em *Ajustes › Lembrete diário*, "Widget na
   tela inicial" fica sempre disponível.
+- **Palavra fixa:** em *Ajustes › Lembrete diário › Palavra fixa no
+  widget* (com busca), pelo alfinete no topo da ficha ou pelo ⋮ da sessão
+  de estudo, uma palavra fica no widget todos os dias, para memorizar uma
+  palavra difícil. O widget mostra um alfinete e "fixada" no lugar da data;
+  a notificação continua com a palavra do dia. Cada idioma de estudo guarda
+  a sua (`widget.pinned.<idioma>` nas preferências), e uma palavra excluída
+  deixa de valer.
 - **iOS:** ainda não. O widget do iPhone precisa de um App Group, que exige
   o Apple Developer Program (conta paga).
 

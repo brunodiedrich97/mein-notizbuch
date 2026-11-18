@@ -18,6 +18,21 @@ import '../../providers/vocabulary_provider.dart';
 import '../../../word_classes/presentation/word_appearance.dart';
 import '../widgets/word_list_card.dart';
 
+/// Minúsculas e sem acentos, trema ou ß, para buscar e ordenar ("Ärzte" ~
+/// "arzte").
+String foldForSearch(String s) => s
+    .toLowerCase()
+    .replaceAll('ä', 'a')
+    .replaceAll('ö', 'o')
+    .replaceAll('ü', 'u')
+    .replaceAll('ß', 'ss')
+    .replaceAll(RegExp('[áàâã]'), 'a')
+    .replaceAll(RegExp('[éê]'), 'e')
+    .replaceAll('í', 'i')
+    .replaceAll(RegExp('[óôõ]'), 'o')
+    .replaceAll('ú', 'u')
+    .replaceAll('ç', 'c');
+
 /// Ordenações do índice.
 enum IndexSort {
   az,
@@ -64,19 +79,7 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
     super.dispose();
   }
 
-  /// Minúsculas e sem trema/ß, para buscar e ordenar ("Ärzte" ~ "arzte").
-  static String _fold(String s) => s
-      .toLowerCase()
-      .replaceAll('ä', 'a')
-      .replaceAll('ö', 'o')
-      .replaceAll('ü', 'u')
-      .replaceAll('ß', 'ss')
-      .replaceAll(RegExp('[áàâã]'), 'a')
-      .replaceAll(RegExp('[éê]'), 'e')
-      .replaceAll('í', 'i')
-      .replaceAll(RegExp('[óôõ]'), 'o')
-      .replaceAll('ú', 'u')
-      .replaceAll('ç', 'c');
+  static String _fold(String s) => foldForSearch(s);
 
   /// Chave de ordenação alfabética: a palavra sem o artigo.
   static String _sortKey(WordEntry w) => _fold(stripArticle(w.germanWord));

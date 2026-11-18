@@ -86,11 +86,15 @@ class HeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.active = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+
+  /// Ligado (ex.: palavra fixada): fundo escuro e ícone claro.
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +102,10 @@ class HeaderIconButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: p.card,
+        color: active ? p.ink : p.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: p.outline),
+          side: BorderSide(color: active ? p.ink : p.outline),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -109,7 +113,11 @@ class HeaderIconButton extends StatelessWidget {
           child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(icon, size: 20, color: p.text700),
+            child: Icon(
+              icon,
+              size: 20,
+              color: active ? p.onInk : p.text700,
+            ),
           ),
         ),
       ),
