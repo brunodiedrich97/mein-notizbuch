@@ -18,7 +18,7 @@
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="14dp"
+            android:layout_height="18dp"
             android:adjustViewBounds="true"
             android:contentDescription="@null"
             android:src="@drawable/ic_notification"
@@ -53,12 +53,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:ellipsize="end"
-        android:fontFamily="serif"
+        android:fontFamily="@font/newsreader_display_bold"
         android:maxLines="1"
         android:text="der Hund"
         android:textColor="#1D5FA7"
-        android:textSize="30sp"
-        android:textStyle="bold" />
+        android:textSize="34sp" />
 
     <TextView
         android:id="@+id/category"

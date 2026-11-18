@@ -37,7 +37,7 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         for (id in appWidgetIds) render(context, appWidgetManager, id, widgetData)
     }
 
-    /** Ao redimensionar, troca entre o layout largo e o quadrado. */
+    /** Ao redimensionar, troca entre os layouts quadrado, largo e alto. */
     override fun onAppWidgetOptionsChanged(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -54,13 +54,17 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         widgetId: Int,
         data: SharedPreferences,
     ) {
-        val minWidth = manager.getAppWidgetOptions(widgetId)
-            .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
-        val small = minWidth < 200
-        val views = RemoteViews(
-            context.packageName,
-            if (small) R.layout.daily_word_widget_small else R.layout.daily_word_widget,
-        )
+        // Em retrato, a largura útil é a mínima e a altura útil é a máxima.
+        val options = manager.getAppWidgetOptions(widgetId)
+        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
+        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 110)
+        val small = width < 200
+        val layout = when {
+            small -> R.layout.daily_word_widget_small
+            height >= 180 -> R.layout.daily_word_widget_large
+            else -> R.layout.daily_word_widget
+        }
+        val views = RemoteViews(context.packageName, layout)
 
         val entry = todayEntry(data.getString("daily_words", null))
         val dark = (context.resources.configuration.uiMode and
