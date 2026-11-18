@@ -202,6 +202,22 @@ fichas iniciais (`AppDatabase.ensureGeneralDeck`). A palavra do dia
 Para um idioma novo: criar o perfil, registrá-lo em `StudyLanguages.all`
 e acrescentar as fichas iniciais em `_seedWordsByLanguage`.
 
+## Idioma nativo
+
+O idioma em que o usuário escreve as traduções, a aproximação da pronúncia
+e as dicas: **português** (padrão), **inglês** ou **espanhol**
+(`lib/core/language/native_language.dart`). Fica em **Ajustes → Idioma →
+Idioma nativo** e é salvo em `native.language`.
+
+- Os rótulos e exemplos do cadastro seguem o idioma nativo ("Tradução em
+  espanhol", "Aproximação ES", "el perro"…), assim como a busca e o nome do
+  deck novo. A interface em si continua em português.
+- As fichas iniciais e o deck "Geral" são criados no idioma nativo
+  (`lib/core/database/seed_translations.dart`).
+- Trocar o idioma nativo não altera as fichas já cadastradas.
+- O idioma nativo e o de estudo não podem ser o mesmo: a opção aparece
+  desativada nas duas listas.
+
 ## Classes gramaticais criadas pelo usuário
 
 Em **Ajustes › Classes gramaticais** (ou no chip "+ Nova" de "Registrar

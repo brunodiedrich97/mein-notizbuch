@@ -71,6 +71,9 @@ class StudyLanguageProfile {
     required this.degreesHint,
     required this.ipaHint,
     required this.exampleHint,
+    required this.deckNameHint,
+    required this.approximationHints,
+    required this.tipHints,
   });
 
   /// Código guardado no banco ("de").
@@ -123,6 +126,20 @@ class StudyLanguageProfile {
   final String degreesHint;
   final String ipaHint;
   final String exampleHint;
+  final String deckNameHint;
+
+  /// Aproximação da pronúncia escrita para quem fala cada idioma nativo
+  /// ("pt" → "GUÊ-en").
+  final Map<String, String> approximationHints;
+
+  /// Dica fonética de exemplo, no idioma nativo.
+  final Map<String, String> tipHints;
+
+  String approximationHintFor(String native) =>
+      approximationHints[native] ?? approximationHints['pt'] ?? '';
+
+  String tipHintFor(String native) =>
+      tipHints[native] ?? tipHints['pt'] ?? '';
 
   String? articleOf(GrammarCategory c) => articles[c];
 
@@ -206,6 +223,13 @@ const StudyLanguageProfile german = StudyLanguageProfile(
   degreesHint: 'schön → schöner → am schönsten',
   ipaHint: 'ˈɡeːən',
   exampleHint: 'Der Hund schläft im Garten.',
+  deckNameHint: 'Gesundheit',
+  approximationHints: {'pt': 'GUÊ-en', 'en': 'GAY-un', 'es': 'GUE-en'},
+  tipHints: {
+    'pt': 'O g é sempre duro, como em "gato".',
+    'en': 'The g is always hard, as in "go".',
+    'es': 'La g suena siempre como en "gato", también antes de e.',
+  },
 );
 
 const StudyLanguageProfile english = StudyLanguageProfile(
@@ -250,6 +274,13 @@ const StudyLanguageProfile english = StudyLanguageProfile(
   degreesHint: 'big → bigger → the biggest',
   ipaHint: 'ɡoʊ',
   exampleHint: 'The dog sleeps in the garden.',
+  deckNameHint: 'Health',
+  approximationHints: {'pt': 'GÔU', 'en': 'GOH', 'es': 'GÓU'},
+  tipHints: {
+    'pt': 'O o desliza para um u: "ôu".',
+    'en': 'The o glides into a u: "oh-oo".',
+    'es': 'La o se desliza hacia una u: "óu".',
+  },
 );
 
 /// Idiomas de estudo disponíveis e o ativo.

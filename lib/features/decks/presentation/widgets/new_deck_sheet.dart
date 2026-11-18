@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/native_language.dart';
 import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
@@ -121,8 +122,8 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                 const SizedBox(height: 12),
                 _SheetField(
                   controller: _namePt,
-                  label: 'Nome em português',
-                  hint: 'Saúde',
+                  label: 'Nome em ${NativeLanguages.active.namePt}',
+                  hint: NativeLanguages.active.deckNameHint,
                   autofocus: true,
                   validator: (v) {
                     final t = v?.trim() ?? '';
@@ -135,7 +136,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                   controller: _nameDe,
                   label:
                       'Nome em ${StudyLanguages.active.namePt} (opcional)',
-                  hint: 'Gesundheit',
+                  hint: StudyLanguages.active.deckNameHint,
                   german: true,
                 ),
                 const SizedBox(height: 4),

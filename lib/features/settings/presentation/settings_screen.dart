@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/language/native_language.dart';
+import '../../../core/language/native_language_provider.dart';
 import '../../../core/language/study_language.dart';
 import '../../../core/language/study_language_provider.dart';
 import '../../../core/theme/app_icons.dart';
@@ -126,9 +128,24 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _chooseStudyLanguage(BuildContext context, WidgetRef ref) async {
     final current = ref.read(studyLanguageProvider);
+    final nativeLang = ref.read(nativeLanguageProvider);
     final code = await showAppSheet<String>(
       context,
-      (_) => _StudyLanguageSheet(selected: current),
+      (_) => _LanguageSheet(
+        title: 'IDIOMA DE ESTUDO',
+        description: 'Cada idioma tem as próprias fichas, decks e frases. '
+            'Nada é apagado ao trocar.',
+        selected: current,
+        options: [
+          for (final l in StudyLanguages.all)
+            _LanguageOption(
+              l.code,
+              _capitalize(l.namePt),
+              l.nameNative,
+              note: l.code == nativeLang ? 'É o seu idioma nativo' : null,
+            ),
+        ],
+      ),
     );
     if (code == null || code == current || !context.mounted) return;
 
@@ -145,9 +162,39 @@ class SettingsScreen extends ConsumerWidget {
     navigator.popUntil((route) => route.isFirst);
   }
 
+  Future<void> _chooseNativeLanguage(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final current = ref.read(nativeLanguageProvider);
+    final study = ref.read(studyLanguageProvider);
+    final code = await showAppSheet<String>(
+      context,
+      (_) => _LanguageSheet(
+        title: 'IDIOMA NATIVO',
+        description: 'O idioma das traduções e das dicas. As fichas já '
+            'cadastradas continuam como estão.',
+        selected: current,
+        options: [
+          for (final l in NativeLanguages.all)
+            _LanguageOption(
+              l.code,
+              _capitalize(l.namePt),
+              l.nameNative,
+              note: l.code == study ? 'É o idioma que você estuda' : null,
+            ),
+        ],
+      ),
+    );
+    if (code == null || code == current) return;
+    await ref.read(nativeLanguageProvider.notifier).select(code);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = AppPalette.of(context);
+    final nativeLang =
+        NativeLanguages.byCode(ref.watch(nativeLanguageProvider));
     final studyCode = ref.watch(studyLanguageProvider);
     final study = StudyLanguages.all.firstWhere((l) => l.code == studyCode);
     final reminder = ref.watch(reminderProvider);
@@ -203,6 +250,13 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: '${_capitalize(study.namePt)} '
                         '(${study.nameNative})',
                     onTap: () => _chooseStudyLanguage(context, ref),
+                  ),
+                  _SettingRow(
+                    icon: Icons.record_voice_over_outlined,
+                    title: 'Idioma nativo',
+                    subtitle: '${_capitalize(nativeLang.namePt)} '
+                        '(${nativeLang.nameNative})',
+                    onTap: () => _chooseNativeLanguage(context, ref),
                   ),
                 ],
               ),
@@ -340,10 +394,30 @@ class _Group extends StatelessWidget {
 String _capitalize(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-/// Lista dos idiomas de estudo. Devolve o código escolhido.
-class _StudyLanguageSheet extends StatelessWidget {
-  const _StudyLanguageSheet({required this.selected});
+/// Uma opção da lista de idiomas.
+class _LanguageOption {
+  const _LanguageOption(this.code, this.title, this.subtitle, {this.note});
 
+  final String code;
+  final String title;
+  final String subtitle;
+
+  /// Motivo de a opção estar indisponível ("É o seu idioma nativo").
+  final String? note;
+}
+
+/// Lista de idiomas para escolher. Devolve o código escolhido.
+class _LanguageSheet extends StatelessWidget {
+  const _LanguageSheet({
+    required this.title,
+    required this.description,
+    required this.options,
+    required this.selected,
+  });
+
+  final String title;
+  final String description;
+  final List<_LanguageOption> options;
   final String selected;
 
   @override
@@ -353,26 +427,27 @@ class _StudyLanguageSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('IDIOMA DE ESTUDO', style: AppText.section(p)),
+        Text(title, style: AppText.section(p)),
         const SizedBox(height: 8),
-        Text(
-          'Cada idioma tem as próprias fichas, decks e frases. Nada é '
-          'apagado ao trocar.',
-          style: AppText.meta(p),
-        ),
+        Text(description, style: AppText.meta(p)),
         const SizedBox(height: 12),
         _Group(
           children: [
-            for (final lang in StudyLanguages.all)
-              _SettingRow(
-                icon: Icons.language,
-                title: _capitalize(lang.namePt),
-                subtitle: lang.nameNative,
-                trailing: lang.code == selected
-                    ? Icon(Icons.check, color: p.text900)
-                    : null,
-                onTap: () => Navigator.of(context).pop(lang.code),
-                showChevron: false,
+            for (final o in options)
+              Opacity(
+                opacity: o.note == null ? 1 : 0.45,
+                child: _SettingRow(
+                  icon: Icons.language,
+                  title: o.title,
+                  subtitle: o.note ?? o.subtitle,
+                  trailing: o.code == selected
+                      ? Icon(Icons.check, color: p.text900)
+                      : null,
+                  onTap: o.note == null
+                      ? () => Navigator.of(context).pop(o.code)
+                      : null,
+                  showChevron: false,
+                ),
               ),
           ],
         ),

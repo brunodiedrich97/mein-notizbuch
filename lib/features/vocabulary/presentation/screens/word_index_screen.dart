@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/native_language.dart';
 import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -291,7 +292,8 @@ class _SearchField extends StatelessWidget {
               style: AppText.item(p),
               decoration: InputDecoration(
                 hintText:
-                    'Buscar em ${StudyLanguages.active.namePt} ou português',
+                    'Buscar em ${StudyLanguages.active.namePt} ou '
+                    '${NativeLanguages.active.namePt}',
                 hintStyle: AppText.item(p).copyWith(
                   color: p.text400,
                   fontWeight: FontWeight.w400,

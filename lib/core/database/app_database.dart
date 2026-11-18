@@ -8,7 +8,9 @@ import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import '../../features/decks/models/deck_icon.dart';
+import '../language/native_language.dart';
 import '../language/study_language.dart';
+import 'seed_translations.dart';
 import '../../features/vocabulary/models/grammar_type.dart';
 import '../../features/writing/models/sentence_source.dart';
 
@@ -144,7 +146,9 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (m) async {
           await m.createAll();
           await _createGeneralDeck();
-          await batch((b) => b.insertAll(wordEntries, _seedWords));
+          // Fichas iniciais no idioma nativo escolhido.
+          final seeds = localizeSeeds(_seedWords, NativeLanguages.active.code);
+          await batch((b) => b.insertAll(wordEntries, seeds));
           await _moveOrphanWordsToGeneral();
         },
         onUpgrade: (m, from, to) async {
@@ -181,7 +185,7 @@ class AppDatabase extends _$AppDatabase {
     return into(decks).insert(
       DecksCompanion.insert(
         id: const Value(germanGeneralDeckId),
-        namePt: 'Geral',
+        namePt: NativeLanguages.active.generalDeckName,
         nameDe: const Value('Allgemein'),
         icon: DeckIcon.general,
       ),
@@ -237,14 +241,17 @@ class AppDatabase extends _$AppDatabase {
     return transaction(() async {
       final id = await into(decks).insert(
         DecksCompanion.insert(
-          namePt: 'Geral',
+          namePt: NativeLanguages.active.generalDeckName,
           nameDe: Value(profile.terms.generalDeck),
           icon: DeckIcon.general,
           language: Value(language),
         ),
       );
       _generalDeckIds[language] = id;
-      final seeds = _seedWordsByLanguage[language] ?? const [];
+      final seeds = localizeSeeds(
+        _seedWordsByLanguage[language] ?? const [],
+        NativeLanguages.active.code,
+      );
       await batch((b) => b.insertAll(wordEntries, [
             for (final w in seeds)
               w.copyWith(deckId: Value(id), language: Value(language)),

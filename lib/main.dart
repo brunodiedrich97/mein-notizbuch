@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/language/native_language_provider.dart';
 import 'core/language/study_language_provider.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/theme/app_theme.dart';
@@ -32,7 +33,9 @@ Future<void> main() async {
   DailyWordWidget.onOpenWord = reminders.onOpenWord;
   await DailyWordWidget.init();
 
-  // O idioma de estudo salvo vale desde a primeira tela.
+  // Os idiomas salvos valem desde a primeira tela. O nativo vem antes:
+  // as fichas iniciais são criadas nele.
+  await NativeLanguageController.restore();
   final container = ProviderContainer();
   await StudyLanguageController.restore(container.read(databaseProvider));
 

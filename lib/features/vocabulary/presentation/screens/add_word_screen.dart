@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/native_language.dart';
 import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -213,6 +214,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final lang = StudyLanguages.active;
+    final nativeLang = NativeLanguages.active;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = _category;
     final classes = WordClassScope.of(context);
@@ -336,13 +338,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.translate_rounded,
-                  title: 'Tradução em português *',
+                  title: 'Tradução em ${nativeLang.namePt} *',
                   trailing: const _MetaText('Obrigatório'),
                   accent: accent,
                   children: [
                     _InlineField(
                       controller: _translation,
-                      hint: 'o cachorro',
+                      hint: nativeLang.translationHint,
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Digite a tradução.'
                           : null,
@@ -427,8 +429,8 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                         Expanded(
                           child: _BoxField(
                             controller: _approximation,
-                            label: 'Aproximação PT',
-                            hint: 'GUÊ-en',
+                            label: 'Aproximação ${nativeLang.tag}',
+                            hint: lang.approximationHintFor(nativeLang.code),
                           ),
                         ),
                       ],
@@ -438,7 +440,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     const _FieldLabel('Dica fonética'),
                     _InlineField(
                       controller: _tip,
-                      hint: 'O g é sempre duro, como em "gato".',
+                      hint: lang.tipHintFor(nativeLang.code),
                       italic: true,
                       maxLines: 3,
                     ),
@@ -461,8 +463,8 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     ),
                     _BoxField(
                       controller: _examplePt,
-                      label: 'Tradução em português',
-                      hint: 'O cachorro dorme no jardim.',
+                      label: 'Tradução em ${nativeLang.namePt}',
+                      hint: nativeLang.exampleTranslationHint,
                       maxLines: 3,
                     ),
                   ],
