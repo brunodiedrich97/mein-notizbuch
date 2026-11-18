@@ -1003,8 +1003,12 @@ class AppStringsEn extends AppStrings {
       '"$word" = $prep + $article. In $language, this contraction is required.';
 
   @override
-  String articleMismatch(String want, String got) =>
-      'Article: expected "$want", not "$got". Check the case (nominative, accusative, dative) and the gender of the word.';
+  String articleMismatch(String want, String got, String tip) =>
+      'Article: expected "$want", not "$got". $tip';
+
+  @override
+  String articleTip(String code) =>
+      code == 'de' ? 'Check the case (nominative, accusative, dative) and the gender of the word.' : 'Use "a" before a consonant sound, "an" before a vowel sound and "the" for something specific.';
 
   @override
   String writtenLowercase(String word) =>

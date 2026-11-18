@@ -1003,8 +1003,12 @@ class AppStringsPt extends AppStrings {
       '"$word" = $prep + $article. Em $language, essa junção é obrigatória.';
 
   @override
-  String articleMismatch(String want, String got) =>
-      'Artigo: o esperado é "$want", e não "$got". Confira o caso (nominativo, acusativo, dativo) e o gênero da palavra.';
+  String articleMismatch(String want, String got, String tip) =>
+      'Artigo: o esperado é "$want", e não "$got". $tip';
+
+  @override
+  String articleTip(String code) =>
+      code == 'de' ? 'Confira o caso (nominativo, acusativo, dativo) e o gênero da palavra.' : 'Use "a" antes de som de consoante, "an" antes de som de vogal e "the" para algo específico.';
 
   @override
   String writtenLowercase(String word) =>

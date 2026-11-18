@@ -171,7 +171,7 @@ String? _explain(String? got, String want, List<String> gotBlock) {
   // Artigo no caso errado.
   if (language.articleForms.contains(gotLower) &&
       language.articleForms.contains(wantLower)) {
-    return tr.articleMismatch(want, got);
+    return tr.articleMismatch(want, got, tr.articleTip(language.code));
   }
 
   // Só a maiúscula/minúscula está diferente.

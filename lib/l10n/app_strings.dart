@@ -270,7 +270,8 @@ abstract class AppStrings {
   String get deleteSentenceTitle;
   String get deleteSentenceWarning;
   String contractionRequired(String word, String prep, String article, String language);
-  String articleMismatch(String want, String got);
+  String articleMismatch(String want, String got, String tip);
+  String articleTip(String code);
   String writtenLowercase(String word);
   String nounCapitalized(String word, String language);
   String startsCapitalized(String word);

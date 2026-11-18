@@ -39,7 +39,12 @@ e('deleteSentenceTitle','EXCLUIR FRASE','DELETE SENTENCE','ELIMINAR FRASE')
 e('deleteSentenceWarning','A frase sai de "Minhas frases". A ficha não muda.','The sentence is removed from "My sentences". The card doesn\'t change.','La frase sale de "Mis frases". La ficha no cambia.')
 # Correção
 e('contractionRequired','"$word" = $prep + $article. Em $language, essa junção é obrigatória.','"$word" = $prep + $article. In $language, this contraction is required.','"$word" = $prep + $article. En $language, esta contracción es obligatoria.','String word, String prep, String article, String language')
-e('articleMismatch','Artigo: o esperado é "$want", e não "$got". Confira o caso (nominativo, acusativo, dativo) e o gênero da palavra.','Article: expected "$want", not "$got". Check the case (nominative, accusative, dative) and the gender of the word.','Artículo: se esperaba "$want", no "$got". Revisa el caso (nominativo, acusativo, dativo) y el género de la palabra.','String want, String got')
+e('articleMismatch','Artigo: o esperado é "$want", e não "$got". $tip','Article: expected "$want", not "$got". $tip','Artículo: se esperaba "$want", no "$got". $tip','String want, String got, String tip')
+e('articleTip',
+  "=> code == 'de' ? 'Confira o caso (nominativo, acusativo, dativo) e o gênero da palavra.' : 'Use \"a\" antes de som de consoante, \"an\" antes de som de vogal e \"the\" para algo específico.'",
+  "=> code == 'de' ? 'Check the case (nominative, accusative, dative) and the gender of the word.' : 'Use \"a\" before a consonant sound, \"an\" before a vowel sound and \"the\" for something specific.'",
+  "=> code == 'de' ? 'Revisa el caso (nominativo, acusativo, dativo) y el género de la palabra.' : 'Usa \"a\" antes de sonido de consonante, \"an\" antes de sonido de vocal y \"the\" para algo específico.'",
+  'String code')
 e('writtenLowercase','"$word" é escrita com minúscula.','"$word" is written in lowercase.','"$word" se escribe con minúscula.','String word')
 e('nounCapitalized','"$word" começa com maiúscula: em $language, todo substantivo é escrito com inicial maiúscula.','"$word" starts with a capital letter: in $language, every noun is capitalized.','"$word" empieza con mayúscula: en $language, todo sustantivo se escribe con mayúscula inicial.','String word, String language')
 e('startsCapitalized','"$word" começa com maiúscula.','"$word" starts with a capital letter.','"$word" empieza con mayúscula.','String word')

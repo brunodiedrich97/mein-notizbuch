@@ -1,19 +1,5 @@
 import '../../../core/database/app_database.dart';
 
-/// Idiomas de tradução. Hoje só existe o português do Brasil; outros
-/// idiomas entram aqui, e [translationOf] passa a escolher a coluna certa.
-enum TranslationLanguage { ptBR }
-
-/// Tradução de [word] no idioma [language].
-String translationOf(
-  WordEntry word, {
-  TranslationLanguage language = TranslationLanguage.ptBR,
-}) {
-  return switch (language) {
-    TranslationLanguage.ptBR => word.portugueseTranslation,
-  };
-}
-
 /// Texto da notificação da palavra do dia.
 class ReminderContent {
   const ReminderContent({
@@ -22,7 +8,7 @@ class ReminderContent {
     required this.meaning,
   });
 
-  /// A palavra em alemão: "der Hund".
+  /// A palavra no idioma de estudo: "der Hund".
   final String title;
 
   /// Classe gramatical: "substantivo · masculino".
@@ -61,7 +47,6 @@ class ReminderContent {
   factory ReminderContent.fromWord(
     WordEntry word, {
     WordClass? customClass,
-    TranslationLanguage language = TranslationLanguage.ptBR,
   }) {
     final base = customClass?.name.toLowerCase() ?? word.category.label;
     final detail = word.tagDetail?.trim();
@@ -70,7 +55,7 @@ class ReminderContent {
     return ReminderContent(
       title: word.germanWord,
       category: category,
-      meaning: translationOf(word, language: language),
+      meaning: word.portugueseTranslation,
     );
   }
 }
