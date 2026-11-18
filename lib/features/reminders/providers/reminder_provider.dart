@@ -51,11 +51,23 @@ class ReminderController extends Notifier<ReminderState> {
     return const ReminderState();
   }
 
+  /// Primeira abertura: ainda não há escolha salva sobre o lembrete.
+  bool _firstRun = false;
+
+  /// A permissão da primeira abertura já foi pedida nesta execução.
+  bool _askedPermission = false;
+
+  /// Renovações da fila, uma de cada vez (a janela de permissão faz o app
+  /// voltar para a frente e pedir outra renovação no meio da primeira).
+  Future<void> _queue = Future.value();
+
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    _firstRun = !prefs.containsKey(_kEnabled);
     state = ReminderState(
       loaded: true,
-      enabled: prefs.getBool(_kEnabled) ?? false,
+      // Vem ligado por padrão; a permissão é pedida na primeira abertura.
+      enabled: prefs.getBool(_kEnabled) ?? true,
       hour: prefs.getInt(_kHour) ?? 9,
       minute: prefs.getInt(_kMinute) ?? 0,
     );
@@ -86,8 +98,23 @@ class ReminderController extends Notifier<ReminderState> {
 
   /// Refaz a fila de notificações (chamado ao abrir o app e ao mudar os
   /// ajustes), com as palavras atuais do banco.
-  Future<void> refresh() async {
+  Future<void> refresh() {
+    final next = _queue.then((_) => _refresh());
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
+
+  Future<void> _refresh() async {
     if (!state.loaded) await _load();
+    if (_firstRun && !_askedPermission) {
+      // Na primeira abertura, pede a permissão de notificações. Se for
+      // negada, o lembrete fica desligado (pode ser ligado em Ajustes).
+      _askedPermission = true;
+      _firstRun = false;
+      final granted = await _service.requestPermission();
+      state = state.copyWith(enabled: granted);
+      await _save();
+    }
     if (!state.enabled) {
       await _service.cancelScheduled();
       return;
