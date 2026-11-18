@@ -35,6 +35,14 @@ class $DecksTable extends Decks with TableInfo<$DecksTable, Deck> {
       GeneratedColumn<String>('icon', aliasedName, false,
               type: DriftSqlType.string, requiredDuringInsert: true)
           .withConverter<DeckIcon>($DecksTable.$convertericon);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('de'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -44,7 +52,8 @@ class $DecksTable extends Decks with TableInfo<$DecksTable, Deck> {
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
   @override
-  List<GeneratedColumn> get $columns => [id, namePt, nameDe, icon, createdAt];
+  List<GeneratedColumn> get $columns =>
+      [id, namePt, nameDe, icon, language, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -68,6 +77,10 @@ class $DecksTable extends Decks with TableInfo<$DecksTable, Deck> {
       context.handle(_nameDeMeta,
           nameDe.isAcceptableOrUnknown(data['name_de']!, _nameDeMeta));
     }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -89,6 +102,8 @@ class $DecksTable extends Decks with TableInfo<$DecksTable, Deck> {
           .read(DriftSqlType.string, data['${effectivePrefix}name_de']),
       icon: $DecksTable.$convertericon.fromSql(attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}icon'])!),
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -114,12 +129,16 @@ class Deck extends DataClass implements Insertable<Deck> {
 
   /// Salvo pelo nome ("health"), não pelo índice.
   final DeckIcon icon;
+
+  /// Idioma de estudo do deck ("de"). (v7)
+  final String language;
   final DateTime createdAt;
   const Deck(
       {required this.id,
       required this.namePt,
       this.nameDe,
       required this.icon,
+      required this.language,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -132,6 +151,7 @@ class Deck extends DataClass implements Insertable<Deck> {
     {
       map['icon'] = Variable<String>($DecksTable.$convertericon.toSql(icon));
     }
+    map['language'] = Variable<String>(language);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -143,6 +163,7 @@ class Deck extends DataClass implements Insertable<Deck> {
       nameDe:
           nameDe == null && nullToAbsent ? const Value.absent() : Value(nameDe),
       icon: Value(icon),
+      language: Value(language),
       createdAt: Value(createdAt),
     );
   }
@@ -156,6 +177,7 @@ class Deck extends DataClass implements Insertable<Deck> {
       nameDe: serializer.fromJson<String?>(json['nameDe']),
       icon: $DecksTable.$convertericon
           .fromJson(serializer.fromJson<String>(json['icon'])),
+      language: serializer.fromJson<String>(json['language']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -168,6 +190,7 @@ class Deck extends DataClass implements Insertable<Deck> {
       'nameDe': serializer.toJson<String?>(nameDe),
       'icon':
           serializer.toJson<String>($DecksTable.$convertericon.toJson(icon)),
+      'language': serializer.toJson<String>(language),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -177,12 +200,14 @@ class Deck extends DataClass implements Insertable<Deck> {
           String? namePt,
           Value<String?> nameDe = const Value.absent(),
           DeckIcon? icon,
+          String? language,
           DateTime? createdAt}) =>
       Deck(
         id: id ?? this.id,
         namePt: namePt ?? this.namePt,
         nameDe: nameDe.present ? nameDe.value : this.nameDe,
         icon: icon ?? this.icon,
+        language: language ?? this.language,
         createdAt: createdAt ?? this.createdAt,
       );
   Deck copyWithCompanion(DecksCompanion data) {
@@ -191,6 +216,7 @@ class Deck extends DataClass implements Insertable<Deck> {
       namePt: data.namePt.present ? data.namePt.value : this.namePt,
       nameDe: data.nameDe.present ? data.nameDe.value : this.nameDe,
       icon: data.icon.present ? data.icon.value : this.icon,
+      language: data.language.present ? data.language.value : this.language,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -202,13 +228,15 @@ class Deck extends DataClass implements Insertable<Deck> {
           ..write('namePt: $namePt, ')
           ..write('nameDe: $nameDe, ')
           ..write('icon: $icon, ')
+          ..write('language: $language, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, namePt, nameDe, icon, createdAt);
+  int get hashCode =>
+      Object.hash(id, namePt, nameDe, icon, language, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -217,6 +245,7 @@ class Deck extends DataClass implements Insertable<Deck> {
           other.namePt == this.namePt &&
           other.nameDe == this.nameDe &&
           other.icon == this.icon &&
+          other.language == this.language &&
           other.createdAt == this.createdAt);
 }
 
@@ -225,12 +254,14 @@ class DecksCompanion extends UpdateCompanion<Deck> {
   final Value<String> namePt;
   final Value<String?> nameDe;
   final Value<DeckIcon> icon;
+  final Value<String> language;
   final Value<DateTime> createdAt;
   const DecksCompanion({
     this.id = const Value.absent(),
     this.namePt = const Value.absent(),
     this.nameDe = const Value.absent(),
     this.icon = const Value.absent(),
+    this.language = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   DecksCompanion.insert({
@@ -238,6 +269,7 @@ class DecksCompanion extends UpdateCompanion<Deck> {
     required String namePt,
     this.nameDe = const Value.absent(),
     required DeckIcon icon,
+    this.language = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : namePt = Value(namePt),
         icon = Value(icon);
@@ -246,6 +278,7 @@ class DecksCompanion extends UpdateCompanion<Deck> {
     Expression<String>? namePt,
     Expression<String>? nameDe,
     Expression<String>? icon,
+    Expression<String>? language,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -253,6 +286,7 @@ class DecksCompanion extends UpdateCompanion<Deck> {
       if (namePt != null) 'name_pt': namePt,
       if (nameDe != null) 'name_de': nameDe,
       if (icon != null) 'icon': icon,
+      if (language != null) 'language': language,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -262,12 +296,14 @@ class DecksCompanion extends UpdateCompanion<Deck> {
       Value<String>? namePt,
       Value<String?>? nameDe,
       Value<DeckIcon>? icon,
+      Value<String>? language,
       Value<DateTime>? createdAt}) {
     return DecksCompanion(
       id: id ?? this.id,
       namePt: namePt ?? this.namePt,
       nameDe: nameDe ?? this.nameDe,
       icon: icon ?? this.icon,
+      language: language ?? this.language,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -288,6 +324,9 @@ class DecksCompanion extends UpdateCompanion<Deck> {
       map['icon'] =
           Variable<String>($DecksTable.$convertericon.toSql(icon.value));
     }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -301,6 +340,7 @@ class DecksCompanion extends UpdateCompanion<Deck> {
           ..write('namePt: $namePt, ')
           ..write('nameDe: $nameDe, ')
           ..write('icon: $icon, ')
+          ..write('language: $language, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -357,6 +397,14 @@ class $WordEntriesTable extends WordEntries
   late final GeneratedColumn<int> customClassId = GeneratedColumn<int>(
       'custom_class_id', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('de'));
   static const VerificationMeta _tagDetailMeta =
       const VerificationMeta('tagDetail');
   @override
@@ -461,6 +509,7 @@ class $WordEntriesTable extends WordEntries
         category,
         deckId,
         customClassId,
+        language,
         tagDetail,
         ipaPronunciation,
         brazilianApproximation,
@@ -515,6 +564,10 @@ class $WordEntriesTable extends WordEntries
           _customClassIdMeta,
           customClassId.isAcceptableOrUnknown(
               data['custom_class_id']!, _customClassIdMeta));
+    }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
     }
     if (data.containsKey('tag_detail')) {
       context.handle(_tagDetailMeta,
@@ -621,6 +674,8 @@ class $WordEntriesTable extends WordEntries
           .read(DriftSqlType.int, data['${effectivePrefix}deck_id']),
       customClassId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}custom_class_id']),
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
       tagDetail: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}tag_detail']),
       ipaPronunciation: attachedDatabase.typeMapping.read(
@@ -680,6 +735,10 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
   /// como "outros" (mesmo comportamento) e o nome e a cor vêm da classe.
   final int? customClassId;
 
+  /// Idioma de estudo da palavra ("de"). Cada idioma é um caderno separado;
+  /// as telas mostram só o idioma ativo. (v7)
+  final String language;
+
   /// Complemento do rótulo da classe: "irregular", "dativo"… (v2)
   final String? tagDetail;
   final String? ipaPronunciation;
@@ -705,6 +764,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       required this.category,
       this.deckId,
       this.customClassId,
+      required this.language,
       this.tagDetail,
       this.ipaPronunciation,
       this.brazilianApproximation,
@@ -736,6 +796,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
     if (!nullToAbsent || customClassId != null) {
       map['custom_class_id'] = Variable<int>(customClassId);
     }
+    map['language'] = Variable<String>(language);
     if (!nullToAbsent || tagDetail != null) {
       map['tag_detail'] = Variable<String>(tagDetail);
     }
@@ -789,6 +850,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       customClassId: customClassId == null && nullToAbsent
           ? const Value.absent()
           : Value(customClassId),
+      language: Value(language),
       tagDetail: tagDetail == null && nullToAbsent
           ? const Value.absent()
           : Value(tagDetail),
@@ -843,6 +905,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           .fromJson(serializer.fromJson<String>(json['category'])),
       deckId: serializer.fromJson<int?>(json['deckId']),
       customClassId: serializer.fromJson<int?>(json['customClassId']),
+      language: serializer.fromJson<String>(json['language']),
       tagDetail: serializer.fromJson<String?>(json['tagDetail']),
       ipaPronunciation: serializer.fromJson<String?>(json['ipaPronunciation']),
       brazilianApproximation:
@@ -873,6 +936,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           $WordEntriesTable.$convertercategory.toJson(category)),
       'deckId': serializer.toJson<int?>(deckId),
       'customClassId': serializer.toJson<int?>(customClassId),
+      'language': serializer.toJson<String>(language),
       'tagDetail': serializer.toJson<String?>(tagDetail),
       'ipaPronunciation': serializer.toJson<String?>(ipaPronunciation),
       'brazilianApproximation':
@@ -899,6 +963,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           GrammarCategory? category,
           Value<int?> deckId = const Value.absent(),
           Value<int?> customClassId = const Value.absent(),
+          String? language,
           Value<String?> tagDetail = const Value.absent(),
           Value<String?> ipaPronunciation = const Value.absent(),
           Value<String?> brazilianApproximation = const Value.absent(),
@@ -923,6 +988,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
         deckId: deckId.present ? deckId.value : this.deckId,
         customClassId:
             customClassId.present ? customClassId.value : this.customClassId,
+        language: language ?? this.language,
         tagDetail: tagDetail.present ? tagDetail.value : this.tagDetail,
         ipaPronunciation: ipaPronunciation.present
             ? ipaPronunciation.value
@@ -962,6 +1028,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
       customClassId: data.customClassId.present
           ? data.customClassId.value
           : this.customClassId,
+      language: data.language.present ? data.language.value : this.language,
       tagDetail: data.tagDetail.present ? data.tagDetail.value : this.tagDetail,
       ipaPronunciation: data.ipaPronunciation.present
           ? data.ipaPronunciation.value
@@ -1007,6 +1074,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           ..write('category: $category, ')
           ..write('deckId: $deckId, ')
           ..write('customClassId: $customClassId, ')
+          ..write('language: $language, ')
           ..write('tagDetail: $tagDetail, ')
           ..write('ipaPronunciation: $ipaPronunciation, ')
           ..write('brazilianApproximation: $brazilianApproximation, ')
@@ -1034,6 +1102,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
         category,
         deckId,
         customClassId,
+        language,
         tagDetail,
         ipaPronunciation,
         brazilianApproximation,
@@ -1060,6 +1129,7 @@ class WordEntry extends DataClass implements Insertable<WordEntry> {
           other.category == this.category &&
           other.deckId == this.deckId &&
           other.customClassId == this.customClassId &&
+          other.language == this.language &&
           other.tagDetail == this.tagDetail &&
           other.ipaPronunciation == this.ipaPronunciation &&
           other.brazilianApproximation == this.brazilianApproximation &&
@@ -1084,6 +1154,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
   final Value<GrammarCategory> category;
   final Value<int?> deckId;
   final Value<int?> customClassId;
+  final Value<String> language;
   final Value<String?> tagDetail;
   final Value<String?> ipaPronunciation;
   final Value<String?> brazilianApproximation;
@@ -1106,6 +1177,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     this.category = const Value.absent(),
     this.deckId = const Value.absent(),
     this.customClassId = const Value.absent(),
+    this.language = const Value.absent(),
     this.tagDetail = const Value.absent(),
     this.ipaPronunciation = const Value.absent(),
     this.brazilianApproximation = const Value.absent(),
@@ -1129,6 +1201,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     required GrammarCategory category,
     this.deckId = const Value.absent(),
     this.customClassId = const Value.absent(),
+    this.language = const Value.absent(),
     this.tagDetail = const Value.absent(),
     this.ipaPronunciation = const Value.absent(),
     this.brazilianApproximation = const Value.absent(),
@@ -1154,6 +1227,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     Expression<String>? category,
     Expression<int>? deckId,
     Expression<int>? customClassId,
+    Expression<String>? language,
     Expression<String>? tagDetail,
     Expression<String>? ipaPronunciation,
     Expression<String>? brazilianApproximation,
@@ -1178,6 +1252,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
       if (category != null) 'category': category,
       if (deckId != null) 'deck_id': deckId,
       if (customClassId != null) 'custom_class_id': customClassId,
+      if (language != null) 'language': language,
       if (tagDetail != null) 'tag_detail': tagDetail,
       if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
       if (brazilianApproximation != null)
@@ -1204,6 +1279,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
       Value<GrammarCategory>? category,
       Value<int?>? deckId,
       Value<int?>? customClassId,
+      Value<String>? language,
       Value<String?>? tagDetail,
       Value<String?>? ipaPronunciation,
       Value<String?>? brazilianApproximation,
@@ -1227,6 +1303,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
       category: category ?? this.category,
       deckId: deckId ?? this.deckId,
       customClassId: customClassId ?? this.customClassId,
+      language: language ?? this.language,
       tagDetail: tagDetail ?? this.tagDetail,
       ipaPronunciation: ipaPronunciation ?? this.ipaPronunciation,
       brazilianApproximation:
@@ -1268,6 +1345,9 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
     }
     if (customClassId.present) {
       map['custom_class_id'] = Variable<int>(customClassId.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
     }
     if (tagDetail.present) {
       map['tag_detail'] = Variable<String>(tagDetail.value);
@@ -1327,6 +1407,7 @@ class WordEntriesCompanion extends UpdateCompanion<WordEntry> {
           ..write('category: $category, ')
           ..write('deckId: $deckId, ')
           ..write('customClassId: $customClassId, ')
+          ..write('language: $language, ')
           ..write('tagDetail: $tagDetail, ')
           ..write('ipaPronunciation: $ipaPronunciation, ')
           ..write('brazilianApproximation: $brazilianApproximation, ')
@@ -1975,6 +2056,7 @@ typedef $$DecksTableCreateCompanionBuilder = DecksCompanion Function({
   required String namePt,
   Value<String?> nameDe,
   required DeckIcon icon,
+  Value<String> language,
   Value<DateTime> createdAt,
 });
 typedef $$DecksTableUpdateCompanionBuilder = DecksCompanion Function({
@@ -1982,6 +2064,7 @@ typedef $$DecksTableUpdateCompanionBuilder = DecksCompanion Function({
   Value<String> namePt,
   Value<String?> nameDe,
   Value<DeckIcon> icon,
+  Value<String> language,
   Value<DateTime> createdAt,
 });
 
@@ -2006,6 +2089,9 @@ class $$DecksTableFilterComposer extends Composer<_$AppDatabase, $DecksTable> {
       $composableBuilder(
           column: $table.icon,
           builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -2032,6 +2118,9 @@ class $$DecksTableOrderingComposer
   ColumnOrderings<String> get icon => $composableBuilder(
       column: $table.icon, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -2056,6 +2145,9 @@ class $$DecksTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<DeckIcon, String> get icon =>
       $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -2088,6 +2180,7 @@ class $$DecksTableTableManager extends RootTableManager<
             Value<String> namePt = const Value.absent(),
             Value<String?> nameDe = const Value.absent(),
             Value<DeckIcon> icon = const Value.absent(),
+            Value<String> language = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               DecksCompanion(
@@ -2095,6 +2188,7 @@ class $$DecksTableTableManager extends RootTableManager<
             namePt: namePt,
             nameDe: nameDe,
             icon: icon,
+            language: language,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -2102,6 +2196,7 @@ class $$DecksTableTableManager extends RootTableManager<
             required String namePt,
             Value<String?> nameDe = const Value.absent(),
             required DeckIcon icon,
+            Value<String> language = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               DecksCompanion.insert(
@@ -2109,6 +2204,7 @@ class $$DecksTableTableManager extends RootTableManager<
             namePt: namePt,
             nameDe: nameDe,
             icon: icon,
+            language: language,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
@@ -2138,6 +2234,7 @@ typedef $$WordEntriesTableCreateCompanionBuilder = WordEntriesCompanion
   required GrammarCategory category,
   Value<int?> deckId,
   Value<int?> customClassId,
+  Value<String> language,
   Value<String?> tagDetail,
   Value<String?> ipaPronunciation,
   Value<String?> brazilianApproximation,
@@ -2162,6 +2259,7 @@ typedef $$WordEntriesTableUpdateCompanionBuilder = WordEntriesCompanion
   Value<GrammarCategory> category,
   Value<int?> deckId,
   Value<int?> customClassId,
+  Value<String> language,
   Value<String?> tagDetail,
   Value<String?> ipaPronunciation,
   Value<String?> brazilianApproximation,
@@ -2208,6 +2306,9 @@ class $$WordEntriesTableFilterComposer
 
   ColumnFilters<int> get customClassId => $composableBuilder(
       column: $table.customClassId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get tagDetail => $composableBuilder(
       column: $table.tagDetail, builder: (column) => ColumnFilters(column));
@@ -2289,6 +2390,9 @@ class $$WordEntriesTableOrderingComposer
       column: $table.customClassId,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get tagDetail => $composableBuilder(
       column: $table.tagDetail, builder: (column) => ColumnOrderings(column));
 
@@ -2369,6 +2473,9 @@ class $$WordEntriesTableAnnotationComposer
   GeneratedColumn<int> get customClassId => $composableBuilder(
       column: $table.customClassId, builder: (column) => column);
 
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
   GeneratedColumn<String> get tagDetail =>
       $composableBuilder(column: $table.tagDetail, builder: (column) => column);
 
@@ -2444,6 +2551,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             Value<GrammarCategory> category = const Value.absent(),
             Value<int?> deckId = const Value.absent(),
             Value<int?> customClassId = const Value.absent(),
+            Value<String> language = const Value.absent(),
             Value<String?> tagDetail = const Value.absent(),
             Value<String?> ipaPronunciation = const Value.absent(),
             Value<String?> brazilianApproximation = const Value.absent(),
@@ -2467,6 +2575,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             category: category,
             deckId: deckId,
             customClassId: customClassId,
+            language: language,
             tagDetail: tagDetail,
             ipaPronunciation: ipaPronunciation,
             brazilianApproximation: brazilianApproximation,
@@ -2490,6 +2599,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             required GrammarCategory category,
             Value<int?> deckId = const Value.absent(),
             Value<int?> customClassId = const Value.absent(),
+            Value<String> language = const Value.absent(),
             Value<String?> tagDetail = const Value.absent(),
             Value<String?> ipaPronunciation = const Value.absent(),
             Value<String?> brazilianApproximation = const Value.absent(),
@@ -2513,6 +2623,7 @@ class $$WordEntriesTableTableManager extends RootTableManager<
             category: category,
             deckId: deckId,
             customClassId: customClassId,
+            language: language,
             tagDetail: tagDetail,
             ipaPronunciation: ipaPronunciation,
             brazilianApproximation: brazilianApproximation,

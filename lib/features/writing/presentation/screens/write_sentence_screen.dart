@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
@@ -119,7 +120,7 @@ class _WriteSentenceScreenState extends ConsumerState<WriteSentenceScreen> {
               WritingField(
                 controller: _german,
                 focusNode: _focus,
-                hint: 'Escreva aqui em alemão…',
+                hint: 'Escreva aqui em ${StudyLanguages.active.namePt}…',
                 autofocus: true,
               ),
               const SizedBox(height: 8),
@@ -239,7 +240,7 @@ class WritingField extends StatelessWidget {
         minLines: 2,
         maxLines: 5,
         maxLength: 300,
-        // O corretor em português estraga o alemão.
+        // O corretor em português estraga o idioma de estudo.
         autocorrect: false,
         enableSuggestions: false,
         textCapitalization: TextCapitalization.sentences,

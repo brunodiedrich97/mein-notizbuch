@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/language/study_language.dart';
+import '../../../core/language/study_language_provider.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +13,7 @@ import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
 import '../../home_widget/data/daily_word_widget.dart';
 import '../../home_widget/presentation/widget_invite_card.dart';
+import '../../home_widget/providers/widget_invite_provider.dart';
 import '../../reminders/providers/reminder_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../../word_classes/presentation/word_classes_screen.dart';
@@ -121,9 +124,32 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _chooseStudyLanguage(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(studyLanguageProvider);
+    final code = await showAppSheet<String>(
+      context,
+      (_) => _StudyLanguageSheet(selected: current),
+    );
+    if (code == null || code == current || !context.mounted) return;
+
+    final navigator = Navigator.of(context);
+    await ref
+        .read(studyLanguageProvider.notifier)
+        .select(ref.read(databaseProvider), code);
+    // O deck aberto era do outro idioma.
+    ref.read(deckScopeProvider.notifier).state = null;
+    // Palavra do dia (notificação e widget) passa a vir do novo idioma.
+    ref.read(reminderProvider.notifier).refresh();
+    refreshDailyWordWidget(ref);
+    // Volta para o início, que já mostra as fichas do novo idioma.
+    navigator.popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = AppPalette.of(context);
+    final studyCode = ref.watch(studyLanguageProvider);
+    final study = StudyLanguages.all.firstWhere((l) => l.code == studyCode);
     final reminder = ref.watch(reminderProvider);
     final backup = ref.watch(backupProvider);
     final classCount = ref.watch(wordClassMapProvider).length;
@@ -163,6 +189,20 @@ class SettingsScreen extends ConsumerWidget {
                         const _TextSizePreview(),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text('IDIOMA', style: AppText.section(p)),
+              const SizedBox(height: 12),
+              _Group(
+                children: [
+                  _SettingRow(
+                    icon: Icons.translate,
+                    title: 'Idioma de estudo',
+                    subtitle: '${_capitalize(study.namePt)} '
+                        '(${study.nameNative})',
+                    onTap: () => _chooseStudyLanguage(context, ref),
                   ),
                 ],
               ),
@@ -296,6 +336,51 @@ class _Group extends StatelessWidget {
   }
 }
 
+/// "alemão" → "Alemão" (o perfil guarda o nome em minúscula, para frases).
+String _capitalize(String s) =>
+    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+/// Lista dos idiomas de estudo. Devolve o código escolhido.
+class _StudyLanguageSheet extends StatelessWidget {
+  const _StudyLanguageSheet({required this.selected});
+
+  final String selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('IDIOMA DE ESTUDO', style: AppText.section(p)),
+        const SizedBox(height: 8),
+        Text(
+          'Cada idioma tem as próprias fichas, decks e frases. Nada é '
+          'apagado ao trocar.',
+          style: AppText.meta(p),
+        ),
+        const SizedBox(height: 12),
+        _Group(
+          children: [
+            for (final lang in StudyLanguages.all)
+              _SettingRow(
+                icon: Icons.language,
+                title: _capitalize(lang.namePt),
+                subtitle: lang.nameNative,
+                trailing: lang.code == selected
+                    ? Icon(Icons.check, color: p.text900)
+                    : null,
+                onTap: () => Navigator.of(context).pop(lang.code),
+                showChevron: false,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _SettingRow extends StatelessWidget {
   const _SettingRow({
     required this.icon,
@@ -303,6 +388,7 @@ class _SettingRow extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.showChevron = true,
   });
 
   final IconData icon;
@@ -310,6 +396,9 @@ class _SettingRow extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// Seta "›" das linhas tocáveis. Desligada nas listas de escolha.
+  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +430,7 @@ class _SettingRow extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[const SizedBox(width: 12), trailing!],
-          if (onTap != null) ...[
+          if (onTap != null && showChevron) ...[
             const SizedBox(width: 8),
             ChevronIcon.right(color: p.text400, size: 12),
           ],

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Fileira de teclas ä ö ü ß, para escrever em alemão com qualquer teclado.
+/// Fileira com as letras especiais do idioma de estudo (ä ö ü ß no
+/// alemão), para escrever com qualquer teclado.
 /// Insere a letra na posição do cursor de [controller].
 class UmlautKeys extends StatelessWidget {
   const UmlautKeys({super.key, required this.controller});
 
   final TextEditingController controller;
-
-  static const _letters = ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'];
 
   void _insert(String letter) {
     final value = controller.value;
@@ -25,6 +25,10 @@ class UmlautKeys extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Idiomas sem letras especiais (inglês) não mostram a fileira.
+    if (StudyLanguages.active.specialLetters.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final p = AppPalette.of(context);
     final radius = BorderRadius.circular(8);
     // As letras crescem até 1,3x; acima disso não caberiam na tecla.
@@ -34,7 +38,7 @@ class UmlautKeys extends StatelessWidget {
       spacing: 6,
       runSpacing: 6,
       children: [
-        for (final letter in _letters)
+        for (final letter in StudyLanguages.active.specialLetters)
           Material(
             color: p.card,
             shape: RoundedRectangleBorder(

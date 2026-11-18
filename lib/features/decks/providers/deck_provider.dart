@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 
-/// Todos os decks. Atualiza sozinha a cada mudança.
+/// Decks do idioma de estudo ativo. Atualiza sozinha a cada mudança.
 final deckListProvider = StreamProvider<List<Deck>>((ref) {
-  return ref.watch(databaseProvider).watchDecks();
+  final language = ref.watch(studyLanguageProvider);
+  return ref.watch(databaseProvider).watchDecks(language);
 });
 
 /// Um deck com as palavras dele.
@@ -15,7 +17,7 @@ class DeckSummary {
   final Deck deck;
   final List<WordEntry> words;
 
-  bool get isGeneral => deck.id == AppDatabase.generalDeckId;
+  bool get isGeneral => AppDatabase.isGeneralDeck(deck.id);
 }
 
 /// Decks com as palavras de cada um. Os decks criados vêm primeiro, na

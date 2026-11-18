@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
@@ -13,9 +14,10 @@ import '../../../word_classes/presentation/word_appearance.dart';
 Color? filterColor(WordFilter f, {required bool isDark}) {
   final category = switch (f) {
     WordFilter.all => null,
-    WordFilter.der => GrammarCategory.masculineNoun,
-    WordFilter.die => GrammarCategory.feminineNoun,
-    WordFilter.das => GrammarCategory.neuterNoun,
+    WordFilter.nouns => GrammarCategory.noun,
+    WordFilter.masculine => GrammarCategory.masculineNoun,
+    WordFilter.feminine => GrammarCategory.feminineNoun,
+    WordFilter.neuter => GrammarCategory.neuterNoun,
     WordFilter.verbs => GrammarCategory.verb,
     WordFilter.adjectives => GrammarCategory.adjective,
     WordFilter.prepositions => GrammarCategory.preposition,
@@ -70,7 +72,7 @@ class _StudyFilterSheetState extends State<_StudyFilterSheet> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final f in WordFilter.values)
+            for (final f in filtersFor(StudyLanguages.active))
               _FilterChip(
                 label: f.label,
                 color: filterColor(f, isDark: isDark),

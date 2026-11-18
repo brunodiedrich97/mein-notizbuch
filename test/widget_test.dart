@@ -21,6 +21,7 @@ void main() {
       correctCount: 0,
       wrongCount: 0,
       createdAt: DateTime(2026),
+      language: 'de',
     );
 
     await tester.pumpWidget(
@@ -49,6 +50,7 @@ void main() {
       correctCount: 0,
       wrongCount: 0,
       createdAt: DateTime(2026),
+      language: 'de',
     );
 
     await tester.pumpWidget(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
@@ -196,7 +197,10 @@ class _TranslationExerciseScreenState
             children: [
               _ProgressBar(value: (_results.length) / total),
               const SizedBox(height: 24),
-              Text('ESCREVA EM ALEMÃO', style: AppText.caption(p)),
+              Text(
+                'ESCREVA EM ${StudyLanguages.active.namePt.toUpperCase()}',
+                style: AppText.caption(p),
+              ),
               const SizedBox(height: 8),
               Text(
                 word.examplePortuguese!.trim(),
@@ -214,7 +218,7 @@ class _TranslationExerciseScreenState
                 WritingField(
                   controller: _input,
                   focusNode: _focus,
-                  hint: 'Escreva a frase em alemão…',
+                  hint: 'Escreva a frase em ${StudyLanguages.active.namePt}…',
                   autofocus: true,
                   onSubmitted: () => _verify(word),
                 ),

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language.dart';
 import '../../study/providers/study_provider.dart';
 import '../../vocabulary/models/grammar_type.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
@@ -103,7 +104,8 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
 
     final questions = <QuizQuestion>[];
     for (final word in chosen) {
-      final question = word.category.isNoun
+      // Pergunta de artigo só em idiomas com gênero (der/die/das).
+      final question = word.category.article != null
           ? _articleQuestion(word)
           : _translationQuestion(word, translations);
       if (question != null) questions.add(question);
@@ -112,7 +114,8 @@ class ReviewQuizNotifier extends AutoDisposeAsyncNotifier<ReviewQuizState> {
   }
 
   QuizQuestion _articleQuestion(WordEntry word) {
-    const options = ['der', 'die', 'das'];
+    // Os artigos do idioma de estudo, na ordem masculino, feminino, neutro.
+    final options = StudyLanguages.active.articles.values.toList();
     return QuizQuestion(
       word: word,
       kind: QuestionKind.article,

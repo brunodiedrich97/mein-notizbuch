@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/grammar_colors.dart';
@@ -150,7 +151,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
   String? _validateGerman(String? value) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Digite a palavra em alemão.';
+    if (text.isEmpty) {
+      return 'Digite a palavra em ${StudyLanguages.active.namePt}.';
+    }
     if (_category.isNoun && GrammarCategory.fromArticle(text) != null) {
       return 'Digite o substantivo depois do artigo.';
     }
@@ -186,6 +189,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
       exampleGerman: _optional(_exampleDe),
       examplePortuguese: _optional(_examplePt),
       deckId: Value(_deckId),
+      language: Value(StudyLanguages.active.code),
       customClassId: Value(c == GrammarCategory.other ? _customClassId : null),
     );
 
@@ -208,6 +212,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
+    final lang = StudyLanguages.active;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = _category;
     final classes = WordClassScope.of(context);
@@ -239,13 +244,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
               children: [
                 _SectionCard(
                   icon: Icons.edit_note_rounded,
-                  title: 'Palavra em alemão *',
+                  title: 'Palavra em ${lang.namePt} *',
                   trailing: const _MetaText('Obrigatório'),
                   accent: accent,
                   children: [
                     _InlineField(
                       controller: _german,
-                      hint: 'der Hund, gehen, schön…',
+                      hint: lang.wordHint,
                       germanInput: true,
                       serif: true,
                       autofocus: true,
@@ -275,8 +280,10 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   padding: const EdgeInsets.only(top: 4, bottom: 10),
                   child: Row(
                     children: [
-                      const Expanded(
-                        child: _SectionLabel('Classe gramatical (Wortart)'),
+                      Expanded(
+                        child: _SectionLabel(
+                          'Classe gramatical (${lang.terms.wordClass})',
+                        ),
                       ),
                       _MetaText(
                         _categoryChosenByUser || _german.text.trim().isEmpty
@@ -291,7 +298,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      for (final category in GrammarCategory.values) ...[
+                      for (final category in lang.categories) ...[
                         _CategoryChip(
                           label: category.shortLabel,
                           color: GrammarColors.of(category, isDark: isDark),
@@ -353,7 +360,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                       if (c.isNoun)
                         _InlineField(
                           controller: _plural,
-                          hint: 'die Hunde',
+                          hint: lang.pluralHint,
                           germanInput: true,
                           serif: true,
                         ),
@@ -369,14 +376,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                         _BoxField(
                           controller: _verbForms,
                           label: 'Pretérito e particípio',
-                          hint: 'ging · ist gegangen',
+                          hint: lang.verbFormsHint,
                           germanInput: true,
                         ),
                         _BoxField(
                           controller: _conjugation,
                           label: 'Presente (uma linha por grupo)',
-                          hint: 'ich gehe · du gehst · er geht\n'
-                              'wir gehen · ihr geht · sie gehen',
+                          hint: lang.conjugationHint,
                           germanInput: true,
                           maxLines: 3,
                         ),
@@ -386,7 +392,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                         _BoxField(
                           controller: _degrees,
                           label: 'Graus',
-                          hint: 'schön → schöner → am schönsten',
+                          hint: lang.degreesHint,
                           germanInput: true,
                         ),
                       if (c == GrammarCategory.preposition)
@@ -400,7 +406,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.record_voice_over_outlined,
-                  title: 'Pronúncia (Aussprache)',
+                  title: 'Pronúncia (${lang.terms.pronunciation})',
                   trailing: const _MetaText('Opcional'),
                   accent: accent,
                   children: [
@@ -411,7 +417,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                           child: _BoxField(
                             controller: _ipa,
                             label: 'Transcrição IPA',
-                            hint: 'ˈɡeːən',
+                            hint: lang.ipaHint,
                             germanInput: true,
                             mono: true,
                             brackets: true,
@@ -441,14 +447,14 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Frase de exemplo (Beispielsatz)',
+                  title: 'Frase de exemplo (${lang.terms.example})',
                   trailing: const _MetaText('Opcional'),
                   accent: accent,
                   children: [
                     _BoxField(
                       controller: _exampleDe,
-                      label: 'Em alemão',
-                      hint: 'Der Hund schläft im Garten.',
+                      label: 'Em ${lang.namePt}',
+                      hint: lang.exampleHint,
                       germanInput: true,
                       serif: true,
                       maxLines: 3,
@@ -674,7 +680,8 @@ class _InlineField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onChanged;
 
-  /// Desliga a autocorreção (o corretor em português estraga o alemão).
+  /// Desliga a autocorreção (o corretor em português estraga o idioma de
+  /// estudo).
   final bool germanInput;
   final bool autofocus;
   final bool serif;

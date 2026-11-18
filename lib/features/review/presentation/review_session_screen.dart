@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/screen_header.dart';
 import '../../../core/widgets/speak_button.dart';
@@ -268,11 +269,12 @@ class _ResultView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ratio = total == 0 ? 0 : score / total;
+    final terms = StudyLanguages.active.terms;
     final message = ratio >= 0.8
-        ? 'Ausgezeichnet! Revisão excelente.'
+        ? '${terms.excellent} Revisão excelente.'
         : ratio >= 0.5
-            ? 'Gut gemacht! Continue praticando.'
-            : 'Weiter so! As fichas que você errou voltam primeiro '
+            ? '${terms.wellDone} Continue praticando.'
+            : '${terms.keepGoing} As fichas que você errou voltam primeiro '
                 'na próxima revisão.';
 
     return Center(

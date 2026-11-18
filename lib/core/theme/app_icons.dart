@@ -30,6 +30,7 @@ class AppIcons {
   /// Caminho do ícone da classe, ou `null` para as classes sem ícone no
   /// protótipo (advérbio e outros), que usam um ícone Material.
   static String? categoryPath(GrammarCategory c) => switch (c) {
+        GrammarCategory.noun => _nounNeut,
         GrammarCategory.masculineNoun => _nounMasc,
         GrammarCategory.feminineNoun => _nounFem,
         GrammarCategory.neuterNoun => _nounNeut,

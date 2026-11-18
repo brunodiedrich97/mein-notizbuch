@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
@@ -20,10 +21,17 @@ enum IndexSort {
   az('A–Z'),
   recent('Recentes'),
   mistakes('Mais erradas'),
-  article('der · die · das');
+  article('Gênero');
 
-  const IndexSort(this.label);
-  final String label;
+  const IndexSort(this._fallbackLabel);
+  final String _fallbackLabel;
+
+  /// "der · die · das" (artigos do idioma de estudo) na ordenação por
+  /// gênero.
+  String get label => this == IndexSort.article &&
+          StudyLanguages.active.articles.isNotEmpty
+      ? StudyLanguages.active.articles.values.join(' · ')
+      : _fallbackLabel;
 }
 
 /// Índice de palavras de um deck (ou de todos): busca, ordenação, filtro
@@ -97,7 +105,10 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
         return [(null, sorted)];
       case IndexSort.article:
         String label(WordEntry w) => w.category.article ?? 'Outras classes';
-        const order = ['der', 'die', 'das', 'Outras classes'];
+        final order = [
+          ...StudyLanguages.active.articles.values,
+          'Outras classes',
+        ];
         final groups = <String, List<WordEntry>>{};
         for (final w in [...words]..sort(_compareAz)) {
           groups.putIfAbsent(label(w), () => []).add(w);
@@ -175,7 +186,10 @@ class _WordIndexScreenState extends ConsumerState<WordIndexScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          for (final s in IndexSort.values) ...[
+                          for (final s in IndexSort.values)
+                            // Ordenar por gênero só existe com artigos.
+                            if (s != IndexSort.article ||
+                                StudyLanguages.active.hasGender) ...[
                             if (s != IndexSort.values.first)
                               const SizedBox(width: 8),
                             _SortPill(
@@ -276,7 +290,8 @@ class _SearchField extends StatelessWidget {
               textInputAction: TextInputAction.search,
               style: AppText.item(p),
               decoration: InputDecoration(
-                hintText: 'Buscar em alemão ou português',
+                hintText:
+                    'Buscar em ${StudyLanguages.active.namePt} ou português',
                 hintStyle: AppText.item(p).copyWith(
                   color: p.text400,
                   fontWeight: FontWeight.w400,

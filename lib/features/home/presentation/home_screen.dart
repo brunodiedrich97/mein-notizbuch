@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
@@ -19,6 +20,7 @@ import '../../decks/providers/deck_provider.dart';
 import '../../splash/presentation/splash_screen.dart' show kLogoMark;
 import '../../vocabulary/presentation/widgets/word_list_card.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
+import '../../../core/language/study_language_provider.dart';
 
 /// Tela inicial: saudação, atalhos (revisar e adicionar), os decks e as
 /// últimas palavras cadastradas.
@@ -32,9 +34,10 @@ class HomeScreen extends ConsumerWidget {
   static const int minWordsForReview = 2;
 
   static String _greeting(DateTime now) {
-    if (now.hour < 12) return 'Guten Morgen!';
-    if (now.hour < 18) return 'Guten Tag!';
-    return 'Guten Abend!';
+    final terms = StudyLanguages.active.terms;
+    if (now.hour < 12) return terms.goodMorning;
+    if (now.hour < 18) return terms.goodDay;
+    return terms.goodEvening;
   }
 
   static String _countText(int words, int decks) {
@@ -52,6 +55,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = AppPalette.of(context);
+    // Saudação e textos seguem o idioma de estudo.
+    ref.watch(studyLanguageProvider);
     final wordsAsync = ref.watch(wordListProvider);
     final words = wordsAsync.valueOrNull ?? const <WordEntry>[];
     final total = words.length;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/grammar_colors.dart';
@@ -499,7 +500,7 @@ class _Preview extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Wort',
+            StudyLanguages.active.terms.sampleWord,
             style: AppTheme.serif(
               fontSize: 22,
               fontWeight: FontWeight.w700,

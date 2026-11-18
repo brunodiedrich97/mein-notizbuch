@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/language/study_language_provider.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home_widget/data/daily_word_widget.dart';
@@ -11,6 +12,7 @@ import 'features/reminders/data/reminder_service.dart';
 import 'features/settings/providers/text_size_provider.dart';
 import 'features/splash/presentation/splash_screen.dart';
 import 'features/vocabulary/presentation/screens/word_detail_screen.dart';
+import 'features/vocabulary/providers/vocabulary_provider.dart';
 import 'features/word_classes/presentation/word_appearance.dart';
 import 'features/word_classes/providers/word_class_provider.dart';
 
@@ -30,7 +32,16 @@ Future<void> main() async {
   DailyWordWidget.onOpenWord = reminders.onOpenWord;
   await DailyWordWidget.init();
 
-  runApp(const ProviderScope(child: DeutschNotizbuchApp()));
+  // O idioma de estudo salvo vale desde a primeira tela.
+  final container = ProviderContainer();
+  await StudyLanguageController.restore(container.read(databaseProvider));
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const DeutschNotizbuchApp(),
+    ),
+  );
 }
 
 class DeutschNotizbuchApp extends StatelessWidget {

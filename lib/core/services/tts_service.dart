@@ -1,26 +1,38 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
-/// Pronúncia em alemão usando o mecanismo de voz do próprio aparelho.
+import '../language/study_language.dart';
+
+/// Pronúncia no idioma de estudo, com o mecanismo de voz do próprio
+/// aparelho.
 ///
-/// Funciona offline quando a voz "Deutsch (Deutschland)" está instalada.
-/// No Android isso costuma exigir baixar o pacote de voz nas configurações
-/// de texto para fala; sem ele, [speakGerman] devolve `false`.
+/// Funciona offline quando a voz do idioma está instalada (ex.: "Deutsch
+/// (Deutschland)"). No Android isso costuma exigir baixar o pacote de voz
+/// nas configurações de texto para fala; sem ele, [speak] devolve `false`.
 class TtsService {
   TtsService._();
 
   static final FlutterTts _tts = FlutterTts();
   static Future<bool>? _ready;
+  static String? _locale;
 
-  static Future<bool> init() => _ready ??= _initialize();
+  /// Prepara a voz do idioma de estudo atual (refaz se o idioma mudar).
+  static Future<bool> init() {
+    final locale = StudyLanguages.active.ttsLocale;
+    if (_locale != locale) {
+      _locale = locale;
+      _ready = null;
+    }
+    return _ready ??= _initialize(locale);
+  }
 
-  static Future<bool> _initialize() async {
+  static Future<bool> _initialize(String locale) async {
     try {
-      final available = await _tts.isLanguageAvailable('de-DE');
+      final available = await _tts.isLanguageAvailable(locale);
       if (available != true && available != 1) {
         _ready = null; // tenta de novo depois (a voz pode ser instalada)
         return false;
       }
-      await _tts.setLanguage('de-DE');
+      await _tts.setLanguage(locale);
       await _tts.setSpeechRate(0.45); // um pouco mais lento, para quem aprende
       await _tts.setPitch(1.0);
       return true;
@@ -30,8 +42,8 @@ class TtsService {
     }
   }
 
-  /// Fala [text] em alemão. Devolve `false` se não houver voz alemã.
-  static Future<bool> speakGerman(String text) async {
+  /// Fala [text] no idioma de estudo. Devolve `false` se não houver voz.
+  static Future<bool> speak(String text) async {
     if (!await init()) return false;
     final clean = text.replaceAll(RegExp(r'[\[\]]'), '').trim();
     if (clean.isEmpty) return true;

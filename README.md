@@ -174,6 +174,34 @@ O app reproduz o protótipo HTML (Tailwind):
 - O layout de caderno aberto (duas fichas) aparece a partir de 840 px de
   largura.
 
+## Idioma de estudo (perfil de idioma)
+
+Tudo o que é específico do idioma estudado vem de um **perfil**
+(`lib/core/language/study_language.dart`), e não do código das telas:
+
+- artigos de cada gênero (der/die/das), artigos que também são do plural,
+  substantivos com maiúscula e o padrão de verbo no infinitivo (usados no
+  reconhecimento automático da classe);
+- voz da pronúncia (`de-DE`) e letras especiais do teclado (ä ö ü ß);
+- formas de artigo e contrações (zum = zu + dem) da correção da escrita;
+- termos exibidos no idioma ("Wortart", "Aussprache", "Beispielsatz",
+  "Guten Tag!", "Gut gemacht!"…) e os exemplos dos campos de cadastro.
+
+Perfis disponíveis: **alemão** (padrão) e **inglês**. O inglês não tem
+gênero: os substantivos ficam numa classe só ("substantivo"), "the dog"
+vira "dog", verbos são reconhecidos por "to …", não há fileira de letras
+especiais e a revisão não pergunta o artigo.
+
+O idioma é trocado em **Ajustes → Idioma → Idioma de estudo** e fica salvo
+(`study.language` nas preferências). Cada idioma tem as próprias fichas,
+decks e frases (coluna `language`, schema v7); nada é apagado ao trocar.
+Na primeira vez de um idioma, o app cria o deck "Geral" dele com algumas
+fichas iniciais (`AppDatabase.ensureGeneralDeck`). A palavra do dia
+(notificação e widget) segue o idioma ativo.
+
+Para um idioma novo: criar o perfil, registrá-lo em `StudyLanguages.all`
+e acrescentar as fichas iniciais em `_seedWordsByLanguage`.
+
 ## Classes gramaticais criadas pelo usuário
 
 Em **Ajustes › Classes gramaticais** (ou no chip "+ Nova" de "Registrar

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/language/study_language.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
@@ -19,6 +20,7 @@ class WordClassesScreen extends ConsumerWidget {
   const WordClassesScreen({super.key});
 
   static String _builtInName(GrammarCategory c) => switch (c) {
+        GrammarCategory.noun => 'Substantivo',
         GrammarCategory.masculineNoun => 'Substantivo masculino (der)',
         GrammarCategory.feminineNoun => 'Substantivo feminino (die)',
         GrammarCategory.neuterNoun => 'Substantivo neutro (das)',
@@ -92,7 +94,7 @@ class WordClassesScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _Group(
                 children: [
-                  for (final c in GrammarCategory.values)
+                  for (final c in StudyLanguages.active.categories)
                     _ClassRow(
                       color: GrammarColors.of(c, isDark: isDark),
                       name: _builtInName(c),

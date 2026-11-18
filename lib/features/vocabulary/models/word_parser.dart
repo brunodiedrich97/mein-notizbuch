@@ -1,6 +1,7 @@
+import '../../../core/language/study_language.dart';
 import 'grammar_type.dart';
 
-/// Resultado da análise do que o usuário digitou no campo em alemão.
+/// Resultado da análise do que o usuário digitou no campo da palavra.
 class ParsedWord {
   const ParsedWord({
     required this.lemma,
@@ -22,21 +23,20 @@ class ParsedWord {
   /// `true` quando a classe é só um palpite (sem artigo digitado).
   final bool isGuess;
 
-  /// "die" também é o artigo do plural, então o gênero pode estar errado.
+  /// O artigo também é do plural ("die" no alemão), então o gênero pode
+  /// estar errado.
   final bool articleIsAmbiguous;
 }
 
 class WordParser {
   WordParser._();
 
-  // Infinitivos alemães terminam em -en, -eln ou -ern ("gehen", "sammeln",
-  // "wandern"). Exigir 2+ letras antes evita falsos positivos como "gern".
-  static final RegExp _verbPattern = RegExp(r'^[a-zäöüß]{2,}(en|eln|ern)$');
-
-  /// Reconhece o gênero quando o usuário digita "der Hund", "die Lampe" ou
-  /// "das Buch". Sem artigo, sugere verbo para infinitivos e "outros" para o
-  /// resto. A sugestão é sempre editável na tela de cadastro.
+  /// Reconhece o gênero quando o usuário digita o artigo ("der Hund",
+  /// "die Lampe", "das Buch" no alemão). Sem artigo, sugere verbo para
+  /// infinitivos e "outros" para o resto, pelas regras do idioma de estudo.
+  /// A sugestão é sempre editável na tela de cadastro.
   static ParsedWord parse(String raw) {
+    final language = StudyLanguages.active;
     final normalized = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (normalized.isEmpty) {
       return const ParsedWord(
@@ -52,18 +52,33 @@ class WordParser {
       final article = normalized.substring(0, space).toLowerCase();
       final category = GrammarCategory.fromArticle(article);
       if (category != null) {
-        final noun = _capitalize(normalized.substring(space + 1));
+        final rest = normalized.substring(space + 1);
+        final noun = language.capitalizeNouns ? _capitalize(rest) : rest;
         return ParsedWord(
           lemma: noun,
           display: '$article $noun',
           category: category,
           isGuess: false,
-          articleIsAmbiguous: article == 'die',
+          articleIsAmbiguous: language.pluralArticles.contains(article),
         );
       }
     }
 
-    final looksLikeVerb = _verbPattern.hasMatch(normalized);
+    // Idiomas sem gênero: "the dog" / "a dog" indica substantivo.
+    if (!language.hasGender && space > 0) {
+      final first = normalized.substring(0, space).toLowerCase();
+      if (language.articleForms.contains(first)) {
+        final noun = normalized.substring(space + 1);
+        return ParsedWord(
+          lemma: noun,
+          display: noun,
+          category: GrammarCategory.noun,
+          isGuess: false,
+        );
+      }
+    }
+
+    final looksLikeVerb = RegExp(language.verbPattern).hasMatch(normalized);
     return ParsedWord(
       lemma: normalized,
       display: normalized,
@@ -72,7 +87,7 @@ class WordParser {
     );
   }
 
-  // Substantivos alemães sempre começam com maiúscula.
+  // Usado quando o idioma escreve substantivos com maiúscula (alemão).
   static String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }

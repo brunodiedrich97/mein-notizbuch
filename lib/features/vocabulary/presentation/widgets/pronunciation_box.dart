@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/language/study_language.dart';
 import '../../../../core/services/tts_service.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Fala [text] em alemão e avisa o usuário se não houver voz instalada.
+/// Fala [text] no idioma de estudo e avisa se não houver voz instalada.
 Future<void> speakWithFeedback(BuildContext context, String text) async {
-  final ok = await TtsService.speakGerman(text);
+  final ok = await TtsService.speak(text);
   if (ok || !context.mounted) return;
+  final language = StudyLanguages.active;
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Não há voz em alemão neste aparelho. Instale a voz '
-          '"Deutsch (Deutschland)" nas configurações de texto para fala.',
+          'Não há voz em ${language.namePt} neste aparelho. Instale a voz '
+          '"${language.nameNative}" nas configurações de texto para fala.',
         ),
       ),
     );

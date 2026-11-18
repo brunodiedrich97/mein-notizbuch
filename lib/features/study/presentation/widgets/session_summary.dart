@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_text.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_buttons.dart';
@@ -61,7 +62,9 @@ class SessionSummary extends StatelessWidget {
             Text('SESSÃO CONCLUÍDA', style: AppText.section(p)),
             const SizedBox(height: 8),
             Text(
-              great ? 'Gut gemacht!' : 'Weiter so!',
+              great
+                  ? StudyLanguages.active.terms.wellDone
+                  : StudyLanguages.active.terms.keepGoing,
               style: AppText.display(p, fontSize: 40),
             ),
             const SizedBox(height: 8),

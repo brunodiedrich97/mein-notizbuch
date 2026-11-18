@@ -1,10 +1,12 @@
+import '../../../core/language/study_language.dart';
 import '../../vocabulary/models/grammar_type.dart';
 
 /// Comparação simples de frases, feita no aparelho (sem internet).
 ///
-/// Não "entende" alemão: compara palavra por palavra com a resposta
+/// Não "entende" o idioma: compara palavra por palavra com a resposta
 /// esperada e reconhece alguns erros comuns para explicar (contrações,
-/// artigos, maiúsculas e trema).
+/// artigos, maiúsculas e letras especiais), com as regras do idioma de
+/// estudo.
 
 /// Minúsculas e sem trema/ß: "Ärzte" → "arzte".
 String foldGerman(String s) => s
@@ -68,32 +70,6 @@ class SentenceCheck {
 
   bool get isPerfect => differences == 0;
 }
-
-const _contractions = {
-  'zum': ('zu', 'dem'),
-  'zur': ('zu', 'der'),
-  'im': ('in', 'dem'),
-  'ins': ('in', 'das'),
-  'am': ('an', 'dem'),
-  'ans': ('an', 'das'),
-  'vom': ('von', 'dem'),
-  'beim': ('bei', 'dem'),
-};
-
-const _articles = {
-  'der',
-  'die',
-  'das',
-  'den',
-  'dem',
-  'des',
-  'ein',
-  'eine',
-  'einen',
-  'einem',
-  'einer',
-  'eines',
-};
 
 /// Compara [answer] com [expected]. Maiúsculas e trema contam como erro
 /// (são parte da escrita correta), mas ganham uma explicação.
@@ -173,13 +149,14 @@ String? _explain(String? got, String want, List<String> gotBlock) {
   final wantLower = want.toLowerCase();
 
   // Contração: escreveu "zu" (ou "zu dem") no lugar de "zum".
-  final contraction = _contractions[wantLower];
+  final language = StudyLanguages.active;
+  final contraction = language.contractions[wantLower];
   if (contraction != null) {
     final (prep, article) = contraction;
     final block = gotBlock.map((t) => t.toLowerCase()).toList();
     if (block.contains(prep) || block.contains(article)) {
-      return '"$wantLower" = $prep + $article. Em alemão, essa junção é '
-          'obrigatória.';
+      return '"$wantLower" = $prep + $article. Em ${language.namePt}, essa '
+          'junção é obrigatória.';
     }
   }
 
@@ -187,7 +164,8 @@ String? _explain(String? got, String want, List<String> gotBlock) {
   final gotLower = got.toLowerCase();
 
   // Artigo no caso errado.
-  if (_articles.contains(gotLower) && _articles.contains(wantLower)) {
+  if (language.articleForms.contains(gotLower) &&
+      language.articleForms.contains(wantLower)) {
     return 'Artigo: o esperado é "$want", e não "$got". Confira o caso '
         '(nominativo, acusativo, dativo) e o gênero da palavra.';
   }
@@ -195,10 +173,11 @@ String? _explain(String? got, String want, List<String> gotBlock) {
   // Só a maiúscula/minúscula está diferente.
   if (gotLower == wantLower) {
     final upper = want[0] == want[0].toUpperCase();
-    return upper
-        ? '"$want" começa com maiúscula: em alemão, todo substantivo é '
-            'escrito com inicial maiúscula.'
-        : '"$want" é escrita com minúscula.';
+    if (!upper) return '"$want" é escrita com minúscula.';
+    return language.capitalizeNouns
+        ? '"$want" começa com maiúscula: em ${language.namePt}, todo '
+            'substantivo é escrito com inicial maiúscula.'
+        : '"$want" começa com maiúscula.';
   }
 
   // Só o trema (ou ß) está diferente.

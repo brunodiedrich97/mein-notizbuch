@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/language/study_language.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../vocabulary/providers/vocabulary_provider.dart';
 import '../../models/deck_icon.dart';
 import '../deck_icon_data.dart';
 import 'deck_card.dart';
 
-/// Folha inferior para criar um deck: nome em português, nome em alemão
+/// Folha inferior para criar um deck: nome em português, nome no idioma de
+/// estudo
 /// (opcional) e ícone.
 class NewDeckSheet extends ConsumerStatefulWidget {
   const NewDeckSheet({super.key});
@@ -55,6 +57,7 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
               namePt: _namePt.text.trim(),
               nameDe: nameDe.isEmpty ? const Value.absent() : Value(nameDe),
               icon: _icon,
+              language: Value(StudyLanguages.active.code),
             ),
           );
       if (mounted) Navigator.of(context).pop(id);
@@ -130,7 +133,8 @@ class _NewDeckSheetState extends ConsumerState<NewDeckSheet> {
                 ),
                 _SheetField(
                   controller: _nameDe,
-                  label: 'Nome em alemão (opcional)',
+                  label:
+                      'Nome em ${StudyLanguages.active.namePt} (opcional)',
                   hint: 'Gesundheit',
                   german: true,
                 ),

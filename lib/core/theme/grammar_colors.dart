@@ -10,6 +10,9 @@ class GrammarColors {
   GrammarColors._();
 
   // ---------- Papel claro (valores do protótipo) ----------
+  /// Substantivo sem gênero (inglês): um azul-petróleo, distinto do azul
+  /// do masculino.
+  static const Color noun = Color(0xFF0E7490);
   static const Color masculine = Color(0xFF1D5FA7);
   static const Color feminine = Color(0xFFA82E2E);
   static const Color neuter = Color(0xFF366B1A);
@@ -21,6 +24,7 @@ class GrammarColors {
   static const Color other = Color(0xFF4B5563);
 
   // ---------- Modo escuro (mesmas famílias, mais claras) ----------
+  static const Color nounDark = Color(0xFF6CC7DA);
   static const Color masculineDark = Color(0xFF7CB0EC);
   static const Color feminineDark = Color(0xFFF08A8A);
   static const Color neuterDark = Color(0xFF8DCB6B);
@@ -41,6 +45,7 @@ class GrammarColors {
 
   static Color of(GrammarCategory category, {required bool isDark}) {
     return switch (category) {
+      GrammarCategory.noun => isDark ? nounDark : noun,
       GrammarCategory.masculineNoun => isDark ? masculineDark : masculine,
       GrammarCategory.feminineNoun => isDark ? feminineDark : feminine,
       GrammarCategory.neuterNoun => isDark ? neuterDark : neuter,

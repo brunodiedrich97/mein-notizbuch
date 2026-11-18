@@ -8,6 +8,7 @@ import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 import '../../features/decks/models/deck_icon.dart';
+import '../language/study_language.dart';
 import '../../features/vocabulary/models/grammar_type.dart';
 import '../../features/writing/models/sentence_source.dart';
 
@@ -25,6 +26,9 @@ class Decks extends Table {
 
   /// Salvo pelo nome ("health"), não pelo índice.
   TextColumn get icon => textEnum<DeckIcon>()();
+
+  /// Idioma de estudo do deck ("de"). (v7)
+  TextColumn get language => text().withDefault(const Constant('de'))();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -44,6 +48,10 @@ class WordEntries extends Table {
   /// Classe criada pelo usuário (v6). Quando preenchida, [category] fica
   /// como "outros" (mesmo comportamento) e o nome e a cor vêm da classe.
   IntColumn get customClassId => integer().nullable()();
+
+  /// Idioma de estudo da palavra ("de"). Cada idioma é um caderno separado;
+  /// as telas mostram só o idioma ativo. (v7)
+  TextColumn get language => text().withDefault(const Constant('de'))();
 
   /// Complemento do rótulo da classe: "irregular", "dativo"… (v2)
   TextColumn get tagDetail => text().nullable()();
@@ -114,11 +122,22 @@ class AppDatabase extends _$AppDatabase {
   /// Para testes: `AppDatabase.forTesting(NativeDatabase.memory())`.
   AppDatabase.forTesting(super.executor);
 
-  /// Deck padrão. Recebe as palavras sem deck e não pode ser excluído.
-  static const int generalDeckId = 1;
+  /// Deck padrão do alemão (criado com o banco).
+  static const int germanGeneralDeckId = 1;
+
+  /// Deck padrão de cada idioma de estudo, por código ("de" → 1).
+  static final Map<String, int> _generalDeckIds = {'de': germanGeneralDeckId};
+
+  /// Deck padrão do idioma de estudo ativo. Recebe as palavras sem deck e
+  /// não pode ser excluído. Garanta que exista com [ensureGeneralDeck].
+  static int get generalDeckId =>
+      _generalDeckIds[StudyLanguages.active.code] ?? germanGeneralDeckId;
+
+  /// O deck é o padrão de algum idioma?
+  static bool isGeneralDeck(int id) => _generalDeckIds.containsValue(id);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -150,13 +169,18 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(wordClasses);
             await m.addColumn(wordEntries, wordEntries.customClassId);
           }
+          if (from < 7) {
+            // Tudo o que já existe é alemão (o padrão da coluna).
+            await m.addColumn(wordEntries, wordEntries.language);
+            await m.addColumn(decks, decks.language);
+          }
         },
       );
 
   Future<void> _createGeneralDeck() {
     return into(decks).insert(
       DecksCompanion.insert(
-        id: const Value(generalDeckId),
+        id: const Value(germanGeneralDeckId),
         namePt: 'Geral',
         nameDe: const Value('Allgemein'),
         icon: DeckIcon.general,
@@ -180,10 +204,53 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// Palavras sem deck vão para o "Geral".
+  /// Palavras sem deck (de alemão, nas migrações) vão para o "Geral".
   Future<void> _moveOrphanWordsToGeneral() {
-    return (update(wordEntries)..where((t) => t.deckId.isNull()))
-        .write(const WordEntriesCompanion(deckId: Value(generalDeckId)));
+    return (update(wordEntries)..where((t) => t.deckId.isNull())).write(
+      const WordEntriesCompanion(deckId: Value(germanGeneralDeckId)),
+    );
+  }
+
+  /// Garante o deck "Geral" do idioma [language] e devolve o id. Na primeira
+  /// vez de um idioma novo, cria o deck e as fichas iniciais dele.
+  Future<int> ensureGeneralDeck(String language) async {
+    if (language == 'de') {
+      await _createGeneralDeck();
+      return germanGeneralDeckId;
+    }
+    final existing = await (select(decks)
+          ..where((t) =>
+              t.language.equals(language) &
+              t.icon.equalsValue(DeckIcon.general))
+          ..orderBy([(t) => OrderingTerm.asc(t.id)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (existing != null) {
+      _generalDeckIds[language] = existing.id;
+      return existing.id;
+    }
+
+    final profile = StudyLanguages.all.firstWhere(
+      (l) => l.code == language,
+      orElse: () => StudyLanguages.active,
+    );
+    return transaction(() async {
+      final id = await into(decks).insert(
+        DecksCompanion.insert(
+          namePt: 'Geral',
+          nameDe: Value(profile.terms.generalDeck),
+          icon: DeckIcon.general,
+          language: Value(language),
+        ),
+      );
+      _generalDeckIds[language] = id;
+      final seeds = _seedWordsByLanguage[language] ?? const [];
+      await batch((b) => b.insertAll(wordEntries, [
+            for (final w in seeds)
+              w.copyWith(deckId: Value(id), language: Value(language)),
+          ]));
+      return id;
+    });
   }
 
   /// Leva as fichas iniciais da v1 ao formato do protótipo.
@@ -212,8 +279,10 @@ class AppDatabase extends _$AppDatabase {
   // ---------- Consultas ----------
 
   /// Lista reativa: emite de novo a cada inserção, edição ou exclusão.
-  Stream<List<WordEntry>> watchAllWords() {
+  /// Palavras do idioma [language], em ordem de cadastro.
+  Stream<List<WordEntry>> watchAllWords(String language) {
     return (select(wordEntries)
+          ..where((t) => t.language.equals(language))
           ..orderBy([
             (t) => OrderingTerm.asc(t.createdAt),
             (t) => OrderingTerm.asc(t.id),
@@ -246,18 +315,27 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Decks em ordem de criação ("Geral" primeiro).
-  Stream<List<Deck>> watchDecks() {
-    return (select(decks)..orderBy([(t) => OrderingTerm.asc(t.id)])).watch();
+  Stream<List<Deck>> watchDecks(String language) {
+    // O "Geral" (id 1) é do alemão. Quando houver outro idioma de estudo,
+    // cada idioma terá o seu deck padrão.
+    return (select(decks)
+          ..where((t) => t.language.equals(language))
+          ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+        .watch();
   }
 
   Future<int> addDeck(DecksCompanion entry) => into(decks).insert(entry);
 
   /// Exclui o deck e move as palavras dele para o "Geral".
   Future<void> deleteDeck(int id) {
-    if (id == generalDeckId) return Future.value();
+    if (isGeneralDeck(id)) return Future.value();
     return transaction(() async {
+      final deck = await (select(decks)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+      if (deck == null) return;
+      final general = await ensureGeneralDeck(deck.language);
       await (update(wordEntries)..where((t) => t.deckId.equals(id)))
-          .write(const WordEntriesCompanion(deckId: Value(generalDeckId)));
+          .write(WordEntriesCompanion(deckId: Value(general)));
       await (delete(decks)..where((t) => t.id.equals(id))).go();
     });
   }
@@ -331,8 +409,16 @@ class AppDatabase extends _$AppDatabase {
         ];
 
     // Converte antes de apagar: se algo estiver errado, nada é perdido.
-    final newDecks = [for (final j in list('decks')) Deck.fromJson(j)];
-    final newWords = [for (final j in list('words')) WordEntry.fromJson(j)];
+    // Backups anteriores à v7 não têm idioma: eram todos de alemão.
+    List<Map<String, dynamic>> withLanguage(String key) => [
+          for (final j in list(key)) {'language': 'de', ...j},
+        ];
+    final newDecks = [
+      for (final j in withLanguage('decks')) Deck.fromJson(j),
+    ];
+    final newWords = [
+      for (final j in withLanguage('words')) WordEntry.fromJson(j),
+    ];
     final newSentences = [
       for (final j in list('sentences')) Sentence.fromJson(j),
     ];
@@ -356,6 +442,9 @@ class AppDatabase extends _$AppDatabase {
       await _createGeneralDeck();
       await _moveOrphanWordsToGeneral();
     });
+    // Os ids dos decks "Geral" dos outros idiomas vêm do backup.
+    _generalDeckIds.removeWhere((code, _) => code != 'de');
+    await ensureGeneralDeck(StudyLanguages.active.code);
   }
 
   /// Registra o resultado de uma pergunta da revisão.
@@ -390,6 +479,72 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
+
+/// Fichas iniciais de cada idioma além do alemão, criadas junto com o deck
+/// "Geral" do idioma (veja [AppDatabase.ensureGeneralDeck]).
+final Map<String, List<WordEntriesCompanion>> _seedWordsByLanguage = {
+  'en': [
+    WordEntriesCompanion.insert(
+      germanWord: 'dog',
+      portugueseTranslation: 'o cachorro',
+      category: GrammarCategory.noun,
+      ipaPronunciation: const Value('[dɔːɡ]'),
+      brazilianApproximation: const Value('DÓG'),
+      pluralForm: const Value('dogs'),
+      exampleGerman: const Value('The dog sleeps in the garden.'),
+      examplePortuguese: const Value('O cachorro dorme no jardim.'),
+    ),
+    WordEntriesCompanion.insert(
+      germanWord: 'to go',
+      portugueseTranslation: 'ir',
+      category: GrammarCategory.verb,
+      tagDetail: const Value('irregular'),
+      ipaPronunciation: const Value('[ɡoʊ]'),
+      brazilianApproximation: const Value('GÔU'),
+      verbForms: const Value('went · gone'),
+      conjugation: const Value(
+        'I go · you go · he goes\nwe go · you go · they go',
+      ),
+    ),
+    WordEntriesCompanion.insert(
+      germanWord: 'beautiful',
+      portugueseTranslation: 'bonito, belo',
+      category: GrammarCategory.adjective,
+      ipaPronunciation: const Value('[ˈbjuːtɪfəl]'),
+      brazilianApproximation: const Value('BIÚ-ti-fol'),
+      degrees: const Value('beautiful → more beautiful → most beautiful'),
+      exampleGerman: const Value('The weather is beautiful.'),
+      examplePortuguese: const Value('O tempo está bonito.'),
+    ),
+    WordEntriesCompanion.insert(
+      germanWord: 'often',
+      portugueseTranslation: 'frequentemente',
+      category: GrammarCategory.adverb,
+      ipaPronunciation: const Value('[ˈɔːfən]'),
+      brazilianApproximation: const Value('Ó-fen'),
+      exampleGerman: const Value('I often read at night.'),
+      examplePortuguese: const Value('Eu leio frequentemente à noite.'),
+    ),
+    WordEntriesCompanion.insert(
+      germanWord: 'with',
+      portugueseTranslation: 'com',
+      category: GrammarCategory.preposition,
+      ipaPronunciation: const Value('[wɪð]'),
+      brazilianApproximation: const Value('UID'),
+      exampleGerman: const Value('I go with my friend.'),
+      examplePortuguese: const Value('Eu vou com meu amigo.'),
+    ),
+    WordEntriesCompanion.insert(
+      germanWord: 'and',
+      portugueseTranslation: 'e',
+      category: GrammarCategory.other,
+      ipaPronunciation: const Value('[ænd]'),
+      brazilianApproximation: const Value('ÉND'),
+      exampleGerman: const Value('bread and butter'),
+      examplePortuguese: const Value('pão e manteiga'),
+    ),
+  ],
+};
 
 const _schoenExample = 'Das Wetter ist schön.';
 const _schoenExampleTranslation = 'O tempo está bonito.';
