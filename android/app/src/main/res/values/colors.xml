@@ -4,4 +4,8 @@
     <color name="splash_background">#FCFBF9</color>
     <!-- Fundo do ícone adaptativo (papel) -->
     <color name="ic_launcher_background">#FCFBF9</color>
+    <!-- Widget "Palavra do dia" -->
+    <color name="widget_background">#FCFBF9</color>
+    <color name="widget_text">#111827</color>
+    <color name="widget_subtle">#6B7280</color>
 </resources>

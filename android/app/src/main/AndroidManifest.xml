@@ -31,7 +31,23 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Toque no widget "Palavra do dia" (home_widget). -->
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
+            </intent-filter>
         </activity>
+        <!-- Widget "Palavra do dia". -->
+        <receiver
+            android:name=".DailyWordWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/daily_word_widget_info"/>
+        </receiver>
         <!-- Notificações agendadas (flutter_local_notifications). -->
         <receiver
             android:exported="false"

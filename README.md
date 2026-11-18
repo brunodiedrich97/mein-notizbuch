@@ -233,6 +233,31 @@ Drive); no Android, qualquer pasta ou provedor. "Importar de um arquivo"
 mostra o que o arquivo contém e, depois de confirmar, substitui os dados do
 aparelho. Funciona nas duas plataformas, sem login.
 
+## Widget "Palavra do dia" (Android)
+
+Widget da tela inicial com a palavra do dia, a classe gramatical e o
+significado, nas cores das classes (versão clara e escura). Tocar nele abre
+a ficha da palavra.
+
+- **Plano compartilhado:** `DailyWordPlan` guarda uma palavra por data para
+  os próximos 14 dias. A notificação e o widget leem o mesmo plano, então
+  mostram a mesma palavra. Datas já planejadas não mudam ao abrir o app.
+- **Dados para o widget:** o app grava o plano (com textos e cores) via
+  `home_widget` (`DailyWordWidget.publish`). O widget nativo
+  (`android/app/src/main/kotlin/.../DailyWordWidgetProvider.kt`) escolhe a
+  entrada do dia sozinho e atualiza a cada hora, então troca de palavra
+  logo depois da meia-noite mesmo com o app fechado.
+- **Layouts:** `res/layout/daily_word_widget.xml` (largo, 4×2) e
+  `daily_word_widget_small.xml` (quadrado, a partir de ~2×2); as cores de
+  fundo e texto acompanham o tema em `values`/`values-night`.
+- **Convite:** um cartão na tela inicial oferece adicionar o widget (janela
+  do sistema no Android 8+, ou instruções se o launcher não permitir). Ele
+  aparece no máximo 3 vezes, com pelo menos 7 dias entre elas, e nunca se o
+  widget já estiver na tela. Em *Ajustes › Lembrete diário*, "Widget na
+  tela inicial" fica sempre disponível.
+- **iOS:** ainda não. O widget do iPhone precisa de um App Group, que exige
+  o Apple Developer Program (conta paga).
+
 ## Backup no Google Drive
 
 O app envia um backup por dia (ao abrir) para a pasta **Mein Notizbuch** do

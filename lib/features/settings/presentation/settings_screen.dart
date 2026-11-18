@@ -9,6 +9,8 @@ import '../../../core/widgets/screen_header.dart';
 import '../../backup/data/file_backup.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../backup/providers/backup_provider.dart';
+import '../../home_widget/data/daily_word_widget.dart';
+import '../../home_widget/presentation/widget_invite_card.dart';
 import '../../reminders/providers/reminder_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../../word_classes/presentation/word_classes_screen.dart';
@@ -203,6 +205,13 @@ class SettingsScreen extends ConsumerWidget {
                           : null,
                     ),
                   ),
+                  if (DailyWordWidget.isSupported)
+                    _SettingRow(
+                      icon: Icons.widgets_outlined,
+                      title: 'Widget na tela inicial',
+                      subtitle: 'A palavra do dia sem abrir o app.',
+                      onTap: () => addDailyWordWidget(context),
+                    ),
                   if (reminder.enabled) ...[
                     _SettingRow(
                       icon: Icons.schedule_rounded,

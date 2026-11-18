@@ -9,12 +9,13 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../../core/database/app_database.dart';
 import '../models/reminder_content.dart';
+import 'daily_word_plan.dart';
 
 /// Notificação diária com uma palavra do Notizbuch.
 ///
 /// Uma notificação agendada não escolhe a palavra na hora de aparecer. Por
-/// isso, o app agenda os próximos [daysAhead] dias, cada um com uma palavra,
-/// e refaz a fila sempre que é aberto.
+/// isso, o app agenda os próximos [daysAhead] dias, seguindo o plano da
+/// palavra do dia ([DailyWordPlan]), e refaz a fila sempre que é aberto.
 class ReminderService {
   ReminderService._();
   static final ReminderService instance = ReminderService._();
@@ -121,10 +122,8 @@ class ReminderService {
     );
   }
 
-  /// Escolhe [count] palavras, sem repetir enquanto houver palavras novas.
-  ///
-  /// Hoje a escolha é aleatória. Com a repetição espaçada, as palavras mais
-  /// difíceis (ou que vencem no dia) passam a ter prioridade aqui.
+  /// Escolhe [count] palavras ao acaso, sem repetir enquanto houver
+  /// palavras novas (usado no "Enviar um teste agora").
   List<WordEntry> pickWords(List<WordEntry> words, int count) {
     if (words.isEmpty) return const [];
     final picked = <WordEntry>[];
@@ -142,31 +141,27 @@ class ReminderService {
     return picked;
   }
 
-  /// Agenda os próximos [daysAhead] dias às [hour]:[minute].
+  /// Agenda a palavra de cada dia do [plan] às [hour]:[minute] (os dias
+  /// cujo horário já passou ficam de fora).
   Future<void> scheduleDaily({
-    required List<WordEntry> words,
+    required List<DailyWord> plan,
     required int hour,
     required int minute,
     Map<int, WordClass> classes = const {},
   }) async {
     await init();
     await cancelScheduled();
-    if (words.isEmpty) return;
 
     final now = tz.TZDateTime.now(tz.local);
-    final startsToday =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute)
-            .isAfter(now);
-    final chosen = pickWords(words, daysAhead);
-
-    for (var i = 0; i < chosen.length; i++) {
-      final day = now.day + i + (startsToday ? 0 : 1);
-      // O construtor ajusta dias além do fim do mês e respeita o horário de
-      // verão (somar 24 h mudaria a hora).
-      final when = tz.TZDateTime(tz.local, now.year, now.month, day, hour, minute);
+    for (var i = 0; i < plan.length && i < daysAhead; i++) {
+      final d = plan[i].date;
+      // O construtor respeita o horário de verão (somar 24 h mudaria a hora).
+      final when = tz.TZDateTime(tz.local, d.year, d.month, d.day, hour, minute);
+      if (!when.isAfter(now)) continue;
+      final word = plan[i].word;
       final content = ReminderContent.fromWord(
-        chosen[i],
-        customClass: classes[chosen[i].customClassId],
+        word,
+        customClass: classes[word.customClassId],
       );
       await _plugin.zonedSchedule(
         _firstId + i,
@@ -175,7 +170,7 @@ class ReminderService {
         when,
         _details(content),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        payload: '${chosen[i].id}',
+        payload: '${word.id}',
       );
     }
   }

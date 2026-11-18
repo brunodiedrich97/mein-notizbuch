@@ -2,4 +2,8 @@
 <resources>
     <!-- Cor do papel no modo escuro (AppPalette.dark.page) -->
     <color name="splash_background">#191816</color>
+    <!-- Widget "Palavra do dia" (tema escuro) -->
+    <color name="widget_background">#232220</color>
+    <color name="widget_text">#F3F4F6</color>
+    <color name="widget_subtle">#9CA3AF</color>
 </resources>

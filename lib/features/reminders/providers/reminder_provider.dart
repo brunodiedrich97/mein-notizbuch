@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/database/app_database.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../../word_classes/providers/word_class_provider.dart';
+import '../data/daily_word_plan.dart';
 import '../data/reminder_service.dart';
 
 class ReminderState {
@@ -121,7 +122,7 @@ class ReminderController extends Notifier<ReminderState> {
     }
     final words = await ref.read(wordListProvider.future);
     await _service.scheduleDaily(
-      words: words,
+      plan: await DailyWordPlan.ensure(words),
       hour: state.hour,
       minute: state.minute,
       classes: await _classes(),

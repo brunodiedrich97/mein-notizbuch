@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/navigation/app_navigator.dart';
 import 'core/theme/app_theme.dart';
+import 'features/home_widget/data/daily_word_widget.dart';
 import 'features/reminders/data/reminder_service.dart';
 import 'features/settings/providers/text_size_provider.dart';
 import 'features/splash/presentation/splash_screen.dart';
@@ -24,6 +25,10 @@ Future<void> main() async {
         ),
       );
   await reminders.init();
+
+  // Tocar no widget "Palavra do dia" também abre a ficha.
+  DailyWordWidget.onOpenWord = reminders.onOpenWord;
+  await DailyWordWidget.init();
 
   runApp(const ProviderScope(child: DeutschNotizbuchApp()));
 }

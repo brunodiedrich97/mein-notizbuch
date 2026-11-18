@@ -6,6 +6,9 @@ import '../../../core/theme/app_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../backup/providers/backup_provider.dart';
+import '../../home_widget/data/daily_word_widget.dart';
+import '../../home_widget/presentation/widget_invite_card.dart';
+import '../../home_widget/providers/widget_invite_provider.dart';
 import '../../reminders/data/reminder_service.dart';
 import '../../reminders/providers/reminder_provider.dart';
 import '../../settings/presentation/settings_screen.dart';
@@ -135,6 +138,8 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const WidgetInviteCard(),
+
                       // ---------- Atalhos ----------
                       IntrinsicHeight(
                         child: Row(
@@ -371,7 +376,8 @@ class _ShortcutTile extends StatelessWidget {
 
 /// Tarefas ao abrir a tela inicial e sempre que o app volta para a
 /// frente: backup diário (se ainda não houve hoje), renovar a fila de
-/// lembretes e abrir a ficha da notificação que abriu o app.
+/// lembretes e o widget, e abrir a ficha da notificação ou do widget que
+/// abriu o app.
 class _StartupTasks extends ConsumerStatefulWidget {
   const _StartupTasks({required this.child});
 
@@ -389,7 +395,10 @@ class _StartupTasksState extends ConsumerState<_StartupTasks>
     WidgetsBinding.instance.addObserver(this);
     Future.microtask(() {
       _run();
-      final wordId = ReminderService.instance.takeLaunchWordId();
+      ref.read(widgetInviteProvider.notifier).check();
+      // Ficha da notificação ou do widget que abriu o app.
+      final wordId = ReminderService.instance.takeLaunchWordId() ??
+          DailyWordWidget.takeLaunchWordId();
       if (wordId != null && mounted) openWordDetail(context, wordId);
     });
   }
@@ -409,6 +418,7 @@ class _StartupTasksState extends ConsumerState<_StartupTasks>
     if (!mounted) return;
     ref.read(backupProvider.notifier).backupIfDue();
     ref.read(reminderProvider.notifier).refresh();
+    refreshDailyWordWidget(ref);
   }
 
   @override

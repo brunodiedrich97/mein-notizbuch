@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">Palavra do dia</string>
+    <string name="widget_title">PALAVRA DO DIA</string>
+    <string name="widget_description">Uma palavra do seu Notizbuch por dia, com a classe e o significado.</string>
+</resources>
