@@ -15,3 +15,12 @@
 
 # home_widget (widget "Palavra do dia")
 -keep class es.antonborri.home_widget.** { *; }
+
+# WorkManager (usado por plugins para tarefas em segundo plano): o banco
+# interno é um Room, criado por reflexão a partir de WorkDatabase_Impl.
+# Sem estas regras, o R8 remove o construtor e o app cai ao abrir
+# ("Failed to create an instance of androidx.work.impl.WorkDatabase").
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+-keep class androidx.work.** { *; }
+-dontwarn androidx.work.**
