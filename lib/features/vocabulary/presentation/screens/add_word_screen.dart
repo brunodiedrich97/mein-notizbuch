@@ -400,7 +400,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.record_voice_over_outlined,
-                  title: 'Pronúncia',
+                  title: 'Pronúncia (Aussprache)',
                   trailing: const _MetaText('Opcional'),
                   accent: accent,
                   children: [
@@ -441,7 +441,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
                 _SectionCard(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Beispielsatz (frase de exemplo)',
+                  title: 'Frase de exemplo (Beispielsatz)',
                   trailing: const _MetaText('Opcional'),
                   accent: accent,
                   children: [
