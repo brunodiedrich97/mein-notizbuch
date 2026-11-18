@@ -27,7 +27,10 @@ class UmlautKeys extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final radius = BorderRadius.circular(8);
-    return Wrap(
+    // As letras crescem até 1,3x; acima disso não caberiam na tecla.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Wrap(
       spacing: 6,
       runSpacing: 6,
       children: [
@@ -54,6 +57,7 @@ class UmlautKeys extends StatelessWidget {
             ),
           ),
       ],
+    ),
     );
   }
 }

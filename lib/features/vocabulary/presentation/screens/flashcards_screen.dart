@@ -576,7 +576,10 @@ class _JumpSheet extends StatelessWidget {
           InkWell(
             onTap: () => Navigator.of(context).pop(i),
             child: Container(
-              height: 48,
+              // Altura mínima: cresce com o tamanho do texto.
+              constraints: const BoxConstraints(minHeight: 48),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
                 border: i == session.length - 1
                     ? null

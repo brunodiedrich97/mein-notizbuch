@@ -272,7 +272,9 @@ class _BackupListSheet extends StatelessWidget {
           InkWell(
             onTap: () => Navigator.of(context).pop(backups[i]),
             child: Container(
-              height: 52,
+              constraints: const BoxConstraints(minHeight: 52),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
                 border: i == backups.length - 1
                     ? null

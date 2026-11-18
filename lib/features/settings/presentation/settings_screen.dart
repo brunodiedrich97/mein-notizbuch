@@ -13,6 +13,7 @@ import '../../reminders/providers/reminder_provider.dart';
 import '../../vocabulary/providers/vocabulary_provider.dart';
 import '../../word_classes/presentation/word_classes_screen.dart';
 import '../../word_classes/providers/word_class_provider.dart';
+import '../providers/text_size_provider.dart';
 
 /// Ajustes: lembrete diário e backup no Google Drive.
 class SettingsScreen extends ConsumerWidget {
@@ -124,6 +125,7 @@ class SettingsScreen extends ConsumerWidget {
     final reminder = ref.watch(reminderProvider);
     final backup = ref.watch(backupProvider);
     final classCount = ref.watch(wordClassMapProvider).length;
+    final textSize = ref.watch(textSizeProvider);
 
     return Scaffold(
       backgroundColor: p.page,
@@ -134,6 +136,35 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
             children: [
+              Text('TELA', style: AppText.section(p)),
+              const SizedBox(height: 12),
+              _Group(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text('Tamanho do texto', style: AppText.item(p)),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Soma com o ajuste de acessibilidade do celular.',
+                          style: AppText.meta(p),
+                        ),
+                        const SizedBox(height: 12),
+                        _TextSizeSelector(
+                          selected: textSize,
+                          onChanged: (level) =>
+                              ref.read(textSizeProvider.notifier).set(level),
+                        ),
+                        const SizedBox(height: 16),
+                        const _TextSizePreview(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
               Text('VOCABULÁRIO', style: AppText.section(p)),
               const SizedBox(height: 12),
               _Group(
@@ -399,6 +430,117 @@ class _ConfirmImportSheet extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Três opções lado a lado: "A" em tamanhos crescentes e o nome.
+class _TextSizeSelector extends StatelessWidget {
+  const _TextSizeSelector({required this.selected, required this.onChanged});
+
+  final TextSizeLevel selected;
+  final ValueChanged<TextSizeLevel> onChanged;
+
+  static const _sampleSize = {
+    TextSizeLevel.normal: 15.0,
+    TextSizeLevel.large: 19.0,
+    TextSizeLevel.extraLarge: 23.0,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Row(
+      children: [
+        for (final level in TextSizeLevel.values) ...[
+          if (level != TextSizeLevel.values.first) const SizedBox(width: 8),
+          Expanded(
+            child: Semantics(
+              button: true,
+              selected: level == selected,
+              label: 'Tamanho do texto: ${level.label}',
+              child: Material(
+                color: level == selected ? p.ink : p.card,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: level == selected ? p.ink : p.outline,
+                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => onChanged(level),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      children: [
+                        // O "A" mostra a diferença real, sem a escala do app.
+                        Text(
+                          'A',
+                          textScaler: TextScaler.noScaling,
+                          style: AppTheme.serif(
+                            fontSize: _sampleSize[level]!,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                            color: level == selected ? p.onInk : p.text900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          level.label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.meta(p).copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: level == selected ? p.onInk : p.text700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Uma ficha em miniatura com o tamanho atual, para conferir.
+class _TextSizePreview extends StatelessWidget {
+  const _TextSizePreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: p.pronBox,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('PRÉVIA', style: AppText.caption(p)),
+          const SizedBox(height: 6),
+          Text(
+            'Der Hund schläft im Garten.',
+            style: AppTheme.serif(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+              color: p.text900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text('O cachorro dorme no jardim.', style: AppText.body(p)),
+        ],
+      ),
     );
   }
 }

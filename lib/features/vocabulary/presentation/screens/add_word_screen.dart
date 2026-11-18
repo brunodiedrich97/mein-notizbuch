@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -285,7 +287,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   ),
                 ),
                 SizedBox(
-                  height: 40,
+                  height: chipRowHeight(context),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -843,7 +845,7 @@ class _DeckPicker extends ConsumerWidget {
     }
 
     return SizedBox(
-      height: 40,
+      height: chipRowHeight(context),
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -960,3 +962,8 @@ class _NewClassChip extends StatelessWidget {
     );
   }
 }
+
+/// Altura das linhas roláveis de chips: 40 px no tamanho normal, maior
+/// quando o texto está aumentado (o chip tem texto de 14 px).
+double chipRowHeight(BuildContext context) =>
+    math.max(40, MediaQuery.textScalerOf(context).scale(14) * 1.4 + 20);

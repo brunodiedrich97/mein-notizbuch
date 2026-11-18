@@ -256,8 +256,8 @@ class _SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: p.card,
         borderRadius: BorderRadius.circular(12),

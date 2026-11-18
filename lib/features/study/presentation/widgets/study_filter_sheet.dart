@@ -218,7 +218,9 @@ class _RadioRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
             border: showDivider
                 ? Border(bottom: BorderSide(color: p.divider))
