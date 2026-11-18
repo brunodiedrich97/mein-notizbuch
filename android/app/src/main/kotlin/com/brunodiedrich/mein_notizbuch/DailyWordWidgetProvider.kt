@@ -59,8 +59,10 @@ class DailyWordWidgetProvider : HomeWidgetProvider() {
         val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
         val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 110)
         val small = width < 200
-        // Compacto (4x1) e quadrado não têm cabeçalho nem data.
-        val compact = !small && height < 100
+        // Compacto (4x1) e quadrado não têm a data. O layout com data
+        // precisa de ~130 dp de altura; abaixo disso, a última linha (o
+        // significado) seria cortada, então fica o compacto.
+        val compact = !small && height < 130
         val layout = when {
             small -> R.layout.daily_word_widget_small
             compact -> R.layout.daily_word_widget_compact
