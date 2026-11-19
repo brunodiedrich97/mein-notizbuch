@@ -49,3 +49,7 @@ app.*.map.json
 
 # Arquivos de trabalho do Claude (mockups, prévias)
 Claude outputs/
+
+# Resultados dos testes de modelos de IA (tool/ai_eval)
+tool/ai_eval/results/
+__pycache__/
